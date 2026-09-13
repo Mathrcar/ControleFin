@@ -72,9 +72,82 @@ def dashboard():
 
 def default_settings():
     return {
-        "version": 1,
+        "version": 2,
         "customCategories": [],
         "transactionOverrides": {},
+        "categoryRules": [],
+    }
+
+
+def normalize_settings(payload):
+    """
+    Normaliza o arquivo de ajustes e mantém compatibilidade com a versão 1.
+    A ordem de categoryRules é preservada porque a primeira regra compatível
+    tem prioridade.
+    """
+    if not isinstance(payload, dict):
+        return default_settings()
+
+    custom_categories = payload.get("customCategories", [])
+    if not isinstance(custom_categories, list):
+        custom_categories = []
+
+    transaction_overrides = payload.get("transactionOverrides", {})
+    if not isinstance(transaction_overrides, dict):
+        transaction_overrides = {}
+
+    raw_rules = payload.get("categoryRules", [])
+    if not isinstance(raw_rules, list):
+        raw_rules = []
+
+    allowed_fields = {"merchant", "description", "bank", "account", "method"}
+    allowed_operators = {"contains", "equals", "startsWith"}
+
+    category_rules = []
+    seen_rule_ids = set()
+
+    for index, raw_rule in enumerate(raw_rules, start=1):
+        if not isinstance(raw_rule, dict):
+            continue
+
+        field = str(raw_rule.get("field") or "").strip()
+        operator = str(raw_rule.get("operator") or "").strip()
+        value = str(raw_rule.get("value") or "").strip()
+        category = str(raw_rule.get("category") or "").strip()
+
+        if field not in allowed_fields:
+            continue
+        if operator not in allowed_operators:
+            continue
+        if not value or not category:
+            continue
+
+        rule_id = str(raw_rule.get("id") or f"rule_{index}").strip()
+        if not rule_id or rule_id in seen_rule_ids:
+            rule_id = f"rule_{index}"
+
+        seen_rule_ids.add(rule_id)
+
+        category_rules.append(
+            {
+                "id": rule_id,
+                "enabled": raw_rule.get("enabled", True) is not False,
+                "field": field,
+                "operator": operator,
+                "value": value,
+                "category": category,
+            }
+        )
+
+    return {
+        "version": 2,
+        "customCategories": [
+            str(category).strip()
+            for category in custom_categories
+            if str(category).strip()
+        ],
+        "transactionOverrides": transaction_overrides,
+        "categoryRules": category_rules,
     }
 
 
@@ -85,9 +158,16 @@ def load_settings():
         return settings
 
     try:
-        return json.loads(
+        raw_settings = json.loads(
             SETTINGS_FILE.read_text(encoding="utf-8")
         )
+        settings = normalize_settings(raw_settings)
+
+        # Migra silenciosamente arquivos antigos (version 1) para version 2.
+        if settings != raw_settings:
+            save_settings(settings)
+
+        return settings
     except Exception:
         return default_settings()
 
@@ -134,6 +214,7 @@ async def update_settings(request: Request):
 
     custom_categories = payload.get("customCategories", [])
     transaction_overrides = payload.get("transactionOverrides", {})
+    category_rules = payload.get("categoryRules", [])
 
     if not isinstance(custom_categories, list):
         raise HTTPException(
@@ -147,15 +228,13 @@ async def update_settings(request: Request):
             detail="transactionOverrides deve ser um objeto.",
         )
 
-    settings = {
-        "version": 1,
-        "customCategories": [
-            str(category).strip()
-            for category in custom_categories
-            if str(category).strip()
-        ],
-        "transactionOverrides": transaction_overrides,
-    }
+    if not isinstance(category_rules, list):
+        raise HTTPException(
+            status_code=400,
+            detail="categoryRules deve ser uma lista.",
+        )
+
+    settings = normalize_settings(payload)
 
     save_settings(settings)
 

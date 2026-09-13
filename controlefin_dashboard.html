@@ -29,9 +29,10 @@
 .insights{display:grid;gap:8px}.insight{display:grid;grid-template-columns:8px 1fr;gap:10px;background:var(--surface2);border:1px solid var(--line);padding:12px;border-radius:12px}.insight .sev{width:8px;height:8px;border-radius:50%;background:var(--blue);margin-top:5px}.insight[data-level=good] .sev{background:var(--good)}.insight[data-level=warn] .sev{background:var(--warn)}.insight[data-level=bad] .sev{background:var(--bad)}.insight strong{display:block;font-size:.8rem}.insight span{display:block;color:var(--muted);font-size:.72rem;line-height:1.4;margin-top:2px}.score-wrap{display:grid;grid-template-columns:128px 1fr;gap:16px;align-items:center}.score-ring{--score:0;width:124px;height:124px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--green) calc(var(--score)*1%),#2a2a2a 0);position:relative}.score-ring:after{content:"";position:absolute;inset:10px;border-radius:50%;background:var(--surface)}.score-number{z-index:1;text-align:center}.score-number strong{font-size:1.8rem}.score-number span{font-size:.67rem;color:var(--muted)}.score-title{margin:0 0 4px}.score-copy{margin:0;color:var(--muted);font-size:.76rem;line-height:1.45}.components{display:grid;gap:8px;margin-top:14px}.component{display:grid;grid-template-columns:110px 1fr 46px;gap:8px;align-items:center;font-size:.69rem}.track{height:6px;background:#292929;border-radius:999px;overflow:hidden}.fill{height:100%;background:var(--green);border-radius:999px}
 .spend-primary-metric{margin-top:8px}.spend-primary-metric small{display:block;color:var(--muted);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}.spend-primary-metric strong{display:block;font-size:clamp(2.7rem,6vw,5.8rem);line-height:.93;letter-spacing:-.065em}.spend-primary-metric .metric-sub{color:var(--muted);font-size:.82rem;margin-top:8px}.mode-card .mode-primary-label{display:block;color:var(--muted);font-size:.64rem;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}.mode-card .mode-total{font-size:.7rem;color:var(--muted);margin-top:5px}.chart-dimension-select{min-width:150px}.chart-head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.chart-head-actions label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:.68rem}.spend-table .description-main{font-weight:700;line-height:1.35;max-width:360px}.spend-table .description-meta{color:var(--muted);font-size:.66rem;margin-top:4px;line-height:1.4}.tx-raw-details summary{cursor:pointer;color:var(--green);font-size:.68rem;font-weight:800}.tx-raw-grid{display:grid;grid-template-columns:repeat(2,minmax(180px,1fr));gap:5px 12px;margin-top:8px;max-width:720px}.tx-raw-grid div{font-size:.65rem;line-height:1.35;overflow-wrap:anywhere}.tx-raw-grid b{color:var(--muted);font-weight:700}.spend-category-input{min-width:170px;width:100%}.table-section-note{color:var(--muted);font-size:.7rem;line-height:1.45}.chart-explainer{color:var(--muted);font-size:.68rem;margin-top:8px}.spend-chart-grid{align-items:stretch}.spend-chart-grid>.panel{min-width:0}.spend-chart-grid .chart{min-height:360px}.spend-chart-grid .chart svg{min-height:360px}.spending-table-panel{margin-top:14px}.spending-table-panel .table-wrap{max-height:640px}.spending-table-panel th{top:0}.spending-table-panel td{vertical-align:top}
 .category-manager{margin-top:10px}.category-manager-row{display:flex;gap:8px;align-items:end;flex-wrap:wrap}.category-manager-row label{display:grid;gap:5px;color:var(--muted);font-size:.69rem;min-width:min(320px,100%);flex:1}.category-manager-row input[type=text]{width:100%}.category-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}.category-chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface2);border-radius:999px;padding:.36rem .5rem .36rem .68rem;font-size:.72rem}.category-chip button{padding:.16rem .42rem;font-size:.68rem;background:#2b2b2b}.persist-note{margin-top:10px;padding:10px 12px;border:1px solid rgba(30,215,96,.2);border-radius:11px;background:rgba(30,215,96,.055);color:var(--muted);font-size:.7rem;line-height:1.5}.persist-note strong{color:var(--green)}.persist-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.persist-status{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:.69rem}.persist-status:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
+.category-rules-manager{margin-top:10px}.rule-builder{display:grid;grid-template-columns:1.1fr 1fr 1.5fr 1.4fr auto;gap:9px;align-items:end}.rule-builder label{display:grid;gap:5px;color:var(--muted);font-size:.69rem;min-width:0}.rule-builder input,.rule-builder select{width:100%;min-width:0}.rule-help{margin:10px 0 0;color:var(--muted);font-size:.7rem;line-height:1.5}.rule-list{display:grid;gap:8px;margin-top:12px}.rule-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface2)}.rule-row.is-disabled{opacity:.5}.rule-toggle{display:flex;align-items:center;justify-content:center}.rule-toggle input{width:16px;height:16px;accent-color:var(--green)}.rule-main{min-width:0}.rule-expression{font-size:.76rem;line-height:1.45;overflow-wrap:anywhere}.rule-expression strong{color:var(--text)}.rule-expression .rule-arrow{color:var(--green);font-weight:900;padding:0 .25rem}.rule-meta{color:var(--muted);font-size:.66rem;margin-top:4px}.rule-actions{display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.rule-actions button{padding:.38rem .58rem;font-size:.67rem}.rule-count{color:var(--green);font-weight:800}
 .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:13px;background:var(--surface)}table{border-collapse:collapse;width:100%;min-width:760px}th,td{padding:10px 11px;border-bottom:1px solid var(--line);text-align:left;font-size:.73rem;vertical-align:top}th{position:sticky;top:0;z-index:2;background:#191919;color:var(--muted)}tr:last-child td{border-bottom:0}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}.pill{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:.2rem .44rem;font-size:.64rem}.tx-edit{width:140px}.row-actions{display:flex;gap:5px}.row-actions button{font-size:.68rem;padding:.42rem .58rem}.editor-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:12px}.editor-toolbar label{display:grid;gap:4px;color:var(--muted);font-size:.68rem}.footnote{font-size:.68rem;color:var(--muted);line-height:1.5;margin-top:12px}.empty{padding:28px;color:var(--muted);text-align:center;border:1px dashed var(--line);border-radius:13px}.details-panel{margin-top:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}.details-panel summary{cursor:pointer;padding:14px;font-weight:800}.details-inner{padding:0 14px 14px}.hidden{display:none!important}.toast{position:fixed;right:20px;bottom:20px;z-index:80;max-width:420px;padding:13px 15px;border-radius:12px;background:#282828;border:1px solid #3b3b3b;box-shadow:var(--shadow);transform:translateY(20px);opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:translateY(0)}
-@media(max-width:1180px){.kpis{grid-template-columns:repeat(3,1fr)}.control-dock{grid-template-columns:repeat(3,1fr)}.two,.income-hero{grid-template-columns:1fr}.story-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:760px){.shell{width:min(100% - 18px,1540px)}.hero{grid-template-columns:1fr}.hero-main{min-height:220px}.topbar-inner{align-items:flex-start}.toolbar .desktop-only{display:none}.kpis{grid-template-columns:repeat(2,1fr)}.spend-mode-cards,.mini-stats{grid-template-columns:1fr}.control-dock{grid-template-columns:1fr 1fr}.control-dock .wide{grid-column:span 2}.story-grid{grid-template-columns:1fr}.filters{top:auto}.tx-raw-grid{grid-template-columns:1fr}.desktop-hide{display:none}}
+@media(max-width:1180px){.rule-builder{grid-template-columns:1fr 1fr}.rule-builder button{width:max-content}.kpis{grid-template-columns:repeat(3,1fr)}.control-dock{grid-template-columns:repeat(3,1fr)}.two,.income-hero{grid-template-columns:1fr}.story-grid{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:760px){.rule-builder{grid-template-columns:1fr}.rule-row{grid-template-columns:auto minmax(0,1fr)}.rule-actions{grid-column:1/-1;justify-content:flex-start}.shell{width:min(100% - 18px,1540px)}.hero{grid-template-columns:1fr}.hero-main{min-height:220px}.topbar-inner{align-items:flex-start}.toolbar .desktop-only{display:none}.kpis{grid-template-columns:repeat(2,1fr)}.spend-mode-cards,.mini-stats{grid-template-columns:1fr}.control-dock{grid-template-columns:1fr 1fr}.control-dock .wide{grid-column:span 2}.story-grid{grid-template-columns:1fr}.filters{top:auto}.tx-raw-grid{grid-template-columns:1fr}.desktop-hide{display:none}}
 @media(max-width:480px){.kpis{grid-template-columns:1fr}.control-dock{grid-template-columns:1fr}.control-dock .wide{grid-column:span 1}.hero h2{font-size:2.2rem}.hero-number strong{font-size:3rem}.nav-tabs{width:100%}}
 </style>
 </head>
@@ -97,13 +98,46 @@
             <button id="createSpendCategoryBtn" class="primary" type="button">Criar categoria</button>
           </div>
           <div class="category-chips" id="customCategoryChips"></div>
-          <div class="persist-note" id="spending-persistence-info"><strong>Salvamento automático ativo.</strong> Categorias e reclassificações são gravadas pelo backend em <span class="mono">user_data/ajustes.json</span>. O navegador apenas envia e lê os ajustes; o arquivo permanente fica na pasta local do ControleFin.</div>
+          <div class="persist-note" id="spending-persistence-info"><strong>Salvamento automático ativo.</strong> Categorias, reclassificações e regras automáticas são gravadas pelo backend em <span class="mono">user_data/ajustes.json</span>. O navegador apenas envia e lê os ajustes; o arquivo permanente fica na pasta local do ControleFin.</div>
           <div class="persist-actions" id="spending-persistence-actions">
             <button id="exportFinanceConfigBtn" type="button">Baixar backup dos ajustes</button>
             <label class="button ghost" for="importFinanceConfigFile">Restaurar backup</label>
             <input id="importFinanceConfigFile" type="file" accept="application/json,.json">
             <span class="persist-status" id="spendingPersistenceStatus">Nenhuma alteração nesta sessão</span>
           </div>
+        </div>
+      </details>
+
+      <details class="details-panel category-rules-manager" id="spending-category-rules">
+        <summary>Regras automáticas de categorização <span class="rule-count" id="categoryRulesCount">0</span></summary>
+        <div class="details-inner">
+          <div class="rule-builder" id="spending-category-rule-builder">
+            <label>Campo
+              <select id="ruleField">
+                <option value="merchant">Merchant</option>
+                <option value="description">Descrição</option>
+                <option value="bank">Banco</option>
+                <option value="account">Conta / cartão</option>
+                <option value="method">Tipo de gasto</option>
+              </select>
+            </label>
+            <label>Condição
+              <select id="ruleOperator">
+                <option value="contains">contém</option>
+                <option value="equals">é igual a</option>
+                <option value="startsWith">começa com</option>
+              </select>
+            </label>
+            <label>Valor a procurar
+              <input id="ruleValue" type="text" maxlength="120" placeholder="Ex.: IFOOD, UBER, SPOTIFY…">
+            </label>
+            <label>Classificar como
+              <input id="ruleCategory" type="text" maxlength="80" list="spendCategorySuggestions" placeholder="Ex.: Alimentação">
+            </label>
+            <button id="createCategoryRuleBtn" class="primary" type="button">Criar regra</button>
+          </div>
+          <p class="rule-help" id="spending-category-rules-help">A primeira regra ativa que combinar com a transação é aplicada. Ajustes manuais de uma transação sempre têm prioridade sobre as regras. Use ↑ e ↓ para alterar a prioridade.</p>
+          <div class="rule-list" id="categoryRulesList"></div>
         </div>
       </details>
 
@@ -158,7 +192,7 @@
       <article class="panel panel-pad" id="transactions-editor"><div class="editor-toolbar" id="transactions-editor-toolbar"><label>Buscar<input id="txSearch" type="search" placeholder="Descrição, merchant…"></label><label>Natureza<select id="txKindFilter"><option value="all">Todas</option><option value="EXPENSE">Gastos</option><option value="INCOME">Entradas</option><option value="TRANSFER">Transferências próprias</option><option value="INVESTMENT_TRANSFER">Aportes / transferências para investimentos</option><option value="CARD_BILL">Pagamento de fatura</option><option value="REFUND">Estornos</option><option value="IGNORE">Ignoradas</option></select></label><label>Conta<select id="txAccountFilter"><option value="all">Todas</option></select></label></div><div class="table-wrap" id="transactions-table"><table><thead><tr><th>Data</th><th>Conta</th><th>Descrição</th><th class="num">Valor</th><th>Natureza</th><th>Categoria</th><th>Merchant</th><th>Meio</th><th></th></tr></thead><tbody id="transactionsEditorTable"></tbody></table></div><div class="footnote" id="txEditorFootnote"></div></article>
     </section>
 
-    <p class="footnote" id="dashboard-privacy-note">Os dados financeiros permanecem locais. Categorias e reclassificações são salvas em user_data/ajustes.json pelo backend; pagamentos de fatura, transferências próprias e aportes/resgates ficam fora de Gastos e Entradas para evitar dupla contagem patrimonial.</p>
+    <p class="footnote" id="dashboard-privacy-note">Os dados financeiros permanecem locais. Categorias, reclassificações e regras automáticas são salvas em user_data/ajustes.json pelo backend; pagamentos de fatura, transferências próprias e aportes/resgates ficam fora de Gastos e Entradas para evitar dupla contagem patrimonial.</p>
   </main>
 </div>
 <div class="toast" id="toast"></div>
@@ -185,6 +219,8 @@
     overridesStorageKey: 'controlefin.transactionOverrides.v2',
     customCategories: new Set(),
     categoriesStorageKey: 'controlefin.customCategories.v1',
+    categoryRules: [],
+    rulesStorageKey: 'controlefin.categoryRules.v1',
     persistedAt: null,
     persistenceMode: 'backend',
     settingsSaveTimer: null,
@@ -590,6 +626,7 @@
     const legacy = {
       transactionOverrides: {},
       customCategories: [],
+      categoryRules: [],
     };
 
     try {
@@ -610,6 +647,15 @@
       }
     } catch (e) {
       console.warn('Não foi possível ler categorias antigas do localStorage.', e);
+    }
+
+    try {
+      const parsed = JSON.parse(localStorage.getItem(state.rulesStorageKey) || '[]');
+      if (Array.isArray(parsed)) {
+        legacy.categoryRules = parsed;
+      }
+    } catch (e) {
+      console.warn('Não foi possível ler regras antigas do localStorage.', e);
     }
 
     return legacy;
@@ -636,16 +682,19 @@
       const category = String(value || '').trim();
       if (category) state.customCategories.add(category);
     });
+
+    state.categoryRules = sanitizeCategoryRules(settings?.categoryRules);
   }
 
   function currentSettingsPayload() {
     return {
-      version: 1,
+      version: 2,
       customCategories: [...state.customCategories]
         .map(v => String(v || '').trim())
         .filter(Boolean)
         .sort((a, b) => a.localeCompare(b, 'pt-BR')),
       transactionOverrides: Object.fromEntries(state.transactionOverrides),
+      categoryRules: sanitizeCategoryRules(state.categoryRules),
     };
   }
 
@@ -667,13 +716,15 @@
       // só migra quando o arquivo permanente ainda está vazio.
       const backendEmpty =
         state.transactionOverrides.size === 0 &&
-        state.customCategories.size === 0;
+        state.customCategories.size === 0 &&
+        state.categoryRules.length === 0;
 
       if (backendEmpty) {
         const legacy = loadLegacyLocalSettings();
         const hasLegacy =
           Object.keys(legacy.transactionOverrides || {}).length > 0 ||
-          (legacy.customCategories || []).length > 0;
+          (legacy.customCategories || []).length > 0 ||
+          (legacy.categoryRules || []).length > 0;
 
         if (hasLegacy) {
           applySettingsPayload(legacy);
@@ -682,6 +733,7 @@
           // Após migração bem-sucedida, remove apenas as chaves antigas do ControleFin.
           localStorage.removeItem(state.overridesStorageKey);
           localStorage.removeItem(state.categoriesStorageKey);
+          localStorage.removeItem(state.rulesStorageKey);
 
           updatePersistenceStatus(
             `${state.transactionOverrides.size} ajuste(s) migrado(s) para user_data/ajustes.json`
@@ -691,7 +743,7 @@
       }
 
       updatePersistenceStatus(
-        `${state.transactionOverrides.size} ajuste(s) · ${state.customCategories.size} categoria(s) carregados de user_data/ajustes.json`
+        `${state.transactionOverrides.size} ajuste(s) · ${state.customCategories.size} categoria(s) · ${state.categoryRules.length} regra(s) carregados de user_data/ajustes.json`
       );
     } catch (error) {
       console.error('Backend de persistência indisponível:', error);
@@ -737,6 +789,10 @@
       localStorage.setItem(
         state.categoriesStorageKey,
         JSON.stringify(payload.customCategories)
+      );
+      localStorage.setItem(
+        state.rulesStorageKey,
+        JSON.stringify(payload.categoryRules)
       );
       if (!silent) updatePersistenceStatus();
       return;
@@ -793,6 +849,251 @@
     queuePersistentSettingsSave();
   }
 
+  function persistCategoryRules() {
+    queuePersistentSettingsSave();
+  }
+
+  function sanitizeCategoryRules(rules) {
+    if (!Array.isArray(rules)) return [];
+
+    const allowedFields = new Set(['merchant','description','bank','account','method']);
+    const allowedOperators = new Set(['contains','equals','startsWith']);
+    const seen = new Set();
+
+    return rules
+      .filter(rule => rule && typeof rule === 'object' && !Array.isArray(rule))
+      .map((rule, index) => {
+        const field = String(rule.field || '').trim();
+        const operator = String(rule.operator || '').trim();
+        const value = String(rule.value || '').trim();
+        const category = String(rule.category || '').trim();
+
+        if (!allowedFields.has(field) || !allowedOperators.has(operator) || !value || !category) {
+          return null;
+        }
+
+        let id = String(rule.id || `rule_${index + 1}`).trim();
+        if (!id || seen.has(id)) id = `rule_${Date.now()}_${index + 1}`;
+        seen.add(id);
+
+        return {
+          id,
+          enabled: rule.enabled !== false,
+          field,
+          operator,
+          value,
+          category,
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function normalizeRuleText(value) {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+  }
+
+  function ruleFieldValue(transaction, field) {
+    switch (field) {
+      case 'merchant':
+        return originalMerchant(transaction);
+      case 'description':
+        return transaction.description || '';
+      case 'bank':
+        return normalizeInstitution(transaction);
+      case 'account':
+        return transaction.accountName || transaction.name || transaction.accountId || '';
+      case 'method':
+        return inferPaymentMethod(transaction);
+      default:
+        return '';
+    }
+  }
+
+  function ruleMatches(transaction, rule) {
+    if (!rule || rule.enabled === false) return false;
+
+    const actual = normalizeRuleText(ruleFieldValue(transaction, rule.field));
+    const expected = normalizeRuleText(rule.value);
+    if (!actual || !expected) return false;
+
+    if (rule.operator === 'equals') return actual === expected;
+    if (rule.operator === 'startsWith') return actual.startsWith(expected);
+    return actual.includes(expected);
+  }
+
+  function matchingCategoryRule(transaction) {
+    return state.categoryRules.find(rule => ruleMatches(transaction, rule)) || null;
+  }
+
+  function automaticCategory(transaction) {
+    return matchingCategoryRule(transaction)?.category || null;
+  }
+
+  function categoryWithoutManualOverride(transaction) {
+    return automaticCategory(transaction) || transaction.category || 'Sem categoria';
+  }
+
+  function ruleFieldLabel(field) {
+    return ({
+      merchant: 'Merchant',
+      description: 'Descrição',
+      bank: 'Banco',
+      account: 'Conta / cartão',
+      method: 'Tipo de gasto',
+    })[field] || field;
+  }
+
+  function ruleOperatorLabel(operator) {
+    return ({
+      contains: 'contém',
+      equals: 'é igual a',
+      startsWith: 'começa com',
+    })[operator] || operator;
+  }
+
+  function ruleMatchCount(rule) {
+    return table('transactions').filter(transaction => {
+      if (!isUsableStatus(transaction.status)) return false;
+      if (state.currency && transactionCurrency(transaction) !== state.currency) return false;
+      return ruleMatches(transaction, rule);
+    }).length;
+  }
+
+  function renderCategoryRules() {
+    const root = $('categoryRulesList');
+    if (!root) return;
+
+    state.categoryRules = sanitizeCategoryRules(state.categoryRules);
+    const countEl = $('categoryRulesCount');
+    if (countEl) countEl.textContent = String(state.categoryRules.length);
+
+    if (!state.categoryRules.length) {
+      root.innerHTML = '<div class="empty">Nenhuma regra automática criada. Crie uma regra acima para categorizar novas transações automaticamente.</div>';
+      return;
+    }
+
+    root.innerHTML = state.categoryRules.map((rule, index) => {
+      const matches = ruleMatchCount(rule);
+      return `<div class="rule-row ${rule.enabled === false ? 'is-disabled' : ''}" data-rule-id="${esc(rule.id)}">
+        <label class="rule-toggle" title="${rule.enabled === false ? 'Ativar regra' : 'Desativar regra'}">
+          <input type="checkbox" data-rule-action="toggle" ${rule.enabled === false ? '' : 'checked'}>
+        </label>
+        <div class="rule-main">
+          <div class="rule-expression"><strong>${esc(ruleFieldLabel(rule.field))}</strong> ${esc(ruleOperatorLabel(rule.operator))} <strong>“${esc(rule.value)}”</strong><span class="rule-arrow">→</span><strong>${esc(rule.category)}</strong></div>
+          <div class="rule-meta">Prioridade ${index + 1} · ${integer(matches)} transação(ões) compatíveis na moeda atual${rule.enabled === false ? ' · regra desativada' : ''}</div>
+        </div>
+        <div class="rule-actions">
+          <button type="button" data-rule-action="up" title="Aumentar prioridade" ${index === 0 ? 'disabled' : ''}>↑</button>
+          <button type="button" data-rule-action="down" title="Diminuir prioridade" ${index === state.categoryRules.length - 1 ? 'disabled' : ''}>↓</button>
+          <button type="button" data-rule-action="delete" title="Excluir regra">Excluir</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function createCategoryRule() {
+    const field = String($('ruleField')?.value || '').trim();
+    const operator = String($('ruleOperator')?.value || '').trim();
+    const value = String($('ruleValue')?.value || '').trim().replace(/\s+/g, ' ');
+    const category = String($('ruleCategory')?.value || '').trim().replace(/\s+/g, ' ');
+
+    if (!value) return toast('Informe o valor que a regra deve procurar.');
+    if (!category) return toast('Informe a categoria que será aplicada.');
+    if (value.length > 120) return toast('Use um valor de regra com até 120 caracteres.');
+    if (category.length > 80) return toast('Use uma categoria com até 80 caracteres.');
+
+    const duplicate = state.categoryRules.some(rule =>
+      rule.field === field &&
+      rule.operator === operator &&
+      normalizeRuleText(rule.value) === normalizeRuleText(value) &&
+      normalizeRuleText(rule.category) === normalizeRuleText(category)
+    );
+
+    if (duplicate) return toast('Essa regra já existe.');
+
+    const id = (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function')
+      ? `rule_${globalThis.crypto.randomUUID()}`
+      : `rule_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+    state.categoryRules.push({
+      id,
+      enabled: true,
+      field,
+      operator,
+      value,
+      category,
+    });
+
+    // Se a regra introduzir uma categoria nova, ela também passa a constar
+    // entre as categorias personalizadas disponíveis para edição manual.
+    const knownOriginalCategories = new Set(
+      table('transactions')
+        .map(r => String(r.category || '').trim())
+        .filter(Boolean)
+    );
+    if (!knownOriginalCategories.has(category)) {
+      state.customCategories.add(category);
+    }
+
+    if ($('ruleValue')) $('ruleValue').value = '';
+    if ($('ruleCategory')) $('ruleCategory').value = '';
+
+    persistCategoryRules();
+    persistCustomCategories();
+    state.spendTxPage = 0;
+    state.txPage = 0;
+    renderCustomCategoryManager();
+    renderAll();
+    toast('Regra automática criada e salva.');
+  }
+
+  function toggleCategoryRule(ruleId, enabled) {
+    const rule = state.categoryRules.find(item => item.id === ruleId);
+    if (!rule) return;
+    rule.enabled = Boolean(enabled);
+    persistCategoryRules();
+    state.spendTxPage = 0;
+    state.txPage = 0;
+    renderAll();
+    toast(rule.enabled ? 'Regra ativada.' : 'Regra desativada.');
+  }
+
+  function deleteCategoryRule(ruleId) {
+    const rule = state.categoryRules.find(item => item.id === ruleId);
+    if (!rule) return;
+    if (!confirm(`Excluir a regra “${rule.value} → ${rule.category}”?`)) return;
+
+    state.categoryRules = state.categoryRules.filter(item => item.id !== ruleId);
+    persistCategoryRules();
+    state.spendTxPage = 0;
+    state.txPage = 0;
+    renderAll();
+    toast('Regra excluída.');
+  }
+
+  function moveCategoryRule(ruleId, direction) {
+    const index = state.categoryRules.findIndex(item => item.id === ruleId);
+    if (index < 0) return;
+
+    const target = direction === 'up' ? index - 1 : index + 1;
+    if (target < 0 || target >= state.categoryRules.length) return;
+
+    const next = [...state.categoryRules];
+    [next[index], next[target]] = [next[target], next[index]];
+    state.categoryRules = next;
+
+    persistCategoryRules();
+    state.spendTxPage = 0;
+    state.txPage = 0;
+    renderAll();
+    toast('Prioridade das regras atualizada.');
+  }
+
   function allSpendCategories() {
     return uniq([...spendingBaseRows().map(r=>r._category),...state.customCategories]).sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
   }
@@ -815,7 +1116,7 @@
   }
 
   function exportFinanceConfig() {
-    const payload={version:1,exportedAt:new Date().toISOString(),app:'ControleFin',transactionOverrides:Object.fromEntries(state.transactionOverrides),customCategories:[...state.customCategories].sort((a,b)=>a.localeCompare(b,'pt-BR'))};
+    const payload={version:2,exportedAt:new Date().toISOString(),app:'ControleFin',transactionOverrides:Object.fromEntries(state.transactionOverrides),customCategories:[...state.customCategories].sort((a,b)=>a.localeCompare(b,'pt-BR')),categoryRules:sanitizeCategoryRules(state.categoryRules)};
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='controlefin_ajustes_backup.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
   }
 
@@ -826,9 +1127,11 @@
       const overrides=payload.transactionOverrides || payload.overrides || {};
       if(!overrides || typeof overrides!=='object' || Array.isArray(overrides)) throw new Error('Formato de reclassificações inválido');
       const cats=Array.isArray(payload.customCategories)?payload.customCategories:[];
+      const rules=sanitizeCategoryRules(payload.categoryRules);
       state.transactionOverrides.clear(); Object.entries(overrides).forEach(([k,v])=>{if(v&&typeof v==='object')state.transactionOverrides.set(k,v)});
       state.customCategories.clear(); cats.forEach(v=>{const c=String(v||'').trim();if(c)state.customCategories.add(c)});
-      persistOverrides(); persistCustomCategories(); renderCustomCategoryManager(); state.spendTxPage=0; state.txPage=0; renderAll(); toast('Backup de categorias e reclassificações restaurado.');
+      state.categoryRules=rules;
+      queuePersistentSettingsSave(); renderCustomCategoryManager(); state.spendTxPage=0; state.txPage=0; renderAll(); toast('Backup de categorias, reclassificações e regras restaurado.');
     } catch(e) { console.error(e); toast('Não foi possível restaurar esse backup JSON.'); }
     finally { if($('importFinanceConfigFile')) $('importFinanceConfigFile').value=''; }
   }
@@ -907,14 +1210,15 @@
     const key=txKey(r), ov=state.transactionOverrides.get(key)||{};
     const baseMethod=inferPaymentMethod(r), method=ov.method || baseMethod;
     const kind=ov.kind || autoKind(r, method);
-    const category=ov.category || r.category || 'Sem categoria';
+    const categoryRule=matchingCategoryRule(r);
+    const category=ov.category || categoryRule?.category || r.category || 'Sem categoria';
     const merchant=ov.merchant || originalMerchant(r);
     const abs=transactionAbsAmount(r);
     const expense=kind==='EXPENSE' ? (val(r.normalizedExpense)>0 ? val(r.normalizedExpense) : abs) : 0;
     const income=kind==='INCOME' ? (val(r.normalizedInflow)>0 ? val(r.normalizedInflow) : abs) : 0;
     const outflow=(String(r.accountType).toUpperCase()==='BANK' && ['EXPENSE','CARD_BILL'].includes(kind)) ? (val(r.normalizedOutflow)>0?val(r.normalizedOutflow):abs) : 0;
     const entity=normalizeInstitution(r);
-    return {...r,_key:key,_override:ov,_kind:kind,_category:category,_merchant:merchant,_method:method,_expense:expense,_income:income,_bankOutflow:outflow,_institution:entity,_accountLabel:`${entity} · ${r.accountName || r.name || r.accountId || 'Conta'}`,_month:transactionMonth(r),_abs:abs};
+    return {...r,_key:key,_override:ov,_categoryRule:categoryRule,_kind:kind,_category:category,_merchant:merchant,_method:method,_expense:expense,_income:income,_bankOutflow:outflow,_institution:entity,_accountLabel:`${entity} · ${r.accountName || r.name || r.accountId || 'Conta'}`,_month:transactionMonth(r),_abs:abs};
   }
 
   function transactionMonths() {
@@ -1132,7 +1436,7 @@
     if($('spendCategorySuggestions')) $('spendCategorySuggestions').innerHTML=categories.map(c=>`<option value="${esc(c)}"></option>`).join('');
     body.innerHTML=pageRows.map(r=>{
       const original=r.category||'Sem categoria';
-      return `<tr data-spend-txkey="${esc(r._key)}"><td>${shortDate(r.date)}</td><td><strong>${esc(r._institution)}</strong><br><span class="muted">${esc(r.accountName||r.name||r.accountId||'Conta')}</span><br><span class="mono">${esc(r.accountId||'')}</span></td><td><div class="description-main">${esc(r.description||'—')}</div><div class="description-meta">ID ${esc(r.id||'—')} · ${esc(r.status||'status n/d')}</div></td><td>${esc(r._merchant)}</td><td><input class="spend-category-input" list="spendCategorySuggestions" value="${esc(r._category)}"/><div class="description-meta">Original: ${esc(original)}</div></td><td><span class="pill">${esc(r._method)}</span></td><td class="num bad"><strong>${money(r._expense)}</strong></td><td>${rawTransactionDetailsHtml(r)}</td><td><button data-spend-action="save-category">Salvar</button></td></tr>`;
+      return `<tr data-spend-txkey="${esc(r._key)}"><td>${shortDate(r.date)}</td><td><strong>${esc(r._institution)}</strong><br><span class="muted">${esc(r.accountName||r.name||r.accountId||'Conta')}</span><br><span class="mono">${esc(r.accountId||'')}</span></td><td><div class="description-main">${esc(r.description||'—')}</div><div class="description-meta">ID ${esc(r.id||'—')} · ${esc(r.status||'status n/d')}</div></td><td>${esc(r._merchant)}</td><td><input class="spend-category-input" list="spendCategorySuggestions" value="${esc(r._category)}"/><div class="description-meta">Pluggy: ${esc(original)}${r._categoryRule ? ` · Regra: ${esc(r._categoryRule.category)}` : ''}${r._override?.category ? ' · Ajuste manual' : ''}</div></td><td><span class="pill">${esc(r._method)}</span></td><td class="num bad"><strong>${money(r._expense)}</strong></td><td>${rawTransactionDetailsHtml(r)}</td><td><button data-spend-action="save-category">Salvar</button></td></tr>`;
     }).join('') || '<tr><td colspan="9" class="empty">Nenhum gasto encontrado para os filtros atuais.</td></tr>';
     if($('spendingTransactionsCount')) $('spendingTransactionsCount').textContent=`${integer(sorted.length)} gastos`;
     if($('spendingTransactionsFootnote')) $('spendingTransactionsFootnote').innerHTML=`Mostrando ${pageRows.length?state.spendTxPage*state.spendTxPageSize+1:0}–${Math.min((state.spendTxPage+1)*state.spendTxPageSize,sorted.length)} de ${integer(sorted.length)} · página ${state.spendTxPage+1} de ${totalPages}. <button id="spendTxPrevBtn" ${state.spendTxPage===0?'disabled':''}>Anterior</button> <button id="spendTxNextBtn" ${state.spendTxPage>=totalPages-1?'disabled':''}>Próxima</button> · “Same person transfer” e “Investment” são ignoradas por padrão nesta aba.`;
@@ -1145,9 +1449,9 @@
     const base=windowTransactions().find(r=>r._key===key); if(!base) return;
     const input=tr.querySelector('.spend-category-input'); const category=String(input?.value||'').trim();
     const next={...(state.transactionOverrides.get(key)||{})};
-    const original=base.category||'Sem categoria';
-    if(!category || category===original) delete next.category; else next.category=category;
-    if(category && category!==original) { state.customCategories.add(category); persistCustomCategories(); }
+    const automaticBase=categoryWithoutManualOverride(base);
+    if(!category || category===automaticBase) delete next.category; else next.category=category;
+    if(category && category!==automaticBase) { state.customCategories.add(category); persistCustomCategories(); }
     if(Object.keys(next).length) state.transactionOverrides.set(key,next); else state.transactionOverrides.delete(key);
     persistOverrides(); state.spendTxPage=0; renderCustomCategoryManager(); renderAll(); toast('Categoria do gasto atualizada e salva.');
   }
@@ -1256,7 +1560,7 @@
   function saveEditorRow(tr) {
     const key=tr.dataset.txkey; const base=windowTransactions().find(r=>r._key===key); if(!base) return;
     const next={}; tr.querySelectorAll('[data-field]').forEach(el=>{const v=String(el.value||'').trim(); if(v) next[el.dataset.field]=v;});
-    const originalCat=base.category||'Sem categoria', originalMerch=originalMerchant(base); if(next.category===originalCat) delete next.category; if(next.merchant===originalMerch) delete next.merchant;
+    const automaticCat=categoryWithoutManualOverride(base), originalMerch=originalMerchant(base); if(next.category===automaticCat) delete next.category; if(next.merchant===originalMerch) delete next.merchant;
     if(next.category) { state.customCategories.add(next.category); persistCustomCategories(); }
     if(Object.keys(next).length) state.transactionOverrides.set(key,next); else state.transactionOverrides.delete(key); persistOverrides(); state.txPage=0; renderCustomCategoryManager(); renderAll(); toast('Classificação atualizada e salva.');
   }
@@ -1313,6 +1617,7 @@
   }
 
   function renderAll() {
+    renderCategoryRules();
     refreshAnalysisFilters();
     const m=financialMetrics(); renderKPIs(m); renderScore(m); renderCashflow(m); renderInsights(m); renderAccountsSummary(); renderSpending(); renderCreditTable(); renderIncome(); renderTransactionsEditor(); renderInvestments(m); renderAccountVisualCards(); renderMeta();
   }
@@ -1379,6 +1684,24 @@
   $('createSpendCategoryBtn')?.addEventListener('click',createCustomCategory);
   $('newSpendCategoryInput')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();createCustomCategory();}});
   $('customCategoryChips')?.addEventListener('click',e=>{const btn=e.target.closest('button[data-remove-category]');if(btn)removeCustomCategory(btn.dataset.removeCategory);});
+  $('createCategoryRuleBtn')?.addEventListener('click',createCategoryRule);
+  $('ruleValue')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();createCategoryRule();}});
+  $('ruleCategory')?.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();createCategoryRule();}});
+  $('categoryRulesList')?.addEventListener('change',e=>{
+    const toggle=e.target.closest('input[data-rule-action="toggle"]');
+    if(!toggle)return;
+    const row=toggle.closest('[data-rule-id]');
+    if(row)toggleCategoryRule(row.dataset.ruleId,toggle.checked);
+  });
+  $('categoryRulesList')?.addEventListener('click',e=>{
+    const button=e.target.closest('button[data-rule-action]');
+    if(!button)return;
+    const row=button.closest('[data-rule-id]');
+    if(!row)return;
+    const action=button.dataset.ruleAction;
+    if(action==='delete')deleteCategoryRule(row.dataset.ruleId);
+    else if(action==='up'||action==='down')moveCategoryRule(row.dataset.ruleId,action);
+  });
   $('exportFinanceConfigBtn')?.addEventListener('click',exportFinanceConfig);
   $('importFinanceConfigFile')?.addEventListener('change',e=>importFinanceConfig(e.target.files?.[0]));
   ['txKindFilter','txAccountFilter'].forEach(id=>$(id)?.addEventListener('change',()=>{state.txPage=0;renderTransactionsEditor()}));
