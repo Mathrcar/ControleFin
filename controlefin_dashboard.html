@@ -25,14 +25,14 @@
 .show-block-ids [data-block-ref]{outline:1px dashed rgba(30,215,96,.38);outline-offset:2px}
 .show-block-ids [data-block-ref]::after{content:"#" attr(data-block-ref);position:absolute;z-index:80;top:6px;right:6px;max-width:calc(100% - 12px);padding:3px 7px;border:1px solid rgba(30,215,96,.42);border-radius:999px;background:rgba(0,0,0,.88);color:var(--green);font:700 10px/1.2 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;pointer-events:none;box-shadow:0 4px 14px rgba(0,0,0,.28)}
 .bar-list{display:grid;gap:9px}.bar-row{display:grid;grid-template-columns:minmax(110px,1.1fr) 1.9fr auto;gap:10px;align-items:center;padding:6px;border-radius:8px}.bar-row.clickable{cursor:pointer}.bar-row.clickable:hover{background:var(--surface3)}.bar-label{font-size:.78rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.bar-bg{height:7px;border-radius:999px;background:#2b2b2b;overflow:hidden}.bar-fg{height:100%;border-radius:999px;background:var(--green);min-width:2px}.bar-value{font-size:.74rem;color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}.ranking-scroll{max-height:420px;overflow:auto;padding-right:4px}.story-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}.story-card{background:var(--surface2);border:1px solid var(--line);border-radius:13px;padding:13px;min-width:0}.story-card small{display:block;color:var(--muted);font-size:.68rem;margin-bottom:6px}.story-card strong{display:block;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:.9rem}.story-card span{display:block;margin-top:4px;color:var(--muted);font-size:.72rem}.month-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(205px,1fr));gap:10px}.month-card{background:var(--surface2);border:1px solid var(--line);border-radius:14px;padding:14px}.month-card .month-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:11px}.month-card .month-top strong{font-size:.9rem}.month-card .month-total{font-weight:900;color:var(--green)}.month-card .micro{display:grid;gap:7px}.micro-row{display:flex;justify-content:space-between;gap:10px;font-size:.71rem}.micro-row span:first-child{color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.micro-row span:last-child{font-variant-numeric:tabular-nums;white-space:nowrap}
-.income-hero{display:grid;grid-template-columns:1.2fr 1fr;gap:14px}.mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.mini{padding:14px;border:1px solid var(--line);border-radius:13px;background:var(--surface2)}.mini small{display:block;color:var(--muted);font-size:.68rem;margin-bottom:5px}.mini strong{font-size:1.15rem}.summary-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}.summary-card{padding:15px;background:var(--surface2);border:1px solid var(--line);border-radius:14px}.summary-card small{color:var(--muted);display:block;font-size:.68rem}.summary-card strong{display:block;font-size:1.15rem;margin:6px 0}.summary-card span{font-size:.72rem;color:var(--muted)}
+.income-hero{display:grid;grid-template-columns:1.2fr 1fr;gap:14px}.income-summary-hero{padding:22px;background:radial-gradient(circle at 92% 20%,rgba(30,215,96,.14),transparent 22rem),var(--surface)}.income-mode-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:18px}.income-table-panel{margin-top:14px}.income-table-panel .table-wrap{max-height:640px}.income-table-panel th{top:0}.income-table-panel td{vertical-align:top}.income-class-select{min-width:135px;width:100%}.income-purpose-cell{min-width:230px}.income-purpose-controls{display:grid;gap:6px}.income-purpose-controls select{width:100%;min-width:0;max-width:100%}.income-purpose-note{color:var(--muted);font-size:.65rem;line-height:1.35}.income-purpose-note strong{color:var(--green)}.income-link-select:disabled{opacity:.45;cursor:not-allowed}.mini-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.mini{padding:14px;border:1px solid var(--line);border-radius:13px;background:var(--surface2)}.mini small{display:block;color:var(--muted);font-size:.68rem;margin-bottom:5px}.mini strong{font-size:1.15rem}.summary-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}.summary-card{padding:15px;background:var(--surface2);border:1px solid var(--line);border-radius:14px}.summary-card small{color:var(--muted);display:block;font-size:.68rem}.summary-card strong{display:block;font-size:1.15rem;margin:6px 0}.summary-card span{font-size:.72rem;color:var(--muted)}
 .insights{display:grid;gap:8px}.insight{display:grid;grid-template-columns:8px 1fr;gap:10px;background:var(--surface2);border:1px solid var(--line);padding:12px;border-radius:12px}.insight .sev{width:8px;height:8px;border-radius:50%;background:var(--blue);margin-top:5px}.insight[data-level=good] .sev{background:var(--good)}.insight[data-level=warn] .sev{background:var(--warn)}.insight[data-level=bad] .sev{background:var(--bad)}.insight strong{display:block;font-size:.8rem}.insight span{display:block;color:var(--muted);font-size:.72rem;line-height:1.4;margin-top:2px}.score-wrap{display:grid;grid-template-columns:128px 1fr;gap:16px;align-items:center}.score-ring{--score:0;width:124px;height:124px;border-radius:50%;display:grid;place-items:center;background:conic-gradient(var(--green) calc(var(--score)*1%),#2a2a2a 0);position:relative}.score-ring:after{content:"";position:absolute;inset:10px;border-radius:50%;background:var(--surface)}.score-number{z-index:1;text-align:center}.score-number strong{font-size:1.8rem}.score-number span{font-size:.67rem;color:var(--muted)}.score-title{margin:0 0 4px}.score-copy{margin:0;color:var(--muted);font-size:.76rem;line-height:1.45}.components{display:grid;gap:8px;margin-top:14px}.component{display:grid;grid-template-columns:110px 1fr 46px;gap:8px;align-items:center;font-size:.69rem}.track{height:6px;background:#292929;border-radius:999px;overflow:hidden}.fill{height:100%;background:var(--green);border-radius:999px}
 .spend-primary-metric{margin-top:8px}.spend-primary-metric small{display:block;color:var(--muted);font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:.08em;margin-bottom:4px}.spend-primary-metric strong{display:block;font-size:clamp(2.7rem,6vw,5.8rem);line-height:.93;letter-spacing:-.065em}.spend-primary-metric .metric-sub{color:var(--muted);font-size:.82rem;margin-top:8px}.mode-card .mode-primary-label{display:block;color:var(--muted);font-size:.64rem;text-transform:uppercase;letter-spacing:.07em;margin-bottom:4px}.mode-card .mode-total{font-size:.7rem;color:var(--muted);margin-top:5px}.chart-dimension-select{min-width:150px}.chart-head-actions{display:flex;align-items:center;gap:8px;flex-wrap:wrap}.chart-head-actions label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:.68rem}.spend-table .description-main{font-weight:700;line-height:1.35;max-width:360px}.spend-table .description-meta{color:var(--muted);font-size:.66rem;margin-top:4px;line-height:1.4}.tx-raw-details summary{cursor:pointer;color:var(--green);font-size:.68rem;font-weight:800}.tx-raw-grid{display:grid;grid-template-columns:repeat(2,minmax(180px,1fr));gap:5px 12px;margin-top:8px;max-width:720px}.tx-raw-grid div{font-size:.65rem;line-height:1.35;overflow-wrap:anywhere}.tx-raw-grid b{color:var(--muted);font-weight:700}.spend-category-input{min-width:170px;width:100%}.spend-expense-class-select{min-width:135px;width:100%}.reimbursement-cell{min-width:220px}.reimbursement-controls{display:grid;gap:6px}.reimbursement-controls select{width:100%;min-width:0}.reimbursement-people-row{display:flex;align-items:center;gap:7px;color:var(--muted);font-size:.65rem}.reimbursement-people-row input{width:72px;min-width:72px;padding:.42rem .5rem}.reimbursement-people-row input:disabled{opacity:.45;cursor:not-allowed}.reimbursement-summary{margin-top:3px;color:var(--muted);font-size:.66rem;line-height:1.35}.reimbursement-summary strong{color:var(--green)}.value-breakdown{display:grid;gap:3px;min-width:120px}.value-breakdown strong{font-size:.78rem}.value-breakdown small{color:var(--muted);font-size:.64rem;white-space:nowrap}.table-section-note{color:var(--muted);font-size:.7rem;line-height:1.45}.chart-explainer{color:var(--muted);font-size:.68rem;margin-top:8px}.spend-chart-grid{align-items:stretch}.spend-chart-grid>.panel{min-width:0}.spend-chart-grid .chart{min-height:360px}.spend-chart-grid .chart svg{min-height:360px}.spending-table-panel{margin-top:14px}.spending-table-panel .table-wrap{max-height:640px}.spending-table-panel th{top:0}.spending-table-panel td{vertical-align:top}
 .category-manager{margin-top:10px}.category-manager-row{display:flex;gap:8px;align-items:end;flex-wrap:wrap}.category-manager-row label{display:grid;gap:5px;color:var(--muted);font-size:.69rem;min-width:min(320px,100%);flex:1}.category-manager-row input[type=text]{width:100%}.category-chips{display:flex;gap:7px;flex-wrap:wrap;margin-top:12px}.category-chip{display:inline-flex;align-items:center;gap:7px;border:1px solid var(--line);background:var(--surface2);border-radius:999px;padding:.36rem .5rem .36rem .68rem;font-size:.72rem}.category-chip button{padding:.16rem .42rem;font-size:.68rem;background:#2b2b2b}.persist-note{margin-top:10px;padding:10px 12px;border:1px solid rgba(30,215,96,.2);border-radius:11px;background:rgba(30,215,96,.055);color:var(--muted);font-size:.7rem;line-height:1.5}.persist-note strong{color:var(--green)}.persist-actions{display:flex;gap:7px;flex-wrap:wrap;margin-top:10px}.persist-status{display:inline-flex;align-items:center;gap:6px;color:var(--muted);font-size:.69rem}.persist-status:before{content:"";width:7px;height:7px;border-radius:50%;background:var(--green)}
 .category-rules-manager{margin-top:10px}.rule-builder{display:grid;grid-template-columns:1.1fr 1fr 1.5fr 1.4fr auto;gap:9px;align-items:end}.rule-builder label{display:grid;gap:5px;color:var(--muted);font-size:.69rem;min-width:0}.rule-builder input,.rule-builder select{width:100%;min-width:0}.rule-help{margin:10px 0 0;color:var(--muted);font-size:.7rem;line-height:1.5}.rule-list{display:grid;gap:8px;margin-top:12px}.rule-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface2)}.rule-row.is-disabled{opacity:.5}.rule-toggle{display:flex;align-items:center;justify-content:center}.rule-toggle input{width:16px;height:16px;accent-color:var(--green)}.rule-main{min-width:0}.rule-expression{font-size:.76rem;line-height:1.45;overflow-wrap:anywhere}.rule-expression strong{color:var(--text)}.rule-expression .rule-arrow{color:var(--green);font-weight:900;padding:0 .25rem}.rule-meta{color:var(--muted);font-size:.66rem;margin-top:4px}.rule-actions{display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.rule-actions button{padding:.38rem .58rem;font-size:.67rem}.rule-count{color:var(--green);font-weight:800}
 .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:13px;background:var(--surface)}table{border-collapse:collapse;width:100%;min-width:760px}th,td{padding:10px 11px;border-bottom:1px solid var(--line);text-align:left;font-size:.73rem;vertical-align:top}th{position:sticky;top:0;z-index:2;background:#191919;color:var(--muted)}tr:last-child td{border-bottom:0}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}.pill{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:.2rem .44rem;font-size:.64rem}.tx-edit{width:140px}.row-actions{display:flex;gap:5px}.row-actions button{font-size:.68rem;padding:.42rem .58rem}.editor-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:12px}.editor-toolbar label{display:grid;gap:4px;color:var(--muted);font-size:.68rem}.footnote{font-size:.68rem;color:var(--muted);line-height:1.5;margin-top:12px}.empty{padding:28px;color:var(--muted);text-align:center;border:1px dashed var(--line);border-radius:13px}.details-panel{margin-top:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}.details-panel summary{cursor:pointer;padding:14px;font-weight:800}.details-inner{padding:0 14px 14px}.hidden{display:none!important}.toast{position:fixed;right:20px;bottom:20px;z-index:80;max-width:420px;padding:13px 15px;border-radius:12px;background:#282828;border:1px solid #3b3b3b;box-shadow:var(--shadow);transform:translateY(20px);opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:translateY(0)}
 @media(max-width:1180px){.rule-builder{grid-template-columns:1fr 1fr}.rule-builder button{width:max-content}.kpis{grid-template-columns:repeat(3,1fr)}.control-dock{grid-template-columns:repeat(3,1fr)}.two,.income-hero{grid-template-columns:1fr}.story-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:760px){.rule-builder{grid-template-columns:1fr}.rule-row{grid-template-columns:auto minmax(0,1fr)}.rule-actions{grid-column:1/-1;justify-content:flex-start}.shell{width:min(100% - 18px,1540px)}.hero{grid-template-columns:1fr}.hero-main{min-height:220px}.topbar-inner{align-items:flex-start}.toolbar .desktop-only{display:none}.kpis{grid-template-columns:repeat(2,1fr)}.spend-mode-cards,.mini-stats{grid-template-columns:1fr}.control-dock{grid-template-columns:1fr 1fr}.control-dock .wide{grid-column:span 2}.story-grid{grid-template-columns:1fr}.filters{top:auto}.tx-raw-grid{grid-template-columns:1fr}.desktop-hide{display:none}}
+@media(max-width:760px){.rule-builder{grid-template-columns:1fr}.rule-row{grid-template-columns:auto minmax(0,1fr)}.rule-actions{grid-column:1/-1;justify-content:flex-start}.shell{width:min(100% - 18px,1540px)}.hero{grid-template-columns:1fr}.hero-main{min-height:220px}.topbar-inner{align-items:flex-start}.toolbar .desktop-only{display:none}.kpis{grid-template-columns:repeat(2,1fr)}.spend-mode-cards,.income-mode-cards,.mini-stats{grid-template-columns:1fr}.control-dock{grid-template-columns:1fr 1fr}.control-dock .wide{grid-column:span 2}.story-grid{grid-template-columns:1fr}.filters{top:auto}.tx-raw-grid{grid-template-columns:1fr}.desktop-hide{display:none}}
 @media(max-width:480px){.kpis{grid-template-columns:1fr}.control-dock{grid-template-columns:1fr}.control-dock .wide{grid-column:span 1}.hero h2{font-size:2.2rem}.hero-number strong{font-size:3rem}.nav-tabs{width:100%}}
 </style>
 </head>
@@ -180,11 +180,80 @@
     </section>
 
     <section id="incomeView" class="view-panel">
-      <div class="section-head" id="income-header"><div><div class="section-kicker">Entradas</div><h2>Dinheiro que entrou</h2><p>Receitas e créditos efetivos; transferências próprias são excluídas.</p></div></div>
-      <section class="mini-stats" id="income-summary"><div class="mini" id="income-total"><small>Total na janela</small><strong id="incomeTotalMini">—</strong></div><div class="mini" id="income-monthly-average"><small>Média mensal</small><strong id="incomeAvgMini">—</strong></div><div class="mini" id="income-transaction-count"><small>Quantidade</small><strong id="incomeCountMini">—</strong></div></section>
-      <section class="grid two" id="income-analysis-primary" style="margin-top:14px"><article class="panel panel-pad" id="income-by-month"><div class="panel-head"><div><h3>Entradas por mês</h3><p>Evolução do dinheiro recebido.</p></div></div><div class="chart" id="incomeMonthlyChart"></div></article><article class="panel panel-pad" id="income-by-account"><div class="panel-head"><div><h3>Por conta</h3><p>Onde o dinheiro está entrando.</p></div></div><div class="bar-list" id="incomeAccountBars"></div></article></section>
-      <section class="grid two" id="income-analysis-secondary" style="margin-top:14px"><article class="panel panel-pad" id="income-by-source"><div class="panel-head"><div><h3>Origem</h3><p>Principais pagadores/origens identificados.</p></div></div><div class="bar-list" id="incomeSourceBars"></div></article><article class="panel panel-pad" id="income-insights"><div class="panel-head"><div><h3>Leitura automática</h3><p>Sinais relevantes do fluxo consolidado.</p></div></div><div class="insights" id="insights"></div></article></section>
-      <div class="hidden"><table><tbody id="incomeTable"></tbody></table></div>
+      <article class="panel income-summary-hero" id="income-summary">
+        <div class="section-kicker">Entradas consolidadas</div><div class="description-meta" style="margin-bottom:8px">Entradas identificadas como RENDIMENTO ou RESGATE RDB são ignoradas nesta aba.</div>
+        <div class="spend-primary-metric">
+          <small>Entrada média mensal da janela</small>
+          <strong id="incomeAvgMini">—</strong>
+          <div class="metric-sub">Total na janela: <b id="incomeTotalMini">—</b> · <b id="incomeCountMini">—</b> transações consideradas</div>
+        </div>
+        <div class="income-mode-cards">
+          <div class="mode-card" id="income-pix" data-income-method-filter="PIX"><span class="mode-primary-label">Média mensal · PIX</span><strong id="incomePixAvg">—</strong><div class="mode-total">Total na janela: <b id="incomePixTotal">—</b></div><div class="share" id="incomePixShare">—</div></div>
+          <div class="mode-card" id="income-transfer" data-income-method-filter="Transferência"><span class="mode-primary-label">Média mensal · Transferências</span><strong id="incomeTransferAvg">—</strong><div class="mode-total">Total na janela: <b id="incomeTransferTotal">—</b></div><div class="share" id="incomeTransferShare">—</div></div>
+          <div class="mode-card" id="income-other" data-income-method-filter="Outros"><span class="mode-primary-label">Média mensal · Outros</span><strong id="incomeOtherAvg">—</strong><div class="mode-total">Total na janela: <b id="incomeOtherTotal">—</b></div><div class="share" id="incomeOtherShare">—</div></div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <span class="chip" id="incomeReimbursementsChip">Resarcimentos excluídos: —</span>
+        </div>
+      </article>
+
+      <article class="panel control-dock" id="income-filters" style="margin-top:10px">
+        <label>Mês<select id="incomeMonthSelect"><option value="all">Todos</option></select></label>
+        <label>Conta<select id="incomeAccountSelect"><option value="all">Todas</option></select></label>
+        <label>Meio<select id="incomeMethodSelect"><option value="all">Todos</option></select></label>
+        <label>Fixo / variável<select id="incomeClassSelect"><option value="all">Todos</option><option value="FIXED">Fixas</option><option value="VARIABLE">Variáveis</option></select></label>
+        <label>Categoria<select id="incomeCategorySelect"><option value="all">Todas</option></select></label>
+        <label>Origem<select id="incomeSourceSelect"><option value="all">Todas</option></select></label>
+        <label class="wide">Buscar<input id="incomeSearch" type="search" placeholder="Descrição, origem, pagador, categoria…"></label>
+        <label>Valor mín.<input id="incomeMin" type="number" min="0" step="0.01" placeholder="0"></label>
+        <label>Valor máx.<input id="incomeMax" type="number" min="0" step="0.01" placeholder="Sem limite"></label>
+        <div class="control-actions"><button id="clearIncomeFilters" class="ghost">Limpar filtros</button></div>
+      </article>
+
+      <details class="details-panel category-rules-manager" id="income-fixed-rules">
+        <summary>Padrões automáticos de entradas fixas <span class="rule-count" id="fixedIncomeRulesCount">0</span></summary>
+        <div class="details-inner">
+          <p class="rule-help">Toda entrada é <strong>Variável</strong> por padrão. Ao marcar uma entrada como <strong>Fixa</strong>, o ControleFin aprende um padrão por descrição/origem e usa valor, conta e meio de pagamento como sinais de proximidade para reconhecer entradas semelhantes antigas e futuras. Categorias personalizadas e regras automáticas de categoria são compartilhadas com a aba Gastos.</p>
+          <div class="rule-list" id="fixedIncomeRulesList"></div>
+        </div>
+      </details>
+
+      <details class="details-panel category-rules-manager" id="income-source-category-rules">
+        <summary>Regras automáticas de salário por origem <span class="rule-count" id="incomeSourceCategoryRulesCount">0</span></summary>
+        <div class="details-inner">
+          <p class="rule-help">Ao salvar uma entrada como <strong>Salário</strong> ou <strong>Salary</strong>, o ControleFin cria uma regra persistente para a mesma origem. O <span class="mono">payer_name</span> tem prioridade; quando ele não existe, merchant/descrição são usados de forma mais conservadora.</p>
+          <div class="rule-list" id="incomeSourceCategoryRulesList"></div>
+        </div>
+      </details>
+
+      <div class="section-head" id="income-evolution-header"><div><div class="section-kicker">Mês a mês</div><h2>Quanto entra e de onde vem?</h2><p>Os gráficos usam a janela selecionada e os filtros de conta, meio, fixo/variável, categoria, origem, busca e valor. O filtro de mês não corta a tendência.</p></div><span class="chip"><span class="filter-count" id="activeIncomeCount">—</span>&nbsp; entradas visíveis</span></div>
+
+      <section class="grid two spend-chart-grid" id="income-primary-charts">
+        <article class="panel panel-pad" id="income-monthly-absolute">
+          <div class="panel-head"><div><h3>Entradas mensais em reais</h3><p>Barras lado a lado por mês. O total do mês aparece acima do grupo.</p></div><div class="chart-head-actions"><label>Agrupar por <select id="incomeAbsoluteDimensionSelect" class="chart-dimension-select"><option value="category">Categoria</option><option value="source">Origem</option><option value="bank">Banco</option><option value="method">Tipo de entrada</option><option value="incomeClass">Fixo x variável</option></select></label></div></div>
+          <div class="chart tall-chart" id="incomeAbsoluteChart"></div>
+          <div class="chart-explainer">Clique nas legendas para ocultar ou exibir séries.</div>
+        </article>
+        <article class="panel panel-pad" id="income-monthly-share">
+          <div class="panel-head"><div><h3>Composição percentual do mês</h3><p>Cada coluna representa 100% das entradas do mês e mostra sua origem.</p></div><div class="chart-head-actions"><label>Compor por <select id="incomeShareDimensionSelect" class="chart-dimension-select"><option value="category">Categoria</option><option value="source">Origem</option><option value="bank">Banco</option><option value="method">Tipo de entrada</option><option value="incomeClass">Fixo x variável</option></select></label></div></div>
+          <div class="chart tall-chart" id="incomeShareChart"></div>
+          <div class="chart-explainer">Passe o mouse para ver valor e percentual. As legendas são clicáveis.</div>
+        </article>
+      </section>
+
+      <div class="section-head" id="income-destination-header"><div><div class="section-kicker">Origem</div><h2>Principais fontes das entradas</h2><p>Clique em uma categoria ou origem para aplicar o filtro imediatamente.</p></div></div>
+      <section class="grid two" id="income-destination-rankings">
+        <article class="panel panel-pad" id="income-by-category"><div class="panel-head"><div><h3>Categorias</h3><p>Ranking da seleção atual.</p></div></div><div class="bar-list ranking-scroll" id="incomeCategoryBars"></div></article>
+        <article class="panel panel-pad" id="income-by-source"><div class="panel-head"><div><h3>Origens</h3><p>Pagadores/origens com maior entrada.</p></div></div><div class="bar-list ranking-scroll" id="incomeSourceBars"></div></article>
+      </section>
+
+      <article class="panel panel-pad income-table-panel" id="income-transactions">
+        <div class="panel-head"><div><h3>Transações de entradas</h3><p>Edite a categoria e marque cada entrada como fixa ou variável. Alterações recalculam os visuais imediatamente e são persistidas.</p></div><span class="chip" id="incomeTransactionsCount">—</span></div>
+        <div class="table-wrap"><table class="spend-table" id="income-transactions-table"><thead><tr><th>Data</th><th>Banco / conta</th><th>Descrição</th><th>Origem</th><th>Pagador</th><th>Categoria</th><th>Fixo / variável</th><th>Resarcimento / vínculo</th><th>Tipo de entrada</th><th class="num">Valor</th><th>Detalhes</th><th>Ação</th></tr></thead><tbody id="incomeTransactionsTable"></tbody></table></div>
+        <div class="footnote" id="incomeTransactionsFootnote"></div>
+      </article>
+
+      <div class="hidden"><div id="incomeMonthlyChart"></div><div id="incomeAccountBars"></div><table><tbody id="incomeTable"></tbody></table></div>
     </section>
 
     <section id="overviewView" class="view-panel">
@@ -192,6 +261,10 @@
       <section class="kpis" id="overview-kpis"><article class="kpi" id="overview-net-worth"><div class="label">Patrimônio líquido</div><div class="value" id="kpiNetWorth">—</div><div class="sub">Estimado</div></article><article class="kpi" id="overview-bank-balance"><div class="label">Saldo bancário</div><div class="value" id="kpiBank">—</div><div class="sub" id="kpiRunway">—</div></article><article class="kpi" id="overview-investments-kpi"><div class="label">Investimentos</div><div class="value" id="kpiInvestments">—</div><div class="sub" id="kpiInvestProfit">—</div></article><article class="kpi" id="overview-open-credit"><div class="label">Cartões em aberto</div><div class="value" id="kpiCard">—</div><div class="sub" id="kpiCreditUtil">—</div></article><article class="kpi" id="overview-monthly-cash"><div class="label">Caixa médio mensal</div><div class="value" id="kpiAvgNet">—</div><div class="sub" id="kpiSavingsRate">—</div></article></section>
       <div class="hidden"><span id="kpiLoans"></span><span id="kpiDebtRatio"></span></div>
       <section class="grid two" id="overview-analysis" style="margin-top:14px"><article class="panel panel-pad" id="overview-cashflow"><div class="panel-head"><div><h3>Fluxo de caixa</h3><p>Entradas e saídas bancárias mensais.</p></div><span class="chip" id="cashflowRange">—</span></div><div class="chart" id="cashflowChart"></div></article><article class="panel panel-pad" id="overview-health"><div class="panel-head"><div><h3>Saúde financeira</h3><p>Heurística explicável sobre os dados disponíveis.</p></div></div><div class="score-wrap"><div class="score-ring" id="scoreRing"><div class="score-number"><strong id="scoreValue">—</strong><span>/100</span></div></div><div><h4 class="score-title" id="scoreLabel">—</h4><p class="score-copy" id="scoreCopy">—</p></div></div><div class="components" id="scoreComponents"></div></article></section>
+      <article class="panel panel-pad" id="overview-insights" style="margin-top:14px">
+        <div class="panel-head"><div><h3>Leitura automática</h3><p>Sinais relevantes do fluxo, gastos, patrimônio e qualidade dos dados.</p></div></div>
+        <div class="insights" id="insights"></div>
+      </article>
       <div class="section-head" id="overview-accounts-header"><div><h2>Contas</h2><p>BTG Banking, BTG Investimentos e Nubank tratados separadamente.</p></div></div><div class="summary-cards" id="accountVisualCards"></div><div class="hidden"><div id="institutionSummary"></div><table><tbody id="accountsSummaryTable"></tbody></table></div>
       <details class="details-panel" id="overview-investment-details"><summary>Investimentos e detalhes técnicos</summary><div class="details-inner"><div class="grid two"><article id="overview-investment-allocation"><div class="panel-head"><div><h3>Alocação de investimentos</h3></div></div><div class="bar-list" id="investmentBars"></div></article><article id="overview-positions-by-institution"><div class="panel-head"><div><h3>Posições por instituição</h3></div></div><div class="bar-list" id="institutionBars"></div></article></div><div class="hidden"><span id="invTotal"></span><span id="invProfit"></span><span id="invProfitPct"></span><span id="datasetCount"></span><span id="transactionCount"></span><span id="errorCount"></span><div id="datasetGrid"></div><table><tbody id="positionsTable"></tbody><tbody id="connectionTable"></tbody></table></div></div></details>
     </section>
@@ -201,7 +274,7 @@
       <article class="panel panel-pad" id="transactions-editor"><div class="editor-toolbar" id="transactions-editor-toolbar"><label>Buscar<input id="txSearch" type="search" placeholder="Descrição, merchant…"></label><label>Natureza<select id="txKindFilter"><option value="all">Todas</option><option value="EXPENSE">Gastos</option><option value="INCOME">Entradas</option><option value="TRANSFER">Transferências próprias</option><option value="INVESTMENT_TRANSFER">Aportes / transferências para investimentos</option><option value="CARD_BILL">Pagamento de fatura</option><option value="REFUND">Estornos</option><option value="IGNORE">Ignoradas</option></select></label><label>Conta<select id="txAccountFilter"><option value="all">Todas</option></select></label></div><div class="table-wrap" id="transactions-table"><table><thead><tr><th>Data</th><th>Conta</th><th>Descrição</th><th class="num">Valor</th><th>Natureza</th><th>Categoria</th><th>Fixo / variável</th><th>Resarcimento</th><th>Merchant</th><th>Meio</th><th></th></tr></thead><tbody id="transactionsEditorTable"></tbody></table></div><div class="footnote" id="txEditorFootnote"></div></article>
     </section>
 
-    <p class="footnote" id="dashboard-privacy-note">Os dados financeiros permanecem locais. Categorias, reclassificações, regras automáticas, padrões de gastos fixos e perfis de resarcimento são salvos em user_data/ajustes.json pelo backend; pagamentos de fatura, transferências próprias e aportes/resgates ficam fora de Gastos e Entradas para evitar dupla contagem patrimonial.</p>
+    <p class="footnote" id="dashboard-privacy-note">Os dados financeiros permanecem locais. Categorias, reclassificações, regras automáticas, padrões de gastos/entradas fixos, resarcimentos, vínculos e regras de salário por origem são salvos em user_data/ajustes.json pelo backend; pagamentos de fatura, transferências próprias e aportes/resgates ficam fora de Gastos e Entradas para evitar dupla contagem patrimonial.</p>
   </main>
 </div>
 <div class="toast" id="toast"></div>
@@ -225,6 +298,8 @@
     txPageSize: 100,
     spendTxPage: 0,
     spendTxPageSize: 100,
+    incomeTxPage: 0,
+    incomeTxPageSize: 100,
     overridesStorageKey: 'controlefin.transactionOverrides.v2',
     customCategories: new Set(),
     categoriesStorageKey: 'controlefin.customCategories.v1',
@@ -232,6 +307,10 @@
     rulesStorageKey: 'controlefin.categoryRules.v1',
     fixedExpenseRules: [],
     fixedExpenseRulesStorageKey: 'controlefin.fixedExpenseRules.v1',
+    fixedIncomeRules: [],
+    fixedIncomeRulesStorageKey: 'controlefin.fixedIncomeRules.v1',
+    incomeSourceCategoryRules: [],
+    incomeSourceCategoryRulesStorageKey: 'controlefin.incomeSourceCategoryRules.v1',
     persistedAt: null,
     persistenceMode: 'backend',
     settingsSaveTimer: null,
@@ -508,7 +587,7 @@
     const conns=table('connection_health'); const broken=conns.filter(r=>String(r.hasError).toLowerCase()==='true'); const stale=conns.filter(r=>(daysSince(r.lastUpdatedAt||r.updatedAt)??0)>7); if(broken.length||stale.length) push('warn','Qualidade dos dados',`${broken.length} conexão(ões) com erro e ${stale.length} com atualização superior a 7 dias podem reduzir a confiabilidade da leitura.`); else if(conns.length) push('good','Qualidade dos dados','As conexões carregadas não exibem erro e não há atraso superior a 7 dias nas datas disponíveis.');
 
     const due = upcomingBills(); if(due.length) push('warn','Faturas próximas',`${due.length} fatura(s) possuem vencimento nos próximos 10 dias, somando ${money(due.reduce((a,r)=>a+val(r.totalAmount),0), state.currency)} quando o valor está disponível.`);
-    $('insights').innerHTML = items.slice(0,7).map(x=>`<div class="insight" data-level="${x.level}"><span class="sev"></span><div><strong>${esc(x.title)}</strong><span>${esc(x.body)}</span></div></div>`).join('') || '<div class="empty">Sem sinais suficientes.</div>';
+    const insightsEl=$('insights'); if(!insightsEl) return; insightsEl.innerHTML = items.slice(0,7).map(x=>`<div class="insight" data-level="${x.level}"><span class="sev"></span><div><strong>${esc(x.title)}</strong><span>${esc(x.body)}</span></div></div>`).join('') || '<div class="empty">Sem sinais suficientes.</div>';
   }
 
   function upcomingBills() {
@@ -618,6 +697,283 @@
   function transactionAbsAmount(r) { return Math.abs(val(r.amount)); }
   function originalMerchant(r) { return r.merchant__name || r.merchant__businessName || r.merchantName || r.description || 'Não identificado'; }
 
+  function transactionPayerName(r) {
+    const candidates = [
+      r.payer_name,
+      r.payer__name,
+      r.payerName,
+      r.paymentData__payer_name,
+      r.paymentData__payer__name,
+      r.paymentData__payerName,
+      r.transferMetadata__payer_name,
+      r.transferMetadata__payer__name,
+      r.transferMetadata__payerName,
+      r.transactionMetadata__payer_name,
+      r.transactionMetadata__payer__name,
+      r.transactionMetadata__payerName,
+      r.sender_name,
+      r.sender__name,
+      r.senderName,
+      r.origin_name,
+      r.origin__name,
+      r.originName,
+      r.debtor_name,
+      r.debtor__name,
+      r.debtorName,
+      r.pagador_name,
+      r.pagador__name
+    ];
+
+    const value = candidates.find(candidate => String(candidate || '').trim());
+    return value ? String(value).trim() : '';
+  }
+
+  function normalizedFinanceText(value) {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase()
+      .replace(/\s+/g, ' ');
+  }
+
+  function isIgnoredYieldIncome(r) {
+    if (!r || typeof r !== 'object') return false;
+
+    /*
+      A exclusão de RENDIMENTO não depende mais de normalizedInflow,
+      accountType ou type. Alguns conectores podem trazer essas entradas
+      com metadados/sinais diferentes. Para a aba Entradas, basta que o
+      nome ou a descrição identifiquem RENDIMENTO.
+    */
+    const directCandidates = [
+      r.name,
+      r.description,
+      r.transactionName,
+      r.transaction_name,
+      r.descriptionRaw,
+      r.description_raw,
+      r.descriptionOriginal,
+      r.description_original,
+      fixedMerchantText(r),
+      transactionPayerName(r)
+    ];
+
+    const flattenedNameOrDescriptionFields = Object.entries(r)
+      .filter(([key]) => {
+        const normalizedKey = normalizedFinanceText(key).replace(/[^a-z0-9]+/g, '');
+        return (
+          normalizedKey.includes('name') ||
+          normalizedKey.includes('nome') ||
+          normalizedKey.includes('description') ||
+          normalizedKey.includes('descricao')
+        );
+      })
+      .map(([, value]) => value);
+
+    return [...directCandidates, ...flattenedNameOrDescriptionFields]
+      .some(value => {
+        const normalized = normalizedFinanceText(value);
+        return (
+          normalized.includes('rendimento') ||
+          /\bresgate\s+rdb\b/.test(normalized)
+        );
+      });
+  }
+
+  function isSalaryCategory(value) {
+    const normalized = normalizedFinanceText(value);
+    return normalized === 'salario' || normalized === 'salary';
+  }
+
+  function incomeSourceIdentity(r) {
+    const payer = transactionPayerName(r);
+    if (payer) {
+      return {
+        sourceType: 'payer',
+        sourceSignature: normalizedFinanceText(payer),
+        sourceLabel: payer
+      };
+    }
+
+    const merchant = fixedMerchantText(r);
+    if (merchant) {
+      return {
+        sourceType: 'merchant',
+        sourceSignature: normalizedFinanceText(merchant),
+        sourceLabel: merchant
+      };
+    }
+
+    const description = String(r?.description || '').trim();
+    const signature = fixedSignature(description);
+    if (signature) {
+      return {
+        sourceType: 'description',
+        sourceSignature: signature,
+        sourceLabel: description || signature
+      };
+    }
+
+    return null;
+  }
+
+  function sanitizeIncomeSourceCategoryRules(rules) {
+    if (!Array.isArray(rules)) return [];
+    const seen = new Set();
+
+    return rules
+      .filter(rule => rule && typeof rule === 'object' && !Array.isArray(rule))
+      .map((rule, index) => {
+        let id = String(rule.id || `income_source_rule_${index + 1}`).trim();
+        if (!id || seen.has(id)) id = `income_source_rule_${Date.now()}_${index + 1}`;
+        seen.add(id);
+
+        const sourceType = String(rule.sourceType || '').trim();
+        const sourceSignature = String(rule.sourceSignature || '').trim();
+        const category = String(rule.category || '').trim();
+
+        if (!['payer','merchant','description'].includes(sourceType)) return null;
+        if (!sourceSignature || !category) return null;
+
+        return {
+          id,
+          enabled: rule.enabled !== false,
+          sourceType,
+          sourceSignature,
+          sourceLabel: String(rule.sourceLabel || '').trim(),
+          accountId: String(rule.accountId || '').trim(),
+          institution: String(rule.institution || '').trim(),
+          category,
+          createdAt: String(rule.createdAt || '').trim(),
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function incomeSourceCategoryRuleMatches(transaction, rule) {
+    if (!rule || rule.enabled === false) return false;
+
+    const identity = incomeSourceIdentity(transaction);
+    if (!identity) return false;
+    if (identity.sourceType !== rule.sourceType) return false;
+    if (identity.sourceSignature !== rule.sourceSignature) return false;
+
+    // Descrição é um fallback menos confiável, então exige o mesmo contexto bancário.
+    if (rule.sourceType === 'description') {
+      const sameAccount = !rule.accountId || String(transaction.accountId || '') === rule.accountId;
+      const sameInstitution = !rule.institution || normalizeInstitution(transaction) === rule.institution;
+      return sameAccount && sameInstitution;
+    }
+
+    return true;
+  }
+
+  function matchingIncomeSourceCategoryRule(transaction) {
+    return state.incomeSourceCategoryRules.find(
+      rule => incomeSourceCategoryRuleMatches(transaction, rule)
+    ) || null;
+  }
+
+  function upsertIncomeSourceCategoryRule(transaction, category) {
+    const identity = incomeSourceIdentity(transaction);
+    if (!identity || !isSalaryCategory(category)) return null;
+
+    let rule = state.incomeSourceCategoryRules.find(item =>
+      item.sourceType === identity.sourceType &&
+      item.sourceSignature === identity.sourceSignature &&
+      (
+        identity.sourceType !== 'description' ||
+        (
+          item.accountId === String(transaction.accountId || '') &&
+          item.institution === normalizeInstitution(transaction)
+        )
+      )
+    );
+
+    if (!rule) {
+      const id = (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function')
+        ? `income_source_rule_${globalThis.crypto.randomUUID()}`
+        : `income_source_rule_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+
+      rule = {
+        id,
+        enabled: true,
+        sourceType: identity.sourceType,
+        sourceSignature: identity.sourceSignature,
+        sourceLabel: identity.sourceLabel,
+        accountId: identity.sourceType === 'description' ? String(transaction.accountId || '') : '',
+        institution: identity.sourceType === 'description' ? normalizeInstitution(transaction) : '',
+        category: String(category).trim(),
+        createdAt: new Date().toISOString(),
+      };
+
+      state.incomeSourceCategoryRules.push(rule);
+    } else {
+      rule.category = String(category).trim();
+      rule.sourceLabel = identity.sourceLabel;
+      rule.enabled = true;
+    }
+
+    return rule;
+  }
+
+  function incomeSourceCategoryRuleMatchCount(rule) {
+    return table('transactions').filter(transaction => {
+      if (!isUsableStatus(transaction.status) || isIgnoredYieldIncome(transaction)) return false;
+      const method = inferPaymentMethod(transaction);
+      const kind = autoKind(transaction, method);
+      return kind === 'INCOME' && incomeSourceCategoryRuleMatches(transaction, rule);
+    }).length;
+  }
+
+  function renderIncomeSourceCategoryRules() {
+    const root = $('incomeSourceCategoryRulesList');
+    const count = $('incomeSourceCategoryRulesCount');
+    if (!root) return;
+
+    state.incomeSourceCategoryRules = sanitizeIncomeSourceCategoryRules(state.incomeSourceCategoryRules);
+    if (count) count.textContent = String(state.incomeSourceCategoryRules.length);
+
+    if (!state.incomeSourceCategoryRules.length) {
+      root.innerHTML = '<div class="empty">Nenhuma regra de salário por origem criada ainda.</div>';
+      return;
+    }
+
+    root.innerHTML = state.incomeSourceCategoryRules.map(rule => {
+      const matches = incomeSourceCategoryRuleMatchCount(rule);
+      const sourceTypeLabel = rule.sourceType === 'payer'
+        ? 'payer_name'
+        : rule.sourceType === 'merchant'
+          ? 'merchant'
+          : 'descrição';
+
+      return `<div class="rule-row" data-income-source-rule-id="${esc(rule.id)}">
+        <div class="rule-toggle"><span class="pill">${esc(sourceTypeLabel)}</span></div>
+        <div class="rule-main">
+          <div class="rule-expression"><strong>${esc(rule.sourceLabel || rule.sourceSignature)}</strong><span class="rule-arrow">→</span><strong>${esc(rule.category)}</strong></div>
+          <div class="rule-meta">${integer(matches)} entrada(s) da mesma origem reconhecida(s)</div>
+        </div>
+        <div class="rule-actions">
+          <button type="button" data-income-source-rule-action="delete">Excluir regra</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function deleteIncomeSourceCategoryRule(ruleId) {
+    const rule = state.incomeSourceCategoryRules.find(item => item.id === ruleId);
+    if (!rule) return;
+    if (!confirm(`Excluir a regra de salário para “${rule.sourceLabel || rule.sourceSignature}”?`)) return;
+
+    state.incomeSourceCategoryRules = state.incomeSourceCategoryRules.filter(item => item.id !== ruleId);
+    queuePersistentSettingsSave();
+    state.incomeTxPage = 0;
+    state.txPage = 0;
+    renderAll();
+    toast('Regra automática de salário por origem excluída.');
+  }
+
   function searchableTransactionText(r) {
     return Object.entries(r).filter(([k,v])=>v && /(description|merchant|payment|method|operation|transfer|transaction|category|type|receiver|payer|beneficiary)/i.test(k)).map(([,v])=>String(v)).join(' ').toLowerCase();
   }
@@ -639,6 +995,8 @@
       customCategories: [],
       categoryRules: [],
       fixedExpenseRules: [],
+      fixedIncomeRules: [],
+      incomeSourceCategoryRules: [],
     };
 
     try {
@@ -679,6 +1037,20 @@
       console.warn('Não foi possível ler padrões antigos de gastos fixos do localStorage.', e);
     }
 
+    try {
+      const parsed = JSON.parse(localStorage.getItem(state.fixedIncomeRulesStorageKey) || '[]');
+      if (Array.isArray(parsed)) legacy.fixedIncomeRules = parsed;
+    } catch (e) {
+      console.warn('Não foi possível ler padrões antigos de entradas fixas do localStorage.', e);
+    }
+
+    try {
+      const parsed = JSON.parse(localStorage.getItem(state.incomeSourceCategoryRulesStorageKey) || '[]');
+      if (Array.isArray(parsed)) legacy.incomeSourceCategoryRules = parsed;
+    } catch (e) {
+      console.warn('Não foi possível ler regras antigas de categoria por origem.', e);
+    }
+
     return legacy;
   }
 
@@ -706,11 +1078,13 @@
 
     state.categoryRules = sanitizeCategoryRules(settings?.categoryRules);
     state.fixedExpenseRules = sanitizeFixedExpenseRules(settings?.fixedExpenseRules);
+    state.fixedIncomeRules = sanitizeFixedIncomeRules(settings?.fixedIncomeRules);
+    state.incomeSourceCategoryRules = sanitizeIncomeSourceCategoryRules(settings?.incomeSourceCategoryRules);
   }
 
   function currentSettingsPayload() {
     return {
-      version: 4,
+      version: 6,
       customCategories: [...state.customCategories]
         .map(v => String(v || '').trim())
         .filter(Boolean)
@@ -718,6 +1092,8 @@
       transactionOverrides: Object.fromEntries(state.transactionOverrides),
       categoryRules: sanitizeCategoryRules(state.categoryRules),
       fixedExpenseRules: sanitizeFixedExpenseRules(state.fixedExpenseRules),
+      fixedIncomeRules: sanitizeFixedIncomeRules(state.fixedIncomeRules),
+      incomeSourceCategoryRules: sanitizeIncomeSourceCategoryRules(state.incomeSourceCategoryRules),
     };
   }
 
@@ -741,7 +1117,9 @@
         state.transactionOverrides.size === 0 &&
         state.customCategories.size === 0 &&
         state.categoryRules.length === 0 &&
-        state.fixedExpenseRules.length === 0;
+        state.fixedExpenseRules.length === 0 &&
+        state.fixedIncomeRules.length === 0 &&
+        state.incomeSourceCategoryRules.length === 0;
 
       if (backendEmpty) {
         const legacy = loadLegacyLocalSettings();
@@ -749,7 +1127,9 @@
           Object.keys(legacy.transactionOverrides || {}).length > 0 ||
           (legacy.customCategories || []).length > 0 ||
           (legacy.categoryRules || []).length > 0 ||
-          (legacy.fixedExpenseRules || []).length > 0;
+          (legacy.fixedExpenseRules || []).length > 0 ||
+          (legacy.fixedIncomeRules || []).length > 0 ||
+          (legacy.incomeSourceCategoryRules || []).length > 0;
 
         if (hasLegacy) {
           applySettingsPayload(legacy);
@@ -760,6 +1140,8 @@
           localStorage.removeItem(state.categoriesStorageKey);
           localStorage.removeItem(state.rulesStorageKey);
           localStorage.removeItem(state.fixedExpenseRulesStorageKey);
+          localStorage.removeItem(state.fixedIncomeRulesStorageKey);
+          localStorage.removeItem(state.incomeSourceCategoryRulesStorageKey);
 
           updatePersistenceStatus(
             `${state.transactionOverrides.size} ajuste(s) migrado(s) para user_data/ajustes.json`
@@ -769,7 +1151,7 @@
       }
 
       updatePersistenceStatus(
-        `${state.transactionOverrides.size} ajuste(s) · ${state.customCategories.size} categoria(s) · ${state.categoryRules.length} regra(s) de categoria · ${state.fixedExpenseRules.length} padrão(ões) de gasto fixo carregados`
+        `${state.transactionOverrides.size} ajuste(s) · ${state.customCategories.size} categoria(s) · ${state.categoryRules.length} regra(s) de categoria · ${state.fixedExpenseRules.length} padrão(ões) de gasto fixo · ${state.fixedIncomeRules.length} padrão(ões) de entrada fixa · ${state.incomeSourceCategoryRules.length} regra(s) de salário por origem carregados`
       );
     } catch (error) {
       console.error('Backend de persistência indisponível:', error);
@@ -823,6 +1205,14 @@
       localStorage.setItem(
         state.fixedExpenseRulesStorageKey,
         JSON.stringify(payload.fixedExpenseRules)
+      );
+      localStorage.setItem(
+        state.fixedIncomeRulesStorageKey,
+        JSON.stringify(payload.fixedIncomeRules)
+      );
+      localStorage.setItem(
+        state.incomeSourceCategoryRulesStorageKey,
+        JSON.stringify(payload.incomeSourceCategoryRules)
       );
       if (!silent) updatePersistenceStatus();
       return;
@@ -965,7 +1355,10 @@
   }
 
   function categoryWithoutManualOverride(transaction) {
-    return automaticCategory(transaction) || transaction.category || 'Sem categoria';
+    const method=inferPaymentMethod(transaction);
+    const kind=autoKind(transaction,method);
+    const sourceRule=kind==='INCOME' ? matchingIncomeSourceCategoryRule(transaction) : null;
+    return sourceRule?.category || automaticCategory(transaction) || transaction.category || 'Sem categoria';
   }
 
   function ruleFieldLabel(field) {
@@ -1547,6 +1940,187 @@
     return changed;
   }
 
+
+  function sanitizeFixedIncomeRules(rules) {
+    if (!Array.isArray(rules)) return [];
+    const seen = new Set();
+
+    return rules
+      .filter(rule => rule && typeof rule === 'object' && !Array.isArray(rule))
+      .map((rule, index) => {
+        let id = String(rule.id || `fixed_income_rule_${index + 1}`).trim();
+        if (!id || seen.has(id)) id = `fixed_income_rule_${Date.now()}_${index + 1}`;
+        seen.add(id);
+
+        const merchantSignature = String(rule.merchantSignature || '').trim();
+        const descriptionSignature = String(rule.descriptionSignature || '').trim();
+        if (!merchantSignature && !descriptionSignature) return null;
+
+        return {
+          id,
+          enabled: rule.enabled !== false,
+          merchantSignature,
+          descriptionSignature,
+          institution: String(rule.institution || '').trim(),
+          accountId: String(rule.accountId || '').trim(),
+          method: String(rule.method || '').trim(),
+          category: String(rule.category || '').trim(),
+          amount: val(rule.amount),
+          sourceLabel: String(rule.sourceLabel || '').trim(),
+          sourceTransactionKey: String(rule.sourceTransactionKey || '').trim(),
+          createdAt: String(rule.createdAt || '').trim(),
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function persistFixedIncomeRules() {
+    queuePersistentSettingsSave();
+  }
+
+  function fixedIncomeRuleMatches(transaction, rule) {
+    if (!rule || rule.enabled === false) return false;
+
+    const merchantSignature = fixedSignature(fixedMerchantText(transaction));
+    const descriptionSignature = fixedSignature(transaction.description || '');
+
+    const merchantScore = tokenSimilarity(merchantSignature, rule.merchantSignature);
+    const descriptionScore = tokenSimilarity(descriptionSignature, rule.descriptionSignature);
+    const amountRatio = amountDifferenceRatio(transactionAbsAmount(transaction), rule.amount);
+
+    const method = inferPaymentMethod(transaction);
+    const institution = normalizeInstitution(transaction);
+    const accountId = String(transaction.accountId || '');
+
+    const sameMethod = !rule.method || method === rule.method;
+    const sameAccount = !rule.accountId || accountId === rule.accountId;
+    const sameInstitution = !rule.institution || institution === rule.institution;
+
+    const strongDescription =
+      descriptionScore >= 0.84 &&
+      (sameMethod || sameAccount || merchantScore >= 0.50);
+
+    const merchantAndDescription =
+      merchantScore >= 0.90 &&
+      descriptionScore >= 0.45 &&
+      amountRatio <= 0.40 &&
+      (sameMethod || sameInstitution);
+
+    const merchantAndAmount =
+      merchantScore >= 0.90 &&
+      amountRatio <= 0.18 &&
+      sameMethod &&
+      sameInstitution;
+
+    const accountDescriptionAndAmount =
+      descriptionScore >= 0.72 &&
+      amountRatio <= 0.25 &&
+      sameAccount &&
+      sameMethod;
+
+    return Boolean(
+      strongDescription ||
+      merchantAndDescription ||
+      merchantAndAmount ||
+      accountDescriptionAndAmount
+    );
+  }
+
+  function matchingFixedIncomeRule(transaction) {
+    return state.fixedIncomeRules.find(rule => fixedIncomeRuleMatches(transaction, rule)) || null;
+  }
+
+  function fixedIncomeRuleMatchCount(rule) {
+    return table('transactions').filter(transaction => {
+      if (!isUsableStatus(transaction.status)) return false;
+      const method = inferPaymentMethod(transaction);
+      const kind = autoKind(transaction, method);
+      return kind === 'INCOME' && fixedIncomeRuleMatches(transaction, rule);
+    }).length;
+  }
+
+  function createFixedIncomeRuleFromTransaction(transaction) {
+    const merchantSignature = fixedSignature(fixedMerchantText(transaction));
+    const descriptionSignature = fixedSignature(transaction.description || '');
+
+    if (!merchantSignature && !descriptionSignature) return null;
+
+    const existing = matchingFixedIncomeRule(transaction);
+    if (existing) return existing;
+
+    const id = (globalThis.crypto && typeof globalThis.crypto.randomUUID === 'function')
+      ? `fixed_income_rule_${globalThis.crypto.randomUUID()}`
+      : `fixed_income_rule_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+
+    const rule = {
+      id,
+      enabled: true,
+      merchantSignature,
+      descriptionSignature,
+      institution: normalizeInstitution(transaction),
+      accountId: String(transaction.accountId || ''),
+      method: transaction._method || inferPaymentMethod(transaction),
+      category: transaction._category || categoryWithoutManualOverride(transaction),
+      amount: transactionAbsAmount(transaction),
+      sourceLabel: String(
+        fixedMerchantText(transaction) ||
+        transaction.description ||
+        transaction._merchant ||
+        'Entrada fixa'
+      ).trim(),
+      sourceTransactionKey: transaction._key || txKey(transaction),
+      createdAt: new Date().toISOString(),
+    };
+
+    state.fixedIncomeRules.push(rule);
+    return rule;
+  }
+
+  function renderFixedIncomeRules() {
+    const root = $('fixedIncomeRulesList');
+    const count = $('fixedIncomeRulesCount');
+    if (!root) return;
+
+    state.fixedIncomeRules = sanitizeFixedIncomeRules(state.fixedIncomeRules);
+    if (count) count.textContent = String(state.fixedIncomeRules.length);
+
+    if (!state.fixedIncomeRules.length) {
+      root.innerHTML = '<div class="empty">Nenhum padrão aprendido ainda. Marque uma entrada recorrente como Fixa para criar o primeiro padrão.</div>';
+      return;
+    }
+
+    root.innerHTML = state.fixedIncomeRules.map(rule => {
+      const matches = fixedIncomeRuleMatchCount(rule);
+      const referenceAmount = rule.amount > 0 ? money(rule.amount) : 'valor não disponível';
+      const context = [rule.institution, rule.method, referenceAmount].filter(Boolean).join(' · ');
+
+      return `<div class="rule-row" data-fixed-income-rule-id="${esc(rule.id)}">
+        <div class="rule-toggle"><span class="pill">Fixa</span></div>
+        <div class="rule-main">
+          <div class="rule-expression"><strong>${esc(rule.sourceLabel || rule.descriptionSignature || rule.merchantSignature || 'Padrão')}</strong><span class="rule-arrow">→</span><strong>Fixa</strong></div>
+          <div class="rule-meta">${integer(matches)} entrada(s) semelhante(s) · ${esc(context || 'padrão por similaridade')}</div>
+        </div>
+        <div class="rule-actions">
+          <button type="button" data-fixed-income-rule-action="delete">Excluir padrão</button>
+        </div>
+      </div>`;
+    }).join('');
+  }
+
+  function deleteFixedIncomeRule(ruleId) {
+    const rule = state.fixedIncomeRules.find(item => item.id === ruleId);
+    if (!rule) return;
+
+    if (!confirm(`Excluir o padrão automático de “${rule.sourceLabel || 'entrada fixa'}”?`)) return;
+
+    state.fixedIncomeRules = state.fixedIncomeRules.filter(item => item.id !== ruleId);
+    persistFixedIncomeRules();
+    state.incomeTxPage = 0;
+    state.txPage = 0;
+    renderAll();
+    toast('Padrão de entrada fixa excluído. Entradas sem ajuste específico voltaram para Variável.');
+  }
+
   function allSpendCategories() {
     return uniq([...spendingBaseRows().map(r=>r._category),...state.customCategories]).sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
   }
@@ -1569,7 +2143,7 @@
   }
 
   function exportFinanceConfig() {
-    const payload={version:4,exportedAt:new Date().toISOString(),app:'ControleFin',transactionOverrides:Object.fromEntries(state.transactionOverrides),customCategories:[...state.customCategories].sort((a,b)=>a.localeCompare(b,'pt-BR')),categoryRules:sanitizeCategoryRules(state.categoryRules),fixedExpenseRules:sanitizeFixedExpenseRules(state.fixedExpenseRules)};
+    const payload={version:6,exportedAt:new Date().toISOString(),app:'ControleFin',transactionOverrides:Object.fromEntries(state.transactionOverrides),customCategories:[...state.customCategories].sort((a,b)=>a.localeCompare(b,'pt-BR')),categoryRules:sanitizeCategoryRules(state.categoryRules),fixedExpenseRules:sanitizeFixedExpenseRules(state.fixedExpenseRules),fixedIncomeRules:sanitizeFixedIncomeRules(state.fixedIncomeRules),incomeSourceCategoryRules:sanitizeIncomeSourceCategoryRules(state.incomeSourceCategoryRules)};
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='controlefin_ajustes_backup.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
   }
 
@@ -1582,11 +2156,15 @@
       const cats=Array.isArray(payload.customCategories)?payload.customCategories:[];
       const rules=sanitizeCategoryRules(payload.categoryRules);
       const fixedRules=sanitizeFixedExpenseRules(payload.fixedExpenseRules);
+      const fixedIncomeRules=sanitizeFixedIncomeRules(payload.fixedIncomeRules);
+      const incomeSourceCategoryRules=sanitizeIncomeSourceCategoryRules(payload.incomeSourceCategoryRules);
       state.transactionOverrides.clear(); Object.entries(overrides).forEach(([k,v])=>{if(v&&typeof v==='object')state.transactionOverrides.set(k,v)});
       state.customCategories.clear(); cats.forEach(v=>{const c=String(v||'').trim();if(c)state.customCategories.add(c)});
       state.categoryRules=rules;
       state.fixedExpenseRules=fixedRules;
-      queuePersistentSettingsSave(); renderCustomCategoryManager(); state.spendTxPage=0; state.txPage=0; renderAll(); toast('Backup de categorias, reclassificações e padrões de gastos fixos restaurado.');
+      state.fixedIncomeRules=fixedIncomeRules;
+      state.incomeSourceCategoryRules=incomeSourceCategoryRules;
+      queuePersistentSettingsSave(); renderCustomCategoryManager(); state.spendTxPage=0; state.txPage=0; renderAll(); toast('Backup de categorias, reclassificações, resarcimentos, vínculos e regras automáticas restaurado.');
     } catch(e) { console.error(e); toast('Não foi possível restaurar esse backup JSON.'); }
     finally { if($('importFinanceConfigFile')) $('importFinanceConfigFile').value=''; }
   }
@@ -1652,6 +2230,7 @@
   }
 
   function autoKind(r, method) {
+    if(isIgnoredYieldIncome(r)) return 'IGNORE';
     if(state.internalTransferKeys.has(txKey(r)) || isExplicitSelfTransfer(r, method)) return 'TRANSFER';
     if(isInvestmentMovement(r, method)) return 'INVESTMENT_TRANSFER';
     if(String(r.accountType).toUpperCase()==='BANK' && val(r.normalizedOutflow)>0 && method==='Pagamento de fatura') return 'CARD_BILL';
@@ -1666,7 +2245,8 @@
     const baseMethod=inferPaymentMethod(r), method=ov.method || baseMethod;
     const kind=ov.kind || autoKind(r, method);
     const categoryRule=matchingCategoryRule(r);
-    const category=ov.category || categoryRule?.category || r.category || 'Sem categoria';
+    const incomeSourceCategoryRule=kind==='INCOME' ? matchingIncomeSourceCategoryRule(r) : null;
+    const category=ov.category || incomeSourceCategoryRule?.category || categoryRule?.category || r.category || 'Sem categoria';
     const merchant=ov.merchant || originalMerchant(r);
     const fixedExpenseRule=kind==='EXPENSE' ? matchingFixedExpenseRule(r) : null;
     const expenseClass=kind==='EXPENSE'
@@ -1698,9 +2278,27 @@
     );
     const expense=kind==='EXPENSE' ? reimbursement.userExpense : 0;
     const income=kind==='INCOME' ? (val(r.normalizedInflow)>0 ? val(r.normalizedInflow) : abs) : 0;
+    const fixedIncomeRule=kind==='INCOME' ? matchingFixedIncomeRule(r) : null;
+    const incomeClass=kind==='INCOME'
+      ? (ov.incomeClass==='FIXED'
+          ? 'FIXED'
+          : ov.incomeClass==='VARIABLE'
+            ? 'VARIABLE'
+            : fixedIncomeRule
+              ? 'FIXED'
+              : 'VARIABLE')
+      : '';
+    const incomeClassSource=kind!=='INCOME'
+      ? 'not-income'
+      : ['FIXED','VARIABLE'].includes(ov.incomeClass)
+        ? 'manual'
+        : fixedIncomeRule
+          ? 'similarity-rule'
+          : 'default';
+    const incomeClassLabelValue=expenseClassLabel(incomeClass);
     const outflow=(String(r.accountType).toUpperCase()==='BANK' && ['EXPENSE','CARD_BILL'].includes(kind)) ? (val(r.normalizedOutflow)>0?val(r.normalizedOutflow):abs) : 0;
     const entity=normalizeInstitution(r);
-    return {...r,_key:key,_override:ov,_categoryRule:categoryRule,_fixedExpenseRule:fixedExpenseRule,_kind:kind,_category:category,_merchant:merchant,_method:method,_expenseClass:expenseClass,_expenseClassLabel:expenseClassLabelValue,_expenseClassSource:expenseClassSource,_grossExpense:grossExpense,_reimbursementMode:reimbursement.mode,_reimbursementSplitPeople:reimbursement.splitPeople,_reimbursementReceivable:reimbursement.receivable,_reimbursementSource:reimbursementProfile.source,_expense:expense,_income:income,_bankOutflow:outflow,_institution:entity,_accountLabel:`${entity} · ${r.accountName || r.name || r.accountId || 'Conta'}`,_month:transactionMonth(r),_abs:abs};
+    return {...r,_key:key,_override:ov,_categoryRule:categoryRule,_incomeSourceCategoryRule:incomeSourceCategoryRule,_fixedExpenseRule:fixedExpenseRule,_fixedIncomeRule:fixedIncomeRule,_isIncomeReimbursement:kind==='INCOME'&&ov.incomePurpose==='REIMBURSEMENT',_linkedExpenseKey:String(ov.linkedExpenseKey||''),_kind:kind,_category:category,_merchant:merchant,_method:method,_expenseClass:expenseClass,_expenseClassLabel:expenseClassLabelValue,_expenseClassSource:expenseClassSource,_incomeClass:incomeClass,_incomeClassLabel:incomeClassLabelValue,_incomeClassSource:incomeClassSource,_grossExpense:grossExpense,_reimbursementMode:reimbursement.mode,_reimbursementSplitPeople:reimbursement.splitPeople,_reimbursementReceivable:reimbursement.receivable,_reimbursementSource:reimbursementProfile.source,_expense:expense,_income:income,_bankOutflow:outflow,_institution:entity,_accountLabel:`${entity} · ${r.accountName || r.name || r.accountId || 'Conta'}`,_month:transactionMonth(r),_abs:abs};
   }
 
   function transactionMonths() {
@@ -1711,7 +2309,7 @@
 
   function windowTransactions() {
     const months=new Set(transactionMonths());
-    return table('transactions').filter(r=>transactionCurrency(r)===state.currency && isUsableStatus(r.status) && months.has(transactionMonth(r))).map(effectiveTransaction);
+    return table('transactions').filter(r=>transactionCurrency(r)===state.currency && isUsableStatus(r.status) && months.has(transactionMonth(r)) && !isIgnoredYieldIncome(r)).map(effectiveTransaction);
   }
 
   function setSelectOptions(id, options, allLabel, valueKey=x=>x, labelKey=x=>x) {
@@ -2011,11 +2609,19 @@
     }
   }
 
-  function renderInteractiveBars(elId, entries, filterId, limit=16) {
+  function renderInteractiveBars(elId, entries, filterId, limit=16, rerender=null) {
     const arr=entries.filter(x=>x[1]>0).slice(0,limit), max=Math.max(...arr.map(x=>x[1]),1), el=$(elId);
     if(!el) return;
     el.innerHTML=arr.map(([label,v])=>`<div class="bar-row clickable" data-filter-value="${esc(label)}" data-tooltip="${esc(`${label}\n${money(v)}`)}" title="Filtrar por ${esc(label)}"><div class="bar-label">${esc(label)}</div><div class="bar-bg"><div class="bar-fg" style="width:${v/max*100}%"></div></div><div class="bar-value">${esc(money(v))}</div></div>`).join('') || '<div class="empty">Sem dados para esta seleção.</div>';
-    el.querySelectorAll('[data-filter-value]').forEach(row=>row.addEventListener('click',()=>{const sel=$(filterId); if(!sel)return; const v=row.dataset.filterValue; if([...sel.options].some(o=>o.value===v)){sel.value=v;renderSpending();}}));
+    el.querySelectorAll('[data-filter-value]').forEach(row=>row.addEventListener('click',()=>{
+      const sel=$(filterId); if(!sel)return;
+      const v=row.dataset.filterValue;
+      if([...sel.options].some(o=>o.value===v)){
+        sel.value=v;
+        if(typeof rerender==='function') rerender();
+        else renderSpending();
+      }
+    }));
   }
 
   function renderMonthlySpendCards(rows) {
@@ -2072,7 +2678,7 @@
   }
 
   function renderAccountsSummary() {
-    const txs=windowTransactions(), expenses=txs.filter(r=>r._kind==='EXPENSE'), incomes=txs.filter(r=>r._kind==='INCOME');
+    const txs=windowTransactions(), expenses=txs.filter(r=>r._kind==='EXPENSE'), incomes=txs.filter(r=>r._kind==='INCOME'&&!r._isIncomeReimbursement);
     const accounts=table('accounts').filter(r=>String(r.currencyCode||'UNKNOWN')===state.currency && ['BANK','CREDIT'].includes(String(r.type).toUpperCase()));
     const positions=currencyRows('financial_positions'); const posById=new Map(); positions.forEach(r=>{if(r.sourceId) posById.set(String(r.sourceId),r)});
     const entities=uniq([...accounts.map(r=>normalizeInstitution(r)),...positions.map(r=>normalizeInstitution(r,String(r.positionType).toUpperCase()==='INVESTMENT'?'investment':'auto'))]);
@@ -2087,13 +2693,458 @@
     $('accountsSummaryTable').innerHTML=rows.map(x=>`<tr><td><strong>${esc(x.inst)}</strong></td><td>${esc(x.a.name||'—')}<br><span class="muted">${esc(x.a.subtype||'')}</span></td><td><span class="pill">${String(x.a.type).toUpperCase()==='CREDIT'?'Cartão':String(x.a.type).toUpperCase()==='INVESTMENT'?'Investimentos':'Conta bancária'}</span></td><td class="num">${money(x.pos.currentAmount ?? x.a.effectiveBalance ?? x.a.balance)}</td><td class="num ${val(x.pos.netWorthContribution)>=0?'good':'bad'}">${money(x.pos.netWorthContribution)}</td><td class="num bad">${money(x.aexp)}</td><td class="num good">${money(x.ainc)}</td><td class="mono">${x.kind==='investment'?'carteira agregada':`accountId ${esc(x.aid)}`}<br>ItemId ${esc(x.a.itemId||'—')}</td></tr>`).join('') || '<tr><td colspan="8" class="empty">Nenhuma conta ou posição encontrada nesta moeda.</td></tr>';
   }
 
+
+  function incomePurposeLabel(value) {
+    return value === 'REIMBURSEMENT' ? 'Resarcimento' : 'Entrada normal';
+  }
+
+  function incomePurposeOptions(selected) {
+    const current = selected === 'REIMBURSEMENT' ? 'REIMBURSEMENT' : 'NORMAL';
+    return [
+      ['NORMAL','Entrada normal'],
+      ['REIMBURSEMENT','Resarcimento']
+    ].map(([value,label]) =>
+      `<option value="${value}" ${current===value?'selected':''}>${label}</option>`
+    ).join('');
+  }
+
+  function allExpensesForAssociation() {
+    return table('transactions')
+      .filter(r =>
+        transactionCurrency(r)===state.currency &&
+        isUsableStatus(r.status) &&
+        !isIgnoredYieldIncome(r)
+      )
+      .map(effectiveTransaction)
+      .filter(r=>r._kind==='EXPENSE' && r._grossExpense>0)
+      .sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+  }
+
+  function expenseAssociationLabel(expense) {
+    if (!expense) return 'Gasto não encontrado';
+    const classLabel=expense._expenseClass==='FIXED'?'Fixo':'Variável';
+    const description=expense._merchant || expense.description || 'Gasto';
+    return `${shortDate(expense.date)} · ${description} · ${money(expense._grossExpense)} · ${classLabel}`;
+  }
+
+  function linkedExpenseByKey(key) {
+    if (!key) return null;
+    return allExpensesForAssociation().find(expense=>expense._key===key) || null;
+  }
+
+  function initialExpenseLinkOptions(linkedKey) {
+    if (!linkedKey) return '<option value="">Selecionar gasto…</option>';
+    const linked=linkedExpenseByKey(linkedKey);
+    return `<option value="${esc(linkedKey)}" selected>${esc(expenseAssociationLabel(linked))}</option><option value="">Remover vínculo</option>`;
+  }
+
+  function populateExpenseAssociationSelect(select) {
+    if (!select || select.dataset.populated==='true') return;
+
+    const current=String(select.value || select.dataset.current || '');
+    const expenses=allExpensesForAssociation();
+
+    select.innerHTML =
+      '<option value="">Sem vínculo específico</option>' +
+      expenses.map(expense =>
+        `<option value="${esc(expense._key)}">${esc(expenseAssociationLabel(expense))}</option>`
+      ).join('');
+
+    if ([...select.options].some(option=>option.value===current)) {
+      select.value=current;
+    }
+
+    select.dataset.populated='true';
+  }
+
+  function updateIncomePurposeControls(cell) {
+    if (!cell) return;
+    const purpose=String(cell.querySelector('.income-purpose-select')?.value || 'NORMAL');
+    const link=cell.querySelector('.income-link-select');
+    if (!link) return;
+    link.disabled=purpose!=='REIMBURSEMENT';
+    if (purpose!=='REIMBURSEMENT') link.value='';
+  }
+
+  function incomeBaseRows() {
+    return windowTransactions().filter(
+      r=>r._kind==='INCOME' && r._income>0 && !isIgnoredYieldIncome(r)
+    );
+  }
+
+  function refreshIncomeFilters() {
+    const incomes=incomeBaseRows();
+    const months=uniq(incomes.map(r=>r._month)).sort();
+    setSelectOptions('incomeMonthSelect',months,'Todos da janela');
+
+    const accounts=[...new Map(incomes.filter(r=>r.accountId).map(r=>[
+      String(r.accountId),
+      {id:String(r.accountId),label:accountLabel(r)}
+    ])).values()].sort((a,b)=>a.label.localeCompare(b.label));
+
+    setSelectOptions('incomeAccountSelect',accounts,'Todas as contas',x=>x.id,x=>x.label);
+    setSelectOptions('incomeMethodSelect',uniq(incomes.map(r=>r._method)).sort(),'Todos os meios');
+    setSelectOptions(
+      'incomeCategorySelect',
+      uniq([...incomes.map(r=>r._category),...state.customCategories]).sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')),
+      'Todas as categorias'
+    );
+    setSelectOptions('incomeSourceSelect',uniq(incomes.map(r=>r._merchant)).sort(),'Todas as origens');
+  }
+
+  function filteredIncomes(ignoreMonth=false) {
+    let rows=incomeBaseRows();
+
+    const month=$('incomeMonthSelect')?.value||'all';
+    const account=$('incomeAccountSelect')?.value||'all';
+    const method=$('incomeMethodSelect')?.value||'all';
+    const incomeClass=$('incomeClassSelect')?.value||'all';
+    const category=$('incomeCategorySelect')?.value||'all';
+    const source=$('incomeSourceSelect')?.value||'all';
+    const q=String($('incomeSearch')?.value||'').trim().toLowerCase();
+    const min=num($('incomeMin')?.value);
+    const max=num($('incomeMax')?.value);
+
+    if(!ignoreMonth && month!=='all') rows=rows.filter(r=>r._month===month);
+    if(account!=='all') rows=rows.filter(r=>String(r.accountId)===account);
+    if(method!=='all') rows=rows.filter(r=>r._method===method);
+    if(incomeClass!=='all') rows=rows.filter(r=>r._incomeClass===incomeClass);
+    if(category!=='all') rows=rows.filter(r=>r._category===category);
+    if(source!=='all') rows=rows.filter(r=>r._merchant===source);
+    if(q) rows=rows.filter(r=>[
+      r.description,r._merchant,transactionPayerName(r),r._category,r._incomeClassLabel,
+      r._institution,r._accountLabel,r._method
+    ].some(v=>String(v||'').toLowerCase().includes(q)));
+    if(min!=null) rows=rows.filter(r=>r._income>=min);
+    if(max!=null) rows=rows.filter(r=>r._income<=max);
+
+    return rows;
+  }
+
+  function incomeDimensionMeta(value) {
+    const map={
+      category:{field:'_category',label:'Categoria'},
+      source:{field:'_merchant',label:'Origem'},
+      bank:{field:'_institution',label:'Banco'},
+      method:{field:'_method',label:'Tipo de entrada'},
+      incomeClass:{field:'_incomeClassLabel',label:'Fixo x variável'}
+    };
+    return map[value] || map.category;
+  }
+
+  function incomeSeries(rows, dimensionField, maxSeries=6) {
+    const totals=aggregateBy(rows,dimensionField,'_income');
+    const top=totals.slice(0,maxSeries).map(x=>x[0]);
+    const hasOther=totals.length>maxSeries;
+    const names=[...top,...(hasOther?['Outros']:[])];
+    const colors=['var(--accent)','var(--info)','var(--purple)','var(--warn)','var(--bad)','var(--good)','#ff8c42'];
+
+    return {
+      names,
+      top,
+      hasOther,
+      meta:names.map((name,i)=>({key:name,label:name,color:colors[i%colors.length]})),
+      colorFor:(name)=>colors[Math.max(0,names.indexOf(name))%colors.length]
+    };
+  }
+
+  function monthlyIncomeDimensionData(rows, dimensionField, series) {
+    const months=transactionMonths();
+    const data=new Map(months.map(m=>[m,new Map(series.names.map(name=>[name,0]))]));
+
+    rows.forEach(r=>{
+      if(!data.has(r._month)) return;
+      const raw=r[dimensionField]||'Não identificado';
+      const key=series.top.includes(raw)?raw:(series.hasOther?'Outros':raw);
+      if(!data.get(r._month).has(key)) return;
+      data.get(r._month).set(key,(data.get(r._month).get(key)||0)+r._income);
+    });
+
+    return {months,data};
+  }
+
+  function renderMonthlyIncomeBars(elId, rows, dimensionValue) {
+    const el=$(elId); if(!el) return;
+    const {field,label}=incomeDimensionMeta(dimensionValue);
+    const series=incomeSeries(rows,field,6);
+    const {months,data}=monthlyIncomeDimensionData(rows,field,series);
+
+    if(!months.length || !rows.length || !series.names.length) {
+      el.innerHTML='<div class="empty">Sem entradas para esta seleção.</div>';
+      return;
+    }
+
+    const hidden=hiddenSeries(elId);
+    const visible=series.names.filter(n=>!hidden.has(n));
+    const monthlyVisibleTotals=months.map(m=>visible.reduce((a,n)=>a+(data.get(m)?.get(n)||0),0));
+    const max=Math.max(...months.flatMap(m=>visible.map(n=>data.get(m)?.get(n)||0)),...monthlyVisibleTotals,1);
+    const W=900,H=365,p={l:68,r:18,t:52,b:48};
+    const groupW=(W-p.l-p.r)/Math.max(months.length,1);
+    const gap=3;
+    const bw=Math.max(5,Math.min(34,(groupW*.72-Math.max(visible.length-1,0)*gap)/Math.max(visible.length,1)));
+    const y=v=>p.t+(H-p.t-p.b)*(1-v/max);
+
+    let grid='';
+    for(let i=0;i<=4;i++){
+      const v=max*i/4,yy=y(v);
+      grid+=`<line x1="${p.l}" x2="${W-p.r}" y1="${yy}" y2="${yy}" stroke="var(--line)"/><text class="chart-axis-label" x="${p.l-8}" y="${yy+4}" text-anchor="end">${esc(compact(v))}</text>`;
+    }
+
+    let bars='';
+    months.forEach((m,i)=>{
+      const cx=p.l+groupW*i+groupW/2;
+      const clusterW=visible.length*bw+Math.max(visible.length-1,0)*gap;
+
+      visible.forEach((name,j)=>{
+        const v=data.get(m)?.get(name)||0;
+        if(v<=0) return;
+        const xx=cx-clusterW/2+j*(bw+gap), yy=y(v), h=H-p.b-yy;
+        const color=series.colorFor(name);
+        bars+=`<rect x="${xx}" y="${yy}" width="${bw}" height="${h}" rx="4" fill="${color}" data-tooltip="${esc(`${name}\n${m.slice(5)}/${m.slice(0,4)} · ${money(v)}`)}"/>`;
+        if(visible.length<=3 && months.length<=8 && h>26) bars+=`<text class="chart-value-label" x="${xx+bw/2}" y="${Math.max(yy-6,14)}" text-anchor="middle">${esc(compact(v))}</text>`;
+      });
+
+      const total=monthlyVisibleTotals[i];
+      if(total>0) bars+=`<text class="chart-value-label" x="${cx}" y="${Math.max(y(total)-12,15)}" text-anchor="middle">${esc(money(total))}</text>`;
+      bars+=`<text x="${cx}" y="${H-15}" text-anchor="middle" fill="var(--muted)" font-size="11">${m.slice(5)}/${m.slice(2,4)}</text>`;
+    });
+
+    el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Entradas mensais em reais agrupadas por ${esc(label)}">${grid}<text class="chart-axis-label" x="14" y="${p.t-18}">R$</text><line x1="${p.l}" x2="${W-p.r}" y1="${H-p.b}" y2="${H-p.b}" stroke="var(--line)"/>${bars}</svg>${legendMarkup(elId,series.meta)}`;
+    bindLegend(elId,()=>renderMonthlyIncomeBars(elId,rows,dimensionValue));
+  }
+
+  function renderMonthlyIncomeShare(elId, rows, dimensionValue) {
+    const el=$(elId); if(!el) return;
+    const {field,label}=incomeDimensionMeta(dimensionValue);
+    const series=incomeSeries(rows,field,6);
+    const {months,data}=monthlyIncomeDimensionData(rows,field,series);
+
+    if(!months.length || !rows.length || !series.names.length) {
+      el.innerHTML='<div class="empty">Sem entradas para esta seleção.</div>';
+      return;
+    }
+
+    const hidden=hiddenSeries(elId);
+    const visible=series.names.filter(n=>!hidden.has(n));
+    const W=900,H=365,p={l:58,r:18,t:38,b:48};
+    const groupW=(W-p.l-p.r)/Math.max(months.length,1), bw=Math.min(66,groupW*.62);
+    const yPct=v=>p.t+(H-p.t-p.b)*(1-v/100);
+
+    let grid='';
+    [0,25,50,75,100].forEach(v=>{
+      const yy=yPct(v);
+      grid+=`<line x1="${p.l}" x2="${W-p.r}" y1="${yy}" y2="${yy}" stroke="var(--line)"/><text class="chart-axis-label" x="${p.l-8}" y="${yy+4}" text-anchor="end">${v}%</text>`;
+    });
+
+    let bars='';
+    months.forEach((m,i)=>{
+      const cx=p.l+groupW*i+groupW/2;
+      const fullTotal=series.names.reduce((a,n)=>a+(data.get(m)?.get(n)||0),0);
+      let accPct=0;
+
+      visible.forEach(name=>{
+        const v=data.get(m)?.get(name)||0;
+        if(v<=0 || fullTotal<=0) return;
+        const share=v/fullTotal*100, yy=yPct(accPct+share), h=(H-p.t-p.b)*(share/100), color=series.colorFor(name);
+        bars+=`<rect x="${cx-bw/2}" y="${yy}" width="${bw}" height="${h}" rx="3" fill="${color}" data-tooltip="${esc(`${name}\n${m.slice(5)}/${m.slice(0,4)} · ${money(v)} · ${share.toFixed(1).replace('.',',')}% do mês`)}"/>`;
+        if(h>=28 && share>=9) bars+=`<text class="chart-value-label" x="${cx}" y="${yy+h/2+4}" text-anchor="middle">${share.toFixed(0)}%</text>`;
+        accPct+=share;
+      });
+
+      bars+=`<text x="${cx}" y="${H-15}" text-anchor="middle" fill="var(--muted)" font-size="11">${m.slice(5)}/${m.slice(2,4)}</text>`;
+    });
+
+    el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Composição percentual mensal das entradas por ${esc(label)}">${grid}<line x1="${p.l}" x2="${W-p.r}" y1="${H-p.b}" y2="${H-p.b}" stroke="var(--line)"/>${bars}</svg>${legendMarkup(elId,series.meta)}`;
+    bindLegend(elId,()=>renderMonthlyIncomeShare(elId,rows,dimensionValue));
+  }
+
+  function renderIncomeTransactions(rows) {
+    const body=$('incomeTransactionsTable');
+    if(!body) return;
+
+    const sorted=[...rows].sort((a,b)=>String(b.date||'').localeCompare(String(a.date||'')));
+    const totalPages=Math.max(1,Math.ceil(sorted.length/state.incomeTxPageSize));
+    state.incomeTxPage=Math.min(state.incomeTxPage,totalPages-1);
+
+    const pageRows=sorted.slice(
+      state.incomeTxPage*state.incomeTxPageSize,
+      (state.incomeTxPage+1)*state.incomeTxPageSize
+    );
+
+    body.innerHTML=pageRows.map(r=>{
+      const original=r.category||'Sem categoria';
+      return `<tr data-income-txkey="${esc(r._key)}">
+        <td>${shortDate(r.date)}</td>
+        <td><strong>${esc(r._institution)}</strong><br><span class="muted">${esc(r.accountName||r.name||r.accountId||'Conta')}</span><br><span class="mono">${esc(r.accountId||'')}</span></td>
+        <td><div class="description-main">${esc(r.description||'—')}</div><div class="description-meta">ID ${esc(r.id||'—')} · ${esc(r.status||'status n/d')}</div></td>
+        <td>${esc(r._merchant)}</td>
+        <td><div class="description-main">${esc(transactionPayerName(r) || '—')}</div>${transactionPayerName(r) ? '<div class="description-meta">payer_name</div>' : '<div class="description-meta">Pagador não informado pela transação</div>'}</td>
+        <td><input class="spend-category-input income-category-input" list="spendCategorySuggestions" value="${esc(r._category)}"/><div class="description-meta">Pluggy: ${esc(original)}${r._incomeSourceCategoryRule ? ` · Regra origem: ${esc(r._incomeSourceCategoryRule.category)}` : ''}${r._categoryRule ? ` · Regra geral: ${esc(r._categoryRule.category)}` : ''}${r._override?.category ? ' · Ajuste manual' : ''}</div></td>
+        <td><select class="income-class-select">${expenseClassOptions(r._incomeClass)}</select><div class="description-meta">${r._incomeClassSource==='similarity-rule'?'Automático por similaridade':r._incomeClassSource==='manual'?'Ajuste manual':'Padrão: Variável'}</div></td>
+        <td class="income-purpose-cell"><div class="income-purpose-controls"><select class="income-purpose-select">${incomePurposeOptions(r._isIncomeReimbursement?'REIMBURSEMENT':'NORMAL')}</select><select class="income-link-select" data-current="${esc(r._linkedExpenseKey||'')}" ${r._isIncomeReimbursement?'':'disabled'}>${initialExpenseLinkOptions(r._linkedExpenseKey)}</select><div class="income-purpose-note">${r._isIncomeReimbursement?'<strong>Excluído dos gráficos de entradas.</strong>':'Considerado normalmente nos gráficos.'}</div></div></td>
+        <td><span class="pill">${esc(r._method)}</span></td>
+        <td class="num good"><strong>${money(r._income)}</strong></td>
+        <td>${rawTransactionDetailsHtml(r)}</td>
+        <td><button data-income-action="save">Salvar</button></td>
+      </tr>`;
+    }).join('') || '<tr><td colspan="12" class="empty">Nenhuma entrada encontrada para os filtros atuais.</td></tr>';
+
+    if($('incomeTransactionsCount')) $('incomeTransactionsCount').textContent=`${integer(sorted.length)} entradas`;
+    if($('incomeTransactionsFootnote')) $('incomeTransactionsFootnote').innerHTML=
+      `Mostrando ${pageRows.length?state.incomeTxPage*state.incomeTxPageSize+1:0}–${Math.min((state.incomeTxPage+1)*state.incomeTxPageSize,sorted.length)} de ${integer(sorted.length)} · página ${state.incomeTxPage+1} de ${totalPages}. <button id="incomeTxPrevBtn" ${state.incomeTxPage===0?'disabled':''}>Anterior</button> <button id="incomeTxNextBtn" ${state.incomeTxPage>=totalPages-1?'disabled':''}>Próxima</button>.`;
+
+    $('incomeTxPrevBtn')?.addEventListener('click',()=>{
+      state.incomeTxPage=Math.max(0,state.incomeTxPage-1);
+      renderIncome();
+    });
+    $('incomeTxNextBtn')?.addEventListener('click',()=>{
+      state.incomeTxPage++;
+      renderIncome();
+    });
+  }
+
+  function saveIncomeRow(tr) {
+    const key=tr?.dataset?.incomeTxkey;
+    if(!key) return;
+
+    const base=windowTransactions().find(r=>r._key===key);
+    if(!base) return;
+
+    const category=String(tr.querySelector('.income-category-input')?.value||'').trim();
+    const incomeClass=String(tr.querySelector('.income-class-select')?.value||'VARIABLE').trim();
+    const incomePurpose=String(tr.querySelector('.income-purpose-select')?.value||'NORMAL').trim();
+    const linkedExpenseKey=String(tr.querySelector('.income-link-select')?.value||'').trim();
+
+    const next={...(state.transactionOverrides.get(key)||{})};
+    const automaticBase=categoryWithoutManualOverride(base);
+
+    if(!category || category===automaticBase) delete next.category;
+    else next.category=category;
+
+    let fixedRule=matchingFixedIncomeRule(base);
+    let fixedRuleCreated=false;
+
+    if(incomeClass==='FIXED') {
+      delete next.incomeClass;
+      if(!fixedRule) {
+        fixedRule=createFixedIncomeRuleFromTransaction(base);
+        fixedRuleCreated=Boolean(fixedRule);
+      }
+      if(!fixedRule) next.incomeClass='FIXED';
+    } else {
+      if(fixedRule) next.incomeClass='VARIABLE';
+      else delete next.incomeClass;
+    }
+
+    if(incomePurpose==='REIMBURSEMENT') {
+      next.incomePurpose='REIMBURSEMENT';
+      if(linkedExpenseKey) next.linkedExpenseKey=linkedExpenseKey;
+      else delete next.linkedExpenseKey;
+    } else {
+      delete next.incomePurpose;
+      delete next.linkedExpenseKey;
+    }
+
+    let salaryRule=null;
+    if(incomePurpose!=='REIMBURSEMENT' && isSalaryCategory(category)) {
+      salaryRule=upsertIncomeSourceCategoryRule(base,category);
+      if(salaryRule) {
+        // A regra persistente passa a explicar esta e as demais entradas da origem.
+        delete next.category;
+      }
+    }
+
+    if(category && category!==automaticBase) state.customCategories.add(category);
+
+    if(Object.keys(next).length) state.transactionOverrides.set(key,next);
+    else state.transactionOverrides.delete(key);
+
+    queuePersistentSettingsSave();
+    state.incomeTxPage=0;
+    state.txPage=0;
+    renderCustomCategoryManager();
+    renderAll();
+
+    if(incomePurpose==='REIMBURSEMENT') {
+      const linked=linkedExpenseKey ? linkedExpenseByKey(linkedExpenseKey) : null;
+      toast(linked
+        ? `Entrada marcada como resarcimento e vinculada a ${expenseAssociationLabel(linked)}.`
+        : 'Entrada marcada como resarcimento e excluída dos gráficos.');
+    } else if(salaryRule) {
+      toast(`Regra de ${salaryRule.category} criada para esta origem. ${incomeSourceCategoryRuleMatchCount(salaryRule)} entrada(s) reconhecida(s).`);
+    } else if(incomeClass==='FIXED' && fixedRuleCreated && fixedRule) {
+      toast(`Entrada marcada como Fixa. ${fixedIncomeRuleMatchCount(fixedRule)} entrada(s) semelhante(s) reconhecida(s).`);
+    } else {
+      toast(incomeClass==='FIXED' ? 'Entrada marcada como Fixa.' : 'Entrada atualizada e salva.');
+    }
+  }
+
   function renderIncome() {
-    const rows=windowTransactions().filter(r=>r._kind==='INCOME' && r._income>0); const total=rows.reduce((a,r)=>a+r._income,0), months=Math.max(uniq(rows.map(r=>r._month)).length,1);
-    $('incomeTotalMini').textContent=money(total); $('incomeAvgMini').textContent=money(total/months); $('incomeCountMini').textContent=integer(rows.length);
-    renderSingleMonthlyChart('incomeMonthlyChart',rows,'_income','Sem entradas identificadas na janela.');
-    const byAccount=new Map(); rows.forEach(r=>{const k=accountLabel(r);byAccount.set(k,(byAccount.get(k)||0)+r._income)}); renderBars('incomeAccountBars',[...byAccount.entries()].sort((a,b)=>b[1]-a[1]),money,20);
-    renderBars('incomeSourceBars',aggregateBy(rows,'_merchant','_income'),money,20);
-    $('incomeTable').innerHTML=rows.sort((a,b)=>String(b.date).localeCompare(String(a.date))).slice(0,80).map(r=>`<tr><td>${shortDate(r.date)}</td><td><strong>${esc(r._institution)}</strong><br><span class="muted">${esc(r.accountName||r.accountId||'Conta')}</span></td><td>${esc(r._merchant)}</td><td><span class="pill">${esc(r._method)}</span></td><td class="num good">${money(r._income)}</td></tr>`).join('') || '<tr><td colspan="5" class="empty">Sem entradas identificadas.</td></tr>';
+    refreshIncomeFilters();
+
+    const allTrendRows=filteredIncomes(true);
+    const allRows=filteredIncomes(false);
+    const trendRows=allTrendRows.filter(r=>!r._isIncomeReimbursement);
+    const rows=allRows.filter(r=>!r._isIncomeReimbursement);
+    const reimbursementRows=allTrendRows.filter(r=>r._isIncomeReimbursement);
+    const reimbursementTotal=reimbursementRows.reduce((a,r)=>a+r._income,0);
+    const windowMonths=Math.max(transactionMonths().length,1);
+    const total=trendRows.reduce((a,r)=>a+r._income,0);
+    const avg=total/windowMonths;
+
+    $('incomeAvgMini').textContent=money(avg);
+    $('incomeTotalMini').textContent=money(total);
+    $('incomeCountMini').textContent=integer(trendRows.length);
+    $('activeIncomeCount').textContent=integer(rows.length);
+    if($('incomeReimbursementsChip')) $('incomeReimbursementsChip').textContent=`Resarcimentos excluídos: ${integer(reimbursementRows.length)} · ${money(reimbursementTotal)}`;
+
+    const methodTotal=name=>trendRows.filter(r=>r._method===name).reduce((a,r)=>a+r._income,0);
+    const pix=methodTotal('PIX');
+    const transfer=methodTotal('Transferência');
+    const other=methodTotal('Outros');
+
+    [
+      ['incomePixAvg','incomePixTotal','incomePixShare',pix],
+      ['incomeTransferAvg','incomeTransferTotal','incomeTransferShare',transfer],
+      ['incomeOtherAvg','incomeOtherTotal','incomeOtherShare',other]
+    ].forEach(([aid,tid,sid,value])=>{
+      if($(aid)) $(aid).textContent=money(value/windowMonths);
+      if($(tid)) $(tid).textContent=money(value);
+      if($(sid)) $(sid).textContent=total>0?`${pct(value/total*100)} das entradas da janela`:'Sem entradas na janela';
+    });
+
+    const absoluteDim=$('incomeAbsoluteDimensionSelect')?.value||'category';
+    const shareDim=$('incomeShareDimensionSelect')?.value||'category';
+    renderMonthlyIncomeBars('incomeAbsoluteChart',trendRows,absoluteDim);
+    renderMonthlyIncomeShare('incomeShareChart',trendRows,shareDim);
+
+    renderInteractiveBars(
+      'incomeCategoryBars',
+      aggregateBy(rows,'_category','_income'),
+      'incomeCategorySelect',
+      18,
+      renderIncome
+    );
+    renderInteractiveBars(
+      'incomeSourceBars',
+      aggregateBy(rows,'_merchant','_income'),
+      'incomeSourceSelect',
+      24,
+      renderIncome
+    );
+
+    renderIncomeTransactions(allRows);
+
+    // Mantém os elementos antigos ocultos preenchidos para compatibilidade.
+    if($('incomeMonthlyChart')) renderSingleMonthlyChart('incomeMonthlyChart',trendRows,'_income','Sem entradas identificadas na janela.');
+    if($('incomeAccountBars')) {
+      const byAccount=new Map();
+      trendRows.forEach(r=>{
+        const k=accountLabel(r);
+        byAccount.set(k,(byAccount.get(k)||0)+r._income);
+      });
+      renderBars('incomeAccountBars',[...byAccount.entries()].sort((a,b)=>b[1]-a[1]),money,20);
+    }
   }
 
   function kindLabel(kind) { return ({EXPENSE:'Gasto',INCOME:'Entrada',TRANSFER:'Transferência própria',INVESTMENT_TRANSFER:'Aporte / transferência de investimento',CARD_BILL:'Pagamento de fatura',REFUND:'Estorno/crédito cartão',IGNORE:'Ignorar'})[kind]||kind; }
@@ -2126,13 +3177,13 @@
   function editorFilteredRows() {
     let rows=windowTransactions(); const q=String($('txSearch')?.value||'').trim().toLowerCase(), kind=$('txKindFilter')?.value||'all', account=$('txAccountFilter')?.value||'all';
     if(kind!=='all') rows=rows.filter(r=>r._kind===kind); if(account!=='all') rows=rows.filter(r=>String(r.accountId)===account);
-    if(q) rows=rows.filter(r=>[r.description,r._merchant,r._category,r._expenseClassLabel,r.accountName,r._institution,r._method,r.id].some(v=>String(v||'').toLowerCase().includes(q)));
+    if(q) rows=rows.filter(r=>[r.description,r._merchant,r._category,r._expenseClassLabel,r._incomeClassLabel,r.accountName,r._institution,r._method,r.id].some(v=>String(v||'').toLowerCase().includes(q)));
     return rows.sort((a,b)=>String(b.date).localeCompare(String(a.date)));
   }
 
   function renderTransactionsEditor() {
     const rows=editorFilteredRows(); const totalPages=Math.max(1,Math.ceil(rows.length/state.txPageSize)); state.txPage=Math.min(state.txPage,totalPages-1); const slice=rows.slice(state.txPage*state.txPageSize,(state.txPage+1)*state.txPageSize);
-    $('transactionsEditorTable').innerHTML=slice.map(r=>{const ov=r._override||{};return `<tr data-txkey="${esc(r._key)}"><td>${shortDate(r.date)}</td><td><strong>${esc(r._institution)}</strong><br><span class="muted">${esc(r.accountName||r.accountId||'—')}</span></td><td>${esc(r.description||'—')}<br><span class="mono">${esc(r.id||'')}</span></td><td class="num ${r._kind==='INCOME'?'good':r._kind==='EXPENSE'?'bad':''}">${r._kind==='EXPENSE'?`<strong>${money(r._expense)}</strong><br><small class="muted">Bruto ${money(r._grossExpense)}</small>`:money(r._abs)}</td><td><select class="tx-edit tx-kind" data-field="kind">${kindOptions(ov.kind||'')}</select><br><small class="muted">Atual: ${esc(kindLabel(r._kind))}</small></td><td><input class="tx-edit" data-field="category" value="${esc(r._category)}" /></td><td><select class="tx-edit tx-expense-class" data-field="expenseClass" ${r._kind==='EXPENSE'?'':'disabled'}>${expenseClassOptions(r._expenseClass)}</select><br><small class="muted">${r._kind==='EXPENSE' ? `${esc(r._expenseClassLabel)} · ${r._expenseClassSource==='similarity-rule'?'automático por similaridade':r._expenseClassSource==='manual'?'ajuste manual':'padrão'}` : 'Somente para gastos'}</small></td><td class="reimbursement-cell">${reimbursementControlsHtml(r,'tx',r._kind!=='EXPENSE')}</td><td><input class="tx-edit" data-field="merchant" value="${esc(r._merchant)}" /></td><td><select class="tx-edit tx-method" data-field="method">${methodOptions(ov.method||'')}</select><br><small class="muted">Atual: ${esc(r._method)}</small></td><td><div class="row-actions"><button data-action="save">Salvar</button><button data-action="reset">Resetar</button></div></td></tr>`}).join('') || '<tr><td colspan="11" class="empty">Nenhuma transação encontrada.</td></tr>';
+    $('transactionsEditorTable').innerHTML=slice.map(r=>{const ov=r._override||{};return `<tr data-txkey="${esc(r._key)}"><td>${shortDate(r.date)}</td><td><strong>${esc(r._institution)}</strong><br><span class="muted">${esc(r.accountName||r.accountId||'—')}</span></td><td>${esc(r.description||'—')}<br><span class="mono">${esc(r.id||'')}</span></td><td class="num ${r._kind==='INCOME'?'good':r._kind==='EXPENSE'?'bad':''}">${r._kind==='EXPENSE'?`<strong>${money(r._expense)}</strong><br><small class="muted">Bruto ${money(r._grossExpense)}</small>`:money(r._abs)}</td><td><select class="tx-edit tx-kind" data-field="kind">${kindOptions(ov.kind||'')}</select><br><small class="muted">Atual: ${esc(kindLabel(r._kind))}</small></td><td><input class="tx-edit" data-field="category" value="${esc(r._category)}" /></td><td><select class="tx-edit tx-fixed-variable" data-field="fixedVariable" ${['EXPENSE','INCOME'].includes(r._kind)?'':'disabled'}>${expenseClassOptions(r._kind==='INCOME'?r._incomeClass:r._expenseClass)}</select><br><small class="muted">${r._kind==='EXPENSE' ? `${esc(r._expenseClassLabel)} · ${r._expenseClassSource==='similarity-rule'?'automático por similaridade':r._expenseClassSource==='manual'?'ajuste manual':'padrão'}` : r._kind==='INCOME' ? `${esc(r._incomeClassLabel)} · ${r._incomeClassSource==='similarity-rule'?'automático por similaridade':r._incomeClassSource==='manual'?'ajuste manual':'padrão'}` : 'Somente para gastos e entradas'}</small></td><td class="reimbursement-cell">${reimbursementControlsHtml(r,'tx',r._kind!=='EXPENSE')}</td><td><input class="tx-edit" data-field="merchant" value="${esc(r._merchant)}" /></td><td><select class="tx-edit tx-method" data-field="method">${methodOptions(ov.method||'')}</select><br><small class="muted">Atual: ${esc(r._method)}</small></td><td><div class="row-actions"><button data-action="save">Salvar</button><button data-action="reset">Resetar</button></div></td></tr>`}).join('') || '<tr><td colspan="11" class="empty">Nenhuma transação encontrada.</td></tr>';
     $('txEditorFootnote').innerHTML=`${integer(rows.length)} transação(ões) encontradas · página ${state.txPage+1} de ${totalPages}. <button id="txPrevBtn" ${state.txPage===0?'disabled':''}>Anterior</button> <button id="txNextBtn" ${state.txPage>=totalPages-1?'disabled':''}>Próxima</button> · Transferências próprias, aportes/resgates de investimentos e pagamentos de fatura não entram no gasto consolidado.`;
     $('txPrevBtn')?.addEventListener('click',()=>{state.txPage=Math.max(0,state.txPage-1);renderTransactionsEditor()}); $('txNextBtn')?.addEventListener('click',()=>{state.txPage++;renderTransactionsEditor()});
   }
@@ -2140,7 +3191,7 @@
   function saveEditorRow(tr) {
     const key=tr.dataset.txkey; const base=windowTransactions().find(r=>r._key===key); if(!base) return;
 
-    const selectedExpenseClass=String(tr.querySelector('[data-field="expenseClass"]')?.value||'').trim();
+    const selectedFixedVariable=String(tr.querySelector('[data-field="fixedVariable"]')?.value||'').trim();
     const reimbursementMode=sanitizeReimbursementMode(
       tr.querySelector('.tx-reimbursement-mode')?.value
     );
@@ -2150,7 +3201,7 @@
     const next={};
 
     tr.querySelectorAll('[data-field]').forEach(el=>{
-      if(el.dataset.field==='expenseClass') return;
+      if(el.dataset.field==='fixedVariable') return;
       const v=String(el.value||'').trim();
       if(v) next[el.dataset.field]=v;
     });
@@ -2162,18 +3213,31 @@
     let fixedRule = base._kind==='EXPENSE' ? matchingFixedExpenseRule(base) : null;
     let fixedRuleCreated = false;
 
-    if(base._kind==='EXPENSE' && selectedExpenseClass==='FIXED') {
+    if(base._kind==='EXPENSE' && selectedFixedVariable==='FIXED') {
       if(!fixedRule) {
         fixedRule=createFixedExpenseRuleFromTransaction(base);
         fixedRuleCreated=Boolean(fixedRule);
       }
       if(!fixedRule) next.expenseClass='FIXED';
-    } else if(base._kind==='EXPENSE' && selectedExpenseClass==='VARIABLE') {
+    } else if(base._kind==='EXPENSE' && selectedFixedVariable==='VARIABLE') {
       if(fixedRule) next.expenseClass='VARIABLE';
     }
 
+    let fixedIncomeRule = base._kind==='INCOME' ? matchingFixedIncomeRule(base) : null;
+    let fixedIncomeRuleCreated = false;
+
+    if(base._kind==='INCOME' && selectedFixedVariable==='FIXED') {
+      if(!fixedIncomeRule) {
+        fixedIncomeRule=createFixedIncomeRuleFromTransaction(base);
+        fixedIncomeRuleCreated=Boolean(fixedIncomeRule);
+      }
+      if(!fixedIncomeRule) next.incomeClass='FIXED';
+    } else if(base._kind==='INCOME' && selectedFixedVariable==='VARIABLE') {
+      if(fixedIncomeRule) next.incomeClass='VARIABLE';
+    }
+
     if(base._kind==='EXPENSE') {
-      if(selectedExpenseClass==='FIXED' && fixedRule) {
+      if(selectedFixedVariable==='FIXED' && fixedRule) {
         fixedRule.reimbursementMode=reimbursementMode;
         fixedRule.splitPeople=reimbursementMode==='SHARED' ? splitPeople : 2;
       } else if(reimbursementMode!=='NONE') {
@@ -2192,10 +3256,12 @@
     renderCustomCategoryManager();
     renderAll();
 
-    if(fixedRuleCreated && fixedRule) {
+    if(fixedIncomeRuleCreated && fixedIncomeRule) {
+      toast(`Classificação salva. ${fixedIncomeRuleMatchCount(fixedIncomeRule)} entrada(s) semelhante(s) reconhecida(s) como Fixa.`);
+    } else if(fixedRuleCreated && fixedRule) {
       toast(`Classificação salva. ${fixedExpenseRuleMatchCount(fixedRule)} transação(ões) semelhante(s) reconhecida(s) como Fixo e receberam o mesmo perfil de resarcimento.`);
     } else {
-      toast('Classificação e resarcimento atualizados e salvos.');
+      toast('Classificação atualizada e salva.');
     }
   }
 
@@ -2206,7 +3272,7 @@
   // Redefinições das visões que precisam respeitar reclassificação e contas próprias.
   function aggregateCashflow() {
     const rows=windowTransactions().filter(r=>String(r.accountType).toUpperCase()==='BANK'); const by=new Map();
-    rows.forEach(r=>{if(['TRANSFER','INVESTMENT_TRANSFER','IGNORE'].includes(r._kind)) return; const x=by.get(r._month)||{month:r._month,inflow:0,outflow:0,net:0}; if(r._kind==='INCOME') x.inflow+=r._income; if(['EXPENSE','CARD_BILL'].includes(r._kind)) x.outflow+=r._bankOutflow; x.net=x.inflow-x.outflow; by.set(r._month,x)});
+    rows.forEach(r=>{if(['TRANSFER','INVESTMENT_TRANSFER','IGNORE'].includes(r._kind)) return; const x=by.get(r._month)||{month:r._month,inflow:0,outflow:0,net:0}; if(r._kind==='INCOME'&&!r._isIncomeReimbursement) x.inflow+=r._income; if(['EXPENSE','CARD_BILL'].includes(r._kind)) x.outflow+=r._bankOutflow; x.net=x.inflow-x.outflow; by.set(r._month,x)});
     return [...by.values()].sort((a,b)=>a.month.localeCompare(b.month));
   }
 
@@ -2226,7 +3292,7 @@
     const internal=windowTransactions().filter(r=>['TRANSFER','INVESTMENT_TRANSFER'].includes(r._kind)).length; if(internal) push('good','Movimentações patrimoniais separadas',`${internal} transferência(s) entre contas próprias ou investimentos foram separadas de gastos e entradas para reduzir dupla contagem.`);
     const conns=table('connection_health'),broken=conns.filter(r=>String(r.hasError).toLowerCase()==='true'),stale=conns.filter(r=>(daysSince(r.lastUpdatedAt||r.updatedAt)??0)>7); if(broken.length||stale.length) push('warn','Qualidade dos dados',`${broken.length} conexão(ões) com erro e ${stale.length} com atualização superior a 7 dias podem reduzir a confiabilidade da leitura.`); else if(conns.length) push('good','Qualidade dos dados','As conexões carregadas não exibem erro e não há atraso superior a 7 dias nas datas disponíveis.');
     const due=upcomingBills(); if(due.length) push('warn','Faturas próximas',`${due.length} fatura(s) possuem vencimento nos próximos 10 dias, somando ${money(due.reduce((a,r)=>a+val(r.totalAmount),0),state.currency)} quando o valor está disponível.`);
-    $('insights').innerHTML=items.slice(0,8).map(x=>`<div class="insight" data-level="${x.level}"><span class="sev"></span><div><strong>${esc(x.title)}</strong><span>${esc(x.body)}</span></div></div>`).join('')||'<div class="empty">Sem sinais suficientes.</div>';
+    const insightsEl=$('insights'); if(!insightsEl) return; insightsEl.innerHTML=items.slice(0,8).map(x=>`<div class="insight" data-level="${x.level}"><span class="sev"></span><div><strong>${esc(x.title)}</strong><span>${esc(x.body)}</span></div></div>`).join('')||'<div class="empty">Sem sinais suficientes.</div>';
   }
 
   function renderCreditCardsVisual() {
@@ -2253,6 +3319,8 @@
   function renderAll() {
     renderCategoryRules();
     renderFixedExpenseRules();
+    renderFixedIncomeRules();
+    renderIncomeSourceCategoryRules();
     refreshAnalysisFilters();
     const m=financialMetrics(); renderKPIs(m); renderScore(m); renderCashflow(m); renderInsights(m); renderAccountsSummary(); renderSpending(); renderCreditTable(); renderIncome(); renderTransactionsEditor(); renderInvestments(m); renderAccountVisualCards(); renderMeta();
   }
@@ -2311,10 +3379,23 @@
   document.querySelectorAll('.nav-tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.nav-tab').forEach(x=>x.classList.toggle('active',x===btn));document.querySelectorAll('.view-panel').forEach(x=>x.classList.toggle('active',x.id===btn.dataset.view));window.scrollTo({top:0,behavior:'smooth'});}));
   $('folderPicker').addEventListener('change',e=>loadFolderFiles(e.target.files));
   $('autoLoadBtn').addEventListener('click',autoLoad);
-  $('currencySelect').addEventListener('change',e=>{state.currency=e.target.value;state.txPage=0;state.spendTxPage=0;renderAll()});
-  $('periodSelect').addEventListener('change',e=>{state.period=e.target.value;state.txPage=0;state.spendTxPage=0;renderAll()});
+  $('currencySelect').addEventListener('change',e=>{state.currency=e.target.value;state.txPage=0;state.spendTxPage=0;state.incomeTxPage=0;renderAll()});
+  $('periodSelect').addEventListener('change',e=>{state.period=e.target.value;state.txPage=0;state.spendTxPage=0;state.incomeTxPage=0;renderAll()});
   ['spendMonthSelect','spendAccountSelect','spendMethodSelect','spendExpenseClassSelect','spendCategorySelect','spendMerchantSelect'].forEach(id=>$(id)?.addEventListener('change',()=>{state.spendTxPage=0;renderSpending();}));
   ['spendSearch','spendMin','spendMax'].forEach(id=>$(id)?.addEventListener('input',()=>{state.spendTxPage=0;renderSpending();}));
+  ['incomeMonthSelect','incomeAccountSelect','incomeMethodSelect','incomeClassSelect','incomeCategorySelect','incomeSourceSelect'].forEach(id=>$(id)?.addEventListener('change',()=>{state.incomeTxPage=0;renderIncome();}));
+  ['incomeSearch','incomeMin','incomeMax'].forEach(id=>$(id)?.addEventListener('input',()=>{state.incomeTxPage=0;renderIncome();}));
+  ['incomeAbsoluteDimensionSelect','incomeShareDimensionSelect'].forEach(id=>$(id)?.addEventListener('change',()=>{const chartId=id==='incomeAbsoluteDimensionSelect'?'incomeAbsoluteChart':'incomeShareChart';state.chartLegendHidden.delete(chartId);renderIncome();}));
+  document.querySelectorAll('[data-income-method-filter]').forEach(card=>card.addEventListener('click',()=>{const sel=$('incomeMethodSelect');if(!sel)return;const value=card.dataset.incomeMethodFilter;if([...sel.options].some(o=>o.value===value)){sel.value=value;state.incomeTxPage=0;renderIncome();}}));
+  $('clearIncomeFilters')?.addEventListener('click',()=>{['incomeMonthSelect','incomeAccountSelect','incomeMethodSelect','incomeClassSelect','incomeCategorySelect','incomeSourceSelect'].forEach(id=>{if($(id))$(id).value='all'});['incomeSearch','incomeMin','incomeMax'].forEach(id=>{if($(id))$(id).value=''});state.incomeTxPage=0;renderIncome();});
+  $('incomeTransactionsTable')?.addEventListener('click',e=>{const btn=e.target.closest('button[data-income-action="save"]');if(!btn)return;saveIncomeRow(btn.closest('tr'));});
+  $('incomeTransactionsTable')?.addEventListener('change',e=>{
+    if(e.target.closest('.income-purpose-select')) updateIncomePurposeControls(e.target.closest('td'));
+  });
+  $('incomeTransactionsTable')?.addEventListener('focusin',e=>{
+    const select=e.target.closest('.income-link-select');
+    if(select && !select.disabled) populateExpenseAssociationSelect(select);
+  });
   ['spendAbsoluteDimensionSelect','spendShareDimensionSelect'].forEach(id=>$(id)?.addEventListener('change',()=>{const chartId=id==='spendAbsoluteDimensionSelect'?'spendAbsoluteChart':'spendShareChart';state.chartLegendHidden.delete(chartId);renderSpending();}));
   document.querySelectorAll('[data-method-filter]').forEach(card=>card.addEventListener('click',()=>{const sel=$('spendMethodSelect');if(sel&&[...sel.options].some(o=>o.value===card.dataset.methodFilter)){sel.value=card.dataset.methodFilter;state.spendTxPage=0;renderSpending();}}));
   $('clearSpendFilters')?.addEventListener('click',()=>{['spendMonthSelect','spendAccountSelect','spendMethodSelect','spendExpenseClassSelect','spendCategorySelect','spendMerchantSelect'].forEach(id=>{if($(id))$(id).value='all'});['spendSearch','spendMin','spendMax'].forEach(id=>{if($(id))$(id).value=''});state.spendTxPage=0;renderSpending();});
@@ -2346,6 +3427,18 @@
     if(!button)return;
     const row=button.closest('[data-fixed-rule-id]');
     if(row)deleteFixedExpenseRule(row.dataset.fixedRuleId);
+  });
+  $('fixedIncomeRulesList')?.addEventListener('click',e=>{
+    const button=e.target.closest('button[data-fixed-income-rule-action="delete"]');
+    if(!button)return;
+    const row=button.closest('[data-fixed-income-rule-id]');
+    if(row)deleteFixedIncomeRule(row.dataset.fixedIncomeRuleId);
+  });
+  $('incomeSourceCategoryRulesList')?.addEventListener('click',e=>{
+    const button=e.target.closest('button[data-income-source-rule-action="delete"]');
+    if(!button)return;
+    const row=button.closest('[data-income-source-rule-id]');
+    if(row)deleteIncomeSourceCategoryRule(row.dataset.incomeSourceRuleId);
   });
   $('exportFinanceConfigBtn')?.addEventListener('click',exportFinanceConfig);
   $('importFinanceConfigFile')?.addEventListener('change',e=>importFinanceConfig(e.target.files?.[0]));

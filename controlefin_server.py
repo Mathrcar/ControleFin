@@ -72,11 +72,13 @@ def dashboard():
 
 def default_settings():
     return {
-        "version": 4,
+        "version": 6,
         "customCategories": [],
         "transactionOverrides": {},
         "categoryRules": [],
         "fixedExpenseRules": [],
+        "fixedIncomeRules": [],
+        "incomeSourceCategoryRules": [],
     }
 
 
@@ -104,6 +106,14 @@ def normalize_settings(payload):
     raw_fixed_expense_rules = payload.get("fixedExpenseRules", [])
     if not isinstance(raw_fixed_expense_rules, list):
         raw_fixed_expense_rules = []
+
+    raw_fixed_income_rules = payload.get("fixedIncomeRules", [])
+    if not isinstance(raw_fixed_income_rules, list):
+        raw_fixed_income_rules = []
+
+    raw_income_source_category_rules = payload.get("incomeSourceCategoryRules", [])
+    if not isinstance(raw_income_source_category_rules, list):
+        raw_income_source_category_rules = []
 
     allowed_fields = {"merchant", "description", "bank", "account", "method"}
     allowed_operators = {"contains", "equals", "startsWith"}
@@ -197,8 +207,84 @@ def normalize_settings(payload):
             }
         )
 
+    fixed_income_rules = []
+    seen_fixed_income_rule_ids = set()
+
+    for index, raw_rule in enumerate(raw_fixed_income_rules, start=1):
+        if not isinstance(raw_rule, dict):
+            continue
+
+        rule_id = str(raw_rule.get("id") or f"fixed_income_rule_{index}").strip()
+        if not rule_id or rule_id in seen_fixed_income_rule_ids:
+            rule_id = f"fixed_income_rule_{index}"
+        seen_fixed_income_rule_ids.add(rule_id)
+
+        merchant_signature = str(raw_rule.get("merchantSignature") or "").strip()
+        description_signature = str(raw_rule.get("descriptionSignature") or "").strip()
+
+        if not merchant_signature and not description_signature:
+            continue
+
+        try:
+            amount = float(raw_rule.get("amount") or 0)
+        except (TypeError, ValueError):
+            amount = 0.0
+
+        fixed_income_rules.append(
+            {
+                "id": rule_id,
+                "enabled": raw_rule.get("enabled", True) is not False,
+                "merchantSignature": merchant_signature,
+                "descriptionSignature": description_signature,
+                "institution": str(raw_rule.get("institution") or "").strip(),
+                "accountId": str(raw_rule.get("accountId") or "").strip(),
+                "method": str(raw_rule.get("method") or "").strip(),
+                "category": str(raw_rule.get("category") or "").strip(),
+                "amount": amount,
+                "sourceLabel": str(raw_rule.get("sourceLabel") or "").strip(),
+                "sourceTransactionKey": str(raw_rule.get("sourceTransactionKey") or "").strip(),
+                "createdAt": str(raw_rule.get("createdAt") or "").strip(),
+            }
+        )
+
+    income_source_category_rules = []
+    seen_income_source_rule_ids = set()
+
+    for index, raw_rule in enumerate(raw_income_source_category_rules, start=1):
+        if not isinstance(raw_rule, dict):
+            continue
+
+        source_type = str(raw_rule.get("sourceType") or "").strip()
+        source_signature = str(raw_rule.get("sourceSignature") or "").strip()
+        source_label = str(raw_rule.get("sourceLabel") or "").strip()
+        category = str(raw_rule.get("category") or "").strip()
+
+        if source_type not in {"payer", "merchant", "description"}:
+            continue
+        if not source_signature or not category:
+            continue
+
+        rule_id = str(raw_rule.get("id") or f"income_source_rule_{index}").strip()
+        if not rule_id or rule_id in seen_income_source_rule_ids:
+            rule_id = f"income_source_rule_{index}"
+        seen_income_source_rule_ids.add(rule_id)
+
+        income_source_category_rules.append(
+            {
+                "id": rule_id,
+                "enabled": raw_rule.get("enabled", True) is not False,
+                "sourceType": source_type,
+                "sourceSignature": source_signature,
+                "sourceLabel": source_label,
+                "accountId": str(raw_rule.get("accountId") or "").strip(),
+                "institution": str(raw_rule.get("institution") or "").strip(),
+                "category": category,
+                "createdAt": str(raw_rule.get("createdAt") or "").strip(),
+            }
+        )
+
     return {
-        "version": 4,
+        "version": 6,
         "customCategories": [
             str(category).strip()
             for category in custom_categories
@@ -207,6 +293,8 @@ def normalize_settings(payload):
         "transactionOverrides": transaction_overrides,
         "categoryRules": category_rules,
         "fixedExpenseRules": fixed_expense_rules,
+        "fixedIncomeRules": fixed_income_rules,
+        "incomeSourceCategoryRules": income_source_category_rules,
     }
 
 
@@ -275,6 +363,8 @@ async def update_settings(request: Request):
     transaction_overrides = payload.get("transactionOverrides", {})
     category_rules = payload.get("categoryRules", [])
     fixed_expense_rules = payload.get("fixedExpenseRules", [])
+    fixed_income_rules = payload.get("fixedIncomeRules", [])
+    income_source_category_rules = payload.get("incomeSourceCategoryRules", [])
 
     if not isinstance(custom_categories, list):
         raise HTTPException(
@@ -298,6 +388,18 @@ async def update_settings(request: Request):
         raise HTTPException(
             status_code=400,
             detail="fixedExpenseRules deve ser uma lista.",
+        )
+
+    if not isinstance(fixed_income_rules, list):
+        raise HTTPException(
+            status_code=400,
+            detail="fixedIncomeRules deve ser uma lista.",
+        )
+
+    if not isinstance(income_source_category_rules, list):
+        raise HTTPException(
+            status_code=400,
+            detail="incomeSourceCategoryRules deve ser uma lista.",
         )
 
     settings = normalize_settings(payload)
