@@ -97,7 +97,7 @@
             <button id="createSpendCategoryBtn" class="primary" type="button">Criar categoria</button>
           </div>
           <div class="category-chips" id="customCategoryChips"></div>
-          <div class="persist-note" id="spending-persistence-info"><strong>Salvamento automático ativo.</strong> Categorias e reclassificações são guardadas no armazenamento local do navegador e recarregadas automaticamente quando você abrir este dashboard novamente no mesmo endereço local.</div>
+          <div class="persist-note" id="spending-persistence-info"><strong>Salvamento automático ativo.</strong> Categorias e reclassificações são gravadas pelo backend em <span class="mono">user_data/ajustes.json</span>. O navegador apenas envia e lê os ajustes; o arquivo permanente fica na pasta local do ControleFin.</div>
           <div class="persist-actions" id="spending-persistence-actions">
             <button id="exportFinanceConfigBtn" type="button">Baixar backup dos ajustes</button>
             <label class="button ghost" for="importFinanceConfigFile">Restaurar backup</label>
@@ -158,7 +158,7 @@
       <article class="panel panel-pad" id="transactions-editor"><div class="editor-toolbar" id="transactions-editor-toolbar"><label>Buscar<input id="txSearch" type="search" placeholder="Descrição, merchant…"></label><label>Natureza<select id="txKindFilter"><option value="all">Todas</option><option value="EXPENSE">Gastos</option><option value="INCOME">Entradas</option><option value="TRANSFER">Transferências próprias</option><option value="INVESTMENT_TRANSFER">Aportes / transferências para investimentos</option><option value="CARD_BILL">Pagamento de fatura</option><option value="REFUND">Estornos</option><option value="IGNORE">Ignoradas</option></select></label><label>Conta<select id="txAccountFilter"><option value="all">Todas</option></select></label></div><div class="table-wrap" id="transactions-table"><table><thead><tr><th>Data</th><th>Conta</th><th>Descrição</th><th class="num">Valor</th><th>Natureza</th><th>Categoria</th><th>Merchant</th><th>Meio</th><th></th></tr></thead><tbody id="transactionsEditorTable"></tbody></table></div><div class="footnote" id="txEditorFootnote"></div></article>
     </section>
 
-    <p class="footnote" id="dashboard-privacy-note">Os dados permanecem no navegador. Pagamentos de fatura, transferências entre suas próprias contas e aportes/resgates de investimentos ficam fora de Gastos e Entradas para evitar dupla contagem patrimonial.</p>
+    <p class="footnote" id="dashboard-privacy-note">Os dados financeiros permanecem locais. Categorias e reclassificações são salvas em user_data/ajustes.json pelo backend; pagamentos de fatura, transferências próprias e aportes/resgates ficam fora de Gastos e Entradas para evitar dupla contagem patrimonial.</p>
   </main>
 </div>
 <div class="toast" id="toast"></div>
@@ -186,6 +186,9 @@
     customCategories: new Set(),
     categoriesStorageKey: 'controlefin.customCategories.v1',
     persistedAt: null,
+    persistenceMode: 'backend',
+    settingsSaveTimer: null,
+    settingsSaveInFlight: false,
   };
 
   const $ = (id) => document.getElementById(id);
@@ -583,40 +586,211 @@
     return 'Outros';
   }
 
-  function loadOverrides() {
-    state.transactionOverrides.clear();
+  function loadLegacyLocalSettings() {
+    const legacy = {
+      transactionOverrides: {},
+      customCategories: [],
+    };
+
     try {
-      const parsed=JSON.parse(localStorage.getItem(state.overridesStorageKey)||'{}');
-      Object.entries(parsed).forEach(([k,v])=>{ if(v && typeof v==='object') state.transactionOverrides.set(k,v); });
-    } catch(e) { console.warn('Não foi possível carregar reclassificações locais', e); }
+      const parsed = JSON.parse(localStorage.getItem(state.overridesStorageKey) || '{}');
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        legacy.transactionOverrides = parsed;
+      }
+    } catch (e) {
+      console.warn('Não foi possível ler reclassificações antigas do localStorage.', e);
+    }
+
+    try {
+      const parsed = JSON.parse(localStorage.getItem(state.categoriesStorageKey) || '[]');
+      if (Array.isArray(parsed)) {
+        legacy.customCategories = parsed
+          .map(v => String(v || '').trim())
+          .filter(Boolean);
+      }
+    } catch (e) {
+      console.warn('Não foi possível ler categorias antigas do localStorage.', e);
+    }
+
+    return legacy;
+  }
+
+  function applySettingsPayload(settings) {
+    state.transactionOverrides.clear();
+    state.customCategories.clear();
+
+    const overrides = settings?.transactionOverrides || {};
+    if (overrides && typeof overrides === 'object' && !Array.isArray(overrides)) {
+      Object.entries(overrides).forEach(([key, value]) => {
+        if (value && typeof value === 'object' && !Array.isArray(value)) {
+          state.transactionOverrides.set(key, value);
+        }
+      });
+    }
+
+    const categories = Array.isArray(settings?.customCategories)
+      ? settings.customCategories
+      : [];
+
+    categories.forEach(value => {
+      const category = String(value || '').trim();
+      if (category) state.customCategories.add(category);
+    });
+  }
+
+  function currentSettingsPayload() {
+    return {
+      version: 1,
+      customCategories: [...state.customCategories]
+        .map(v => String(v || '').trim())
+        .filter(Boolean)
+        .sort((a, b) => a.localeCompare(b, 'pt-BR')),
+      transactionOverrides: Object.fromEntries(state.transactionOverrides),
+    };
+  }
+
+  async function loadPersistentSettings() {
+    try {
+      const response = await fetch('/api/settings', {
+        cache: 'no-store',
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const settings = await response.json();
+      applySettingsPayload(settings);
+      state.persistenceMode = 'backend';
+
+      // Migração automática das classificações antigas do localStorage:
+      // só migra quando o arquivo permanente ainda está vazio.
+      const backendEmpty =
+        state.transactionOverrides.size === 0 &&
+        state.customCategories.size === 0;
+
+      if (backendEmpty) {
+        const legacy = loadLegacyLocalSettings();
+        const hasLegacy =
+          Object.keys(legacy.transactionOverrides || {}).length > 0 ||
+          (legacy.customCategories || []).length > 0;
+
+        if (hasLegacy) {
+          applySettingsPayload(legacy);
+          await savePersistentSettings({ silent: true });
+
+          // Após migração bem-sucedida, remove apenas as chaves antigas do ControleFin.
+          localStorage.removeItem(state.overridesStorageKey);
+          localStorage.removeItem(state.categoriesStorageKey);
+
+          updatePersistenceStatus(
+            `${state.transactionOverrides.size} ajuste(s) migrado(s) para user_data/ajustes.json`
+          );
+          return;
+        }
+      }
+
+      updatePersistenceStatus(
+        `${state.transactionOverrides.size} ajuste(s) · ${state.customCategories.size} categoria(s) carregados de user_data/ajustes.json`
+      );
+    } catch (error) {
+      console.error('Backend de persistência indisponível:', error);
+
+      // Fallback de segurança para quem abrir o HTML fora do backend.
+      const legacy = loadLegacyLocalSettings();
+      applySettingsPayload(legacy);
+      state.persistenceMode = 'localStorage';
+
+      updatePersistenceStatus(
+        'Backend indisponível — usando armazenamento local temporariamente'
+      );
+    }
   }
 
   function updatePersistenceStatus(message) {
-    state.persistedAt=new Date();
-    const el=$('spendingPersistenceStatus');
-    if(el) el.textContent=message || `Salvo automaticamente às ${state.persistedAt.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'})}`;
+    state.persistedAt = new Date();
+    const el = $('spendingPersistenceStatus');
+    if (!el) return;
+
+    if (message) {
+      el.textContent = message;
+      return;
+    }
+
+    if (state.persistenceMode === 'backend') {
+      el.textContent =
+        `Salvo em user_data/ajustes.json às ${state.persistedAt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}`;
+    } else {
+      el.textContent =
+        `Salvo no navegador às ${state.persistedAt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}`;
+    }
+  }
+
+  async function savePersistentSettings({ silent = false } = {}) {
+    const payload = currentSettingsPayload();
+
+    if (state.persistenceMode === 'localStorage') {
+      localStorage.setItem(
+        state.overridesStorageKey,
+        JSON.stringify(payload.transactionOverrides)
+      );
+      localStorage.setItem(
+        state.categoriesStorageKey,
+        JSON.stringify(payload.customCategories)
+      );
+      if (!silent) updatePersistenceStatus();
+      return;
+    }
+
+    state.settingsSaveInFlight = true;
+    const statusEl = $('spendingPersistenceStatus');
+    if (statusEl && !silent) statusEl.textContent = 'Salvando ajustes…';
+
+    try {
+      const response = await fetch('/api/settings', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      if (!response.ok) {
+        const detail = await response.text();
+        throw new Error(`HTTP ${response.status}: ${detail}`);
+      }
+
+      state.persistenceMode = 'backend';
+      if (!silent) updatePersistenceStatus();
+    } catch (error) {
+      console.error('Falha ao salvar ajustes no backend:', error);
+      toast('Não foi possível salvar em user_data/ajustes.json.');
+      if (statusEl) statusEl.textContent = 'Erro ao salvar ajustes';
+      throw error;
+    } finally {
+      state.settingsSaveInFlight = false;
+    }
+  }
+
+  function queuePersistentSettingsSave() {
+    clearTimeout(state.settingsSaveTimer);
+
+    const statusEl = $('spendingPersistenceStatus');
+    if (statusEl && state.persistenceMode === 'backend') {
+      statusEl.textContent = 'Alteração pendente de salvamento…';
+    }
+
+    state.settingsSaveTimer = setTimeout(() => {
+      savePersistentSettings().catch(() => {});
+    }, 250);
   }
 
   function persistOverrides() {
-    try {
-      localStorage.setItem(state.overridesStorageKey, JSON.stringify(Object.fromEntries(state.transactionOverrides)));
-      updatePersistenceStatus();
-    } catch(e) { toast('Não foi possível persistir os ajustes neste navegador.'); }
-  }
-
-  function loadCustomCategories() {
-    state.customCategories.clear();
-    try {
-      const parsed=JSON.parse(localStorage.getItem(state.categoriesStorageKey)||'[]');
-      if(Array.isArray(parsed)) parsed.forEach(v=>{const c=String(v||'').trim();if(c)state.customCategories.add(c)});
-    } catch(e) { console.warn('Não foi possível carregar categorias personalizadas',e); }
+    queuePersistentSettingsSave();
   }
 
   function persistCustomCategories() {
-    try {
-      localStorage.setItem(state.categoriesStorageKey,JSON.stringify([...state.customCategories].sort((a,b)=>a.localeCompare(b,'pt-BR'))));
-      updatePersistenceStatus();
-    } catch(e) { toast('Não foi possível salvar as categorias neste navegador.'); }
+    queuePersistentSettingsSave();
   }
 
   function allSpendCategories() {
@@ -975,7 +1149,7 @@
     if(!category || category===original) delete next.category; else next.category=category;
     if(category && category!==original) { state.customCategories.add(category); persistCustomCategories(); }
     if(Object.keys(next).length) state.transactionOverrides.set(key,next); else state.transactionOverrides.delete(key);
-    persistOverrides(); state.spendTxPage=0; renderCustomCategoryManager(); renderAll(); toast('Categoria do gasto atualizada e salva localmente.');
+    persistOverrides(); state.spendTxPage=0; renderCustomCategoryManager(); renderAll(); toast('Categoria do gasto atualizada e salva.');
   }
 
   function renderInteractiveBars(elId, entries, filterId, limit=16) {
@@ -1084,7 +1258,7 @@
     const next={}; tr.querySelectorAll('[data-field]').forEach(el=>{const v=String(el.value||'').trim(); if(v) next[el.dataset.field]=v;});
     const originalCat=base.category||'Sem categoria', originalMerch=originalMerchant(base); if(next.category===originalCat) delete next.category; if(next.merchant===originalMerch) delete next.merchant;
     if(next.category) { state.customCategories.add(next.category); persistCustomCategories(); }
-    if(Object.keys(next).length) state.transactionOverrides.set(key,next); else state.transactionOverrides.delete(key); persistOverrides(); state.txPage=0; renderCustomCategoryManager(); renderAll(); toast('Classificação atualizada e salva localmente.');
+    if(Object.keys(next).length) state.transactionOverrides.set(key,next); else state.transactionOverrides.delete(key); persistOverrides(); state.txPage=0; renderCustomCategoryManager(); renderAll(); toast('Classificação atualizada e salva.');
   }
 
   function exportOverrides() { exportFinanceConfig(); }
@@ -1148,17 +1322,34 @@
     state.currency=currencies.includes('BRL')?'BRL':currencies[0]; $('currencySelect').innerHTML=currencies.map(c=>`<option value="${esc(c)}" ${c===state.currency?'selected':''}>${esc(c)}</option>`).join('');
   }
 
-  function postLoad() {
-    const manifestRows=table('manifest'); state.manifest=Object.fromEntries(manifestRows.map(r=>[r.key,r.value])); state.catalog=table('dataset_catalog'); loadOverrides(); loadCustomCategories(); detectInternalTransfers(); setupCurrencies(); state.loadedAt=new Date();
-    $('dashboard').classList.remove('hidden'); $('welcome').classList.add('hidden'); $('loadStatus').textContent='Dados carregados.';
-    const gen=state.manifest.generatedAtUtc; $('runMeta').textContent=`${state.tables.size} datasets locais${gen?' · gerados em '+shortDate(gen):''}`; renderCustomCategoryManager(); renderAll(); if($('spendingPersistenceStatus')) $('spendingPersistenceStatus').textContent=`${state.transactionOverrides.size} ajuste(s) · ${state.customCategories.size} categoria(s) personalizada(s) carregados`; toast('Dados financeiros carregados localmente.');
+  async function postLoad() {
+    const manifestRows=table('manifest');
+    state.manifest=Object.fromEntries(manifestRows.map(r=>[r.key,r.value]));
+    state.catalog=table('dataset_catalog');
+
+    await loadPersistentSettings();
+
+    detectInternalTransfers();
+    setupCurrencies();
+    state.loadedAt=new Date();
+
+    $('dashboard').classList.remove('hidden');
+    $('welcome').classList.add('hidden');
+    $('loadStatus').textContent='Dados carregados.';
+
+    const gen=state.manifest.generatedAtUtc;
+    $('runMeta').textContent=`${state.tables.size} datasets locais${gen?' · gerados em '+shortDate(gen):''}`;
+
+    renderCustomCategoryManager();
+    renderAll();
+    toast('Dados financeiros e ajustes carregados localmente.');
   }
 
   async function loadFolderFiles(fileList) {
     const files=[...fileList].filter(f=>f.name.toLowerCase().endsWith('.csv')); if(!files.length) return toast('Nenhum CSV encontrado na pasta selecionada.');
     $('loadStatus').textContent=`Lendo ${files.length} arquivo(s)…`; state.tables.clear(); state.files.clear();
     for (const f of files) setTableFromFilename(f.name, await f.text());
-    postLoad();
+    await postLoad();
   }
 
   async function autoLoad() {
@@ -1167,7 +1358,7 @@
       const catResp=await fetch('./data/dataset_catalog.csv',{cache:'no-store'}); if(!catResp.ok) throw new Error('dataset_catalog.csv não encontrado'); const catText=await catResp.text(); setTableFromFilename('dataset_catalog.csv',catText); const catalog=table('dataset_catalog');
       const names=uniq(['manifest.csv',...catalog.map(r=>r.fileName).filter(Boolean)]); let ok=0;
       await Promise.all(names.map(async name=>{try{const res=await fetch('./data/'+name,{cache:'no-store'});if(res.ok){setTableFromFilename(name,await res.text());ok++;}}catch{}}));
-      if(!ok) throw new Error('Nenhum CSV foi lido'); postLoad();
+      if(!ok) throw new Error('Nenhum CSV foi lido'); await postLoad();
     } catch (e) {
       $('loadStatus').textContent='Carregamento automático indisponível. Se abriu o HTML como arquivo, selecione a pasta data/.'; toast('Use “Selecionar pasta data/” ou sirva o projeto via localhost.');
     }

@@ -5,9 +5,10 @@ import webbrowser
 from pathlib import Path
 
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
+import json
 
 from pluggy_finance_export import run_export
 
@@ -46,6 +47,7 @@ BASE_DIR = get_app_dir()
 
 DATA_DIR = BASE_DIR / "data"
 USER_DATA_DIR = BASE_DIR / "user_data"
+SETTINGS_FILE = USER_DATA_DIR / "ajustes.json"
 HTML_FILE = BASE_DIR / "controlefin_dashboard.html"
 ENV_FILE = BASE_DIR / ".env"
 
@@ -54,10 +56,113 @@ USER_DATA_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI()
 
-
 @app.get("/")
 def dashboard():
-    return FileResponse(HTML_FILE)
+    if not HTML_FILE.exists():
+        raise HTTPException(
+            status_code=500,
+            detail=f"Dashboard HTML não encontrado em: {HTML_FILE}",
+        )
+
+    return FileResponse(
+        HTML_FILE,
+        media_type="text/html",
+    )
+
+
+def default_settings():
+    return {
+        "version": 1,
+        "customCategories": [],
+        "transactionOverrides": {},
+    }
+
+
+def load_settings():
+    if not SETTINGS_FILE.exists():
+        settings = default_settings()
+        save_settings(settings)
+        return settings
+
+    try:
+        return json.loads(
+            SETTINGS_FILE.read_text(encoding="utf-8")
+        )
+    except Exception:
+        return default_settings()
+
+
+def save_settings(settings):
+    USER_DATA_DIR.mkdir(
+        parents=True,
+        exist_ok=True
+    )
+
+    temp_file = SETTINGS_FILE.with_suffix(".tmp")
+
+    temp_file.write_text(
+        json.dumps(
+            settings,
+            ensure_ascii=False,
+            indent=2,
+        ),
+        encoding="utf-8",
+    )
+
+    temp_file.replace(SETTINGS_FILE)
+
+@app.get("/api/settings")
+def get_settings():
+    return load_settings()
+
+
+@app.put("/api/settings")
+async def update_settings(request: Request):
+    try:
+        payload = await request.json()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail="JSON inválido.",
+        ) from exc
+
+    if not isinstance(payload, dict):
+        raise HTTPException(
+            status_code=400,
+            detail="Formato inválido.",
+        )
+
+    custom_categories = payload.get("customCategories", [])
+    transaction_overrides = payload.get("transactionOverrides", {})
+
+    if not isinstance(custom_categories, list):
+        raise HTTPException(
+            status_code=400,
+            detail="customCategories deve ser uma lista.",
+        )
+
+    if not isinstance(transaction_overrides, dict):
+        raise HTTPException(
+            status_code=400,
+            detail="transactionOverrides deve ser um objeto.",
+        )
+
+    settings = {
+        "version": 1,
+        "customCategories": [
+            str(category).strip()
+            for category in custom_categories
+            if str(category).strip()
+        ],
+        "transactionOverrides": transaction_overrides,
+    }
+
+    save_settings(settings)
+
+    return {
+        "ok": True,
+        "settingsFile": str(SETTINGS_FILE),
+    }
 
 
 app.mount(
