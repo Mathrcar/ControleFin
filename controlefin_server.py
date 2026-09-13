@@ -5,6 +5,7 @@ import webbrowser
 import re
 import sqlite3
 from contextlib import closing
+from datetime import datetime
 from pathlib import Path
 
 import uvicorn
@@ -80,9 +81,10 @@ def dashboard():
 
 def default_settings():
     return {
-        "version": 8,
+        "version": 9,
         "customCategories": [],
         "customCategoryTranslations": [],
+        "manualTransactions": [],
         "transactionOverrides": {},
         "categoryRules": [],
         "fixedExpenseRules": [],
@@ -111,6 +113,13 @@ def normalize_settings(payload):
     )
     if not isinstance(raw_custom_category_translations, list):
         raw_custom_category_translations = []
+
+    raw_manual_transactions = payload.get(
+        "manualTransactions",
+        [],
+    )
+    if not isinstance(raw_manual_transactions, list):
+        raw_manual_transactions = []
 
     transaction_overrides = payload.get("transactionOverrides", {})
     if not isinstance(transaction_overrides, dict):
@@ -358,18 +367,243 @@ def normalize_settings(payload):
             }
         )
 
+    manual_transactions = []
+    seen_manual_transaction_ids = set()
+
+    allowed_manual_kinds = {"EXPENSE", "INCOME"}
+    allowed_account_types = {"BANK", "CREDIT"}
+    allowed_manual_methods = {
+        "Cartão de crédito",
+        "PIX",
+        "Boleto",
+        "Transferência",
+        "Débito / compra em conta",
+        "Dinheiro",
+        "Outros",
+    }
+    allowed_manual_classes = {"FIXED", "VARIABLE"}
+
+    for index, raw_transaction in enumerate(
+        raw_manual_transactions,
+        start=1,
+    ):
+        if not isinstance(raw_transaction, dict):
+            continue
+
+        manual_id = str(
+            raw_transaction.get("id")
+            or f"manual_{index}"
+        ).strip()
+
+        if (
+            not manual_id
+            or manual_id in seen_manual_transaction_ids
+        ):
+            manual_id = f"manual_{index}"
+
+        seen_manual_transaction_ids.add(manual_id)
+
+        kind = str(
+            raw_transaction.get("manualKind")
+            or raw_transaction.get("kind")
+            or ""
+        ).strip().upper()
+
+        if kind not in allowed_manual_kinds:
+            continue
+
+        date_value = str(
+            raw_transaction.get("date") or ""
+        ).strip()
+
+        try:
+            parsed_date = datetime.strptime(
+                date_value,
+                "%Y-%m-%d",
+            )
+        except (TypeError, ValueError):
+            continue
+
+        try:
+            amount = abs(
+                float(raw_transaction.get("amount") or 0)
+            )
+        except (TypeError, ValueError):
+            amount = 0.0
+
+        if amount <= 0:
+            continue
+
+        description = str(
+            raw_transaction.get("description") or ""
+        ).strip()[:240]
+
+        category = str(
+            raw_transaction.get("category") or ""
+        ).strip()[:120]
+
+        institution_name = str(
+            raw_transaction.get("institutionName") or ""
+        ).strip()[:120]
+
+        account_name = str(
+            raw_transaction.get("accountName") or ""
+        ).strip()[:120]
+
+        account_id = str(
+            raw_transaction.get("accountId") or ""
+        ).strip()[:180]
+
+        account_type = str(
+            raw_transaction.get("accountType") or "BANK"
+        ).strip().upper()
+
+        method = str(
+            raw_transaction.get("manualMethod")
+            or raw_transaction.get("method")
+            or ""
+        ).strip()
+
+        if (
+            not description
+            or not category
+            or not institution_name
+            or not account_name
+            or not account_id
+        ):
+            continue
+
+        if account_type not in allowed_account_types:
+            account_type = "BANK"
+
+        if method not in allowed_manual_methods:
+            continue
+
+        # Entrada em cartão seria semanticamente um estorno/crédito,
+        # não uma entrada financeira. Mantemos entradas manuais em BANK.
+        if kind == "INCOME" and account_type == "CREDIT":
+            account_type = "BANK"
+
+        currency_code = str(
+            raw_transaction.get("currencyCode") or "BRL"
+        ).strip().upper()
+
+        if not re.fullmatch(r"[A-Z]{3}", currency_code):
+            currency_code = "BRL"
+
+        manual_class = str(
+            raw_transaction.get("manualClass") or "VARIABLE"
+        ).strip().upper()
+
+        if manual_class not in allowed_manual_classes:
+            manual_class = "VARIABLE"
+
+        counterparty = str(
+            raw_transaction.get("counterparty")
+            or raw_transaction.get("merchantName")
+            or raw_transaction.get("payer_name")
+            or ""
+        ).strip()[:180]
+
+        created_at = str(
+            raw_transaction.get("createdAt") or ""
+        ).strip()
+
+        updated_at = str(
+            raw_transaction.get("updatedAt") or ""
+        ).strip()
+
+        signed_amount = (
+            -amount
+            if kind == "EXPENSE"
+            else amount
+        )
+
+        normalized_expense = (
+            amount
+            if kind == "EXPENSE"
+            else 0.0
+        )
+
+        normalized_outflow = (
+            amount
+            if kind == "EXPENSE"
+            and account_type == "BANK"
+            else 0.0
+        )
+
+        normalized_inflow = (
+            amount
+            if kind == "INCOME"
+            else 0.0
+        )
+
+        manual_transactions.append(
+            {
+                "id": manual_id,
+                "source": "MANUAL",
+                "manual": True,
+                "manualKind": kind,
+                "date": parsed_date.strftime("%Y-%m-%d"),
+                "month": parsed_date.strftime("%Y-%m"),
+                "amount": round(signed_amount, 2),
+                "currencyCode": currency_code,
+                "status": "POSTED",
+                "type": (
+                    "DEBIT"
+                    if kind == "EXPENSE"
+                    else "CREDIT"
+                ),
+                "description": description,
+                "institutionName": institution_name,
+                "accountName": account_name,
+                "accountId": account_id,
+                "accountType": account_type,
+                "category": category,
+                "manualMethod": method,
+                "manualClass": manual_class,
+                "counterparty": counterparty,
+                "merchantName": (
+                    counterparty
+                    if kind == "EXPENSE"
+                    else ""
+                ),
+                "payer_name": (
+                    counterparty
+                    if kind == "INCOME"
+                    else ""
+                ),
+                "normalizedExpense": round(
+                    normalized_expense,
+                    2,
+                ),
+                "normalizedOutflow": round(
+                    normalized_outflow,
+                    2,
+                ),
+                "normalizedInflow": round(
+                    normalized_inflow,
+                    2,
+                ),
+                "normalizedCardCredit": 0.0,
+                "createdAt": created_at,
+                "updatedAt": updated_at,
+            }
+        )
+
     ui_language = str(payload.get("uiLanguage") or "pt-BR").strip()
     if ui_language not in {"pt-BR", "en-US"}:
         ui_language = "pt-BR"
 
     return {
-        "version": 8,
+        "version": 9,
         "customCategories": [
             str(category).strip()
             for category in custom_categories
             if str(category).strip()
         ],
         "customCategoryTranslations": custom_category_translations,
+        "manualTransactions": manual_transactions,
         "transactionOverrides": transaction_overrides,
         "categoryRules": category_rules,
         "fixedExpenseRules": fixed_expense_rules,
@@ -445,6 +679,10 @@ async def update_settings(request: Request):
         "customCategoryTranslations",
         [],
     )
+    manual_transactions = payload.get(
+        "manualTransactions",
+        [],
+    )
     transaction_overrides = payload.get("transactionOverrides", {})
     category_rules = payload.get("categoryRules", [])
     fixed_expense_rules = payload.get("fixedExpenseRules", [])
@@ -464,6 +702,12 @@ async def update_settings(request: Request):
                 "customCategoryTranslations deve ser "
                 "uma lista."
             ),
+        )
+
+    if not isinstance(manual_transactions, list):
+        raise HTTPException(
+            status_code=400,
+            detail="manualTransactions deve ser uma lista.",
         )
 
     if not isinstance(transaction_overrides, dict):
