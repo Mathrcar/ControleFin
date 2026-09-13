@@ -5,8 +5,8 @@ ControleFin - Exportador local de dados financeiros da Pluggy.
 Objetivo
 --------
 Ler uma lista de Item IDs já conhecida pelo usuário, consultar os produtos
-financeiros relacionados e gerar CSVs estáveis para consumo posterior por um
-HTML/dashboard local.
+financeiros relacionados e gerar CSVs estáveis + um banco SQLite local para
+consumo posterior pelo dashboard.
 
 Decisões importantes
 ---------------------
@@ -25,7 +25,9 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import json
+import sqlite3
 import math
 import os
 import re
@@ -1739,8 +1741,14 @@ def sort_table(table_name: str, records: list[dict[str, Any]]) -> list[dict[str,
     return records
 
 
-def export_csv_bundle(data: ExtractedData, output_dir: Path) -> None:
+def export_csv_bundle(
+    data: ExtractedData,
+    output_dir: Path,
+    *,
+    generated_at: Optional[str] = None,
+) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
+    generated_at = generated_at or utc_now_iso()
 
     # Cria todos os datasets conhecidos para manter nomes estáveis para o HTML.
     known_tables = list(DATASET_DESCRIPTIONS.keys())
@@ -1773,13 +1781,577 @@ def export_csv_bundle(data: ExtractedData, output_dir: Path) -> None:
 
     # Manifest em CSV para o HTML descobrir a execução sem depender de JSON.
     manifest = [
-        {"key": "generatedAtUtc", "value": utc_now_iso()},
+        {"key": "generatedAtUtc", "value": generated_at},
         {"key": "baseUrl", "value": BASE_URL},
         {"key": "datasetCount", "value": len(catalog_rows)},
         {"key": "errorCount", "value": len(data.errors)},
         {"key": "transactionEndpoint", "value": "/v2/transactions"},
     ]
     write_csv(output_dir / "manifest.csv", manifest, ["key", "value"])
+
+
+
+# ---------------------------------------------------------------------------
+# Persistência SQLite
+# ---------------------------------------------------------------------------
+
+SQLITE_DATABASE_NAME = "controlefin.db"
+SQLITE_SCHEMA_VERSION = 1
+SQLITE_METADATA_COLUMNS = {
+    "_cf_row_key",
+    "_cf_sync_id",
+    "_cf_sort_order",
+    "_cf_raw_json",
+}
+
+SQLITE_COMPOSITE_KEYS: dict[str, tuple[str, ...]] = {
+    "dashboard_kpis": ("currencyCode",),
+    "positions_by_institution": ("institutionName", "positionType", "currencyCode"),
+    "connection_health": ("itemId",),
+    "monthly_cashflow": ("month", "currencyCode", "status"),
+    "monthly_cashflow_by_account": ("month", "accountId", "currencyCode", "status"),
+    "monthly_spending_by_category": (
+        "month",
+        "sourceGroup",
+        "categoryId",
+        "category",
+        "currencyCode",
+        "status",
+    ),
+    "monthly_spending_by_merchant": (
+        "month",
+        "sourceGroup",
+        "merchant",
+        "currencyCode",
+        "status",
+    ),
+    "monthly_credit_card_spending": ("month", "accountId", "currencyCode", "status"),
+    "credit_utilization": ("accountId",),
+    "investment_allocation": (
+        "institutionName",
+        "investmentType",
+        "investmentSubtype",
+        "currencyCode",
+    ),
+    "extraction_summary": ("runStartedUtc", "tableName"),
+    "dataset_catalog": ("tableName",),
+    "manifest": ("key",),
+}
+
+
+def quote_sqlite_identifier(value: str) -> str:
+    return '"' + str(value).replace('"', '""') + '"'
+
+
+def sqlite_table_name(value: str) -> str:
+    value = str(value or "")
+    if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", value):
+        raise ValueError(f"Nome de tabela SQLite inválido: {value!r}")
+    return value
+
+
+def sqlite_affinity(values: Iterable[Any]) -> str:
+    has_real = False
+    has_integer = False
+
+    for value in values:
+        if value is None or value == "":
+            continue
+        if isinstance(value, bool):
+            has_integer = True
+            continue
+        if isinstance(value, int):
+            has_integer = True
+            continue
+        if isinstance(value, float):
+            has_real = True
+            continue
+        return "TEXT"
+
+    if has_real:
+        return "REAL"
+    if has_integer:
+        return "INTEGER"
+    return "TEXT"
+
+
+def sqlite_value(value: Any) -> Any:
+    if value is None:
+        return None
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, (dict, list)):
+        return json_text(value)
+    if isinstance(value, (str, int, float, bytes)):
+        return value
+    return str(value)
+
+
+def sqlite_row_key(table_name: str, flat_record: dict[str, Any], index: int) -> str:
+    # IDs reais primeiro: isso permite UPSERT previsível entre sincronizações.
+    for field_name in (
+        "id",
+        "transactionId",
+        "sourceId",
+        "investmentId",
+        "loanId",
+        "billId",
+    ):
+        value = flat_record.get(field_name)
+        if value not in (None, ""):
+            return f"{field_name}:{value}"
+
+    composite_fields = SQLITE_COMPOSITE_KEYS.get(table_name)
+    if composite_fields:
+        values = [flat_record.get(field) for field in composite_fields]
+        if all(value not in (None, "") for value in values):
+            joined = "\x1f".join(str(value) for value in values)
+            return f"composite:{joined}"
+
+    # Fallback determinístico para datasets sem chave natural.
+    canonical = json.dumps(
+        flat_record,
+        ensure_ascii=False,
+        sort_keys=True,
+        separators=(",", ":"),
+        default=str,
+    )
+    digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    return f"sha256:{digest}"
+
+
+def sqlite_connect(database_path: Path) -> sqlite3.Connection:
+    database_path.parent.mkdir(parents=True, exist_ok=True)
+    connection = sqlite3.connect(database_path)
+    connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA foreign_keys = ON")
+    connection.execute("PRAGMA journal_mode = WAL")
+    connection.execute("PRAGMA synchronous = NORMAL")
+    connection.execute("PRAGMA busy_timeout = 5000")
+    return connection
+
+
+def sqlite_existing_columns(
+    connection: sqlite3.Connection,
+    table_name: str,
+) -> set[str]:
+    table_name = sqlite_table_name(table_name)
+    rows = connection.execute(
+        f"PRAGMA table_info({quote_sqlite_identifier(table_name)})"
+    ).fetchall()
+    return {str(row["name"]) for row in rows}
+
+
+def ensure_sqlite_dataset_table(
+    connection: sqlite3.Connection,
+    table_name: str,
+    records: list[dict[str, Any]],
+    defaults: Optional[list[str]] = None,
+) -> list[str]:
+    table_name = sqlite_table_name(table_name)
+    flat_records = [flatten_dict(record) for record in records]
+    columns = csv_columns(records, defaults or [])
+    columns = [
+        column
+        for column in columns
+        if column not in SQLITE_METADATA_COLUMNS
+    ]
+
+    connection.execute(
+        f"""
+        CREATE TABLE IF NOT EXISTS {quote_sqlite_identifier(table_name)} (
+            "_cf_row_key" TEXT PRIMARY KEY,
+            "_cf_sync_id" TEXT NOT NULL,
+            "_cf_sort_order" INTEGER NOT NULL DEFAULT 0,
+            "_cf_raw_json" TEXT
+        )
+        """
+    )
+
+    existing = sqlite_existing_columns(connection, table_name)
+
+    for column in columns:
+        if column in existing:
+            continue
+        values = [record.get(column) for record in flat_records]
+        affinity = sqlite_affinity(values)
+        connection.execute(
+            f"ALTER TABLE {quote_sqlite_identifier(table_name)} "
+            f"ADD COLUMN {quote_sqlite_identifier(column)} {affinity}"
+        )
+        existing.add(column)
+
+    return columns
+
+
+def upsert_sqlite_dataset(
+    connection: sqlite3.Connection,
+    table_name: str,
+    records: list[dict[str, Any]],
+    *,
+    sync_id: str,
+    full_snapshot: bool,
+    defaults: Optional[list[str]] = None,
+) -> int:
+    table_name = sqlite_table_name(table_name)
+    records = sort_table(table_name, records)
+    flat_records = [flatten_dict(record) for record in records]
+    columns = ensure_sqlite_dataset_table(
+        connection,
+        table_name,
+        records,
+        defaults,
+    )
+
+    if records:
+        insert_columns = [
+            "_cf_row_key",
+            "_cf_sync_id",
+            "_cf_sort_order",
+            "_cf_raw_json",
+            *columns,
+        ]
+        placeholders = ",".join("?" for _ in insert_columns)
+        quoted_columns = ",".join(
+            quote_sqlite_identifier(column)
+            for column in insert_columns
+        )
+
+        update_columns = [
+            "_cf_sync_id",
+            "_cf_sort_order",
+            "_cf_raw_json",
+            *columns,
+        ]
+        update_sql = ",".join(
+            f"{quote_sqlite_identifier(column)}="
+            f"excluded.{quote_sqlite_identifier(column)}"
+            for column in update_columns
+        )
+
+        sql = (
+            f"INSERT INTO {quote_sqlite_identifier(table_name)} "
+            f"({quoted_columns}) VALUES ({placeholders}) "
+            f'ON CONFLICT("_cf_row_key") DO UPDATE SET {update_sql}'
+        )
+
+        payload = []
+        for index, (record, flat_record) in enumerate(
+            zip(records, flat_records),
+            start=1,
+        ):
+            row_key = sqlite_row_key(table_name, flat_record, index)
+            row = [
+                row_key,
+                sync_id,
+                index,
+                json_text(record),
+                *[
+                    sqlite_value(flat_record.get(column))
+                    for column in columns
+                ],
+            ]
+            payload.append(row)
+
+        connection.executemany(sql, payload)
+
+    if full_snapshot:
+        connection.execute(
+            f"DELETE FROM {quote_sqlite_identifier(table_name)} "
+            'WHERE "_cf_sync_id" <> ?',
+            (sync_id,),
+        )
+
+    return len(records)
+
+
+def ensure_sqlite_indexes(connection: sqlite3.Connection) -> None:
+    index_specs = {
+        "transactions": (
+            "id",
+            "date",
+            "month",
+            "accountId",
+            "itemId",
+            "currencyCode",
+            "status",
+            "category",
+        ),
+        "accounts": ("id", "itemId", "type", "currencyCode"),
+        "investments": ("id", "itemId", "currencyCode"),
+        "credit_card_bills": ("id", "accountId", "dueDate"),
+        "loans": ("id", "itemId", "currencyCode"),
+    }
+
+    for table_name, columns in index_specs.items():
+        existing = sqlite_existing_columns(connection, table_name)
+        if not existing:
+            continue
+
+        for column in columns:
+            if column not in existing:
+                continue
+            index_name = f"idx_{table_name}_{column}"
+            connection.execute(
+                f"CREATE INDEX IF NOT EXISTS "
+                f"{quote_sqlite_identifier(index_name)} "
+                f"ON {quote_sqlite_identifier(table_name)} "
+                f"({quote_sqlite_identifier(column)})"
+            )
+
+
+def export_sqlite_bundle(
+    data: ExtractedData,
+    output_dir: Path,
+    *,
+    generated_at: Optional[str] = None,
+    full_snapshot: bool = True,
+    sync_id: Optional[str] = None,
+) -> Path:
+    """
+    Grava os mesmos datasets dos CSVs em SQLite.
+
+    Cada dataset vira uma tabela própria. `_cf_row_key` permite UPSERT.
+    `_cf_raw_json` preserva o registro original completo e os campos achatados
+    continuam disponíveis em colunas, com os mesmos nomes usados nos CSVs.
+    """
+    output_dir = Path(output_dir)
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    generated_at = generated_at or utc_now_iso()
+    sync_id = sync_id or f"sync_{generated_at}_{os.getpid()}"
+    database_path = output_dir / SQLITE_DATABASE_NAME
+
+    known_tables = list(DATASET_DESCRIPTIONS.keys())
+    extra_tables = [
+        table_name
+        for table_name in data.tables.keys()
+        if table_name not in DATASET_DESCRIPTIONS
+    ]
+    all_tables = known_tables + sorted(extra_tables)
+
+    catalog_rows: list[dict[str, Any]] = []
+    total_rows = 0
+
+    with sqlite_connect(database_path) as connection:
+        connection.execute(
+            """
+            CREATE TABLE IF NOT EXISTS "_cf_sync_runs" (
+                syncId TEXT PRIMARY KEY,
+                startedAtUtc TEXT NOT NULL,
+                finishedAtUtc TEXT,
+                fullSnapshot INTEGER NOT NULL,
+                status TEXT NOT NULL,
+                datasetCount INTEGER NOT NULL DEFAULT 0,
+                rowCount INTEGER NOT NULL DEFAULT 0,
+                errorCount INTEGER NOT NULL DEFAULT 0,
+                schemaVersion INTEGER NOT NULL
+            )
+            """
+        )
+
+        connection.execute(
+            """
+            INSERT OR REPLACE INTO "_cf_sync_runs" (
+                syncId, startedAtUtc, fullSnapshot, status,
+                datasetCount, rowCount, errorCount, schemaVersion
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                sync_id,
+                generated_at,
+                int(full_snapshot),
+                "RUNNING",
+                len(all_tables),
+                0,
+                len(data.errors),
+                SQLITE_SCHEMA_VERSION,
+            ),
+        )
+
+        for table_name in all_tables:
+            records = sort_table(
+                table_name,
+                data.tables.get(table_name, []),
+            )
+            count = upsert_sqlite_dataset(
+                connection,
+                table_name,
+                records,
+                sync_id=sync_id,
+                full_snapshot=full_snapshot,
+                defaults=DEFAULT_COLUMNS.get(table_name, []),
+            )
+            total_rows += count
+
+            grain, description = DATASET_DESCRIPTIONS.get(
+                table_name,
+                (
+                    "variável",
+                    "Tabela adicional gerada pelo exportador.",
+                ),
+            )
+            catalog_rows.append(
+                {
+                    "tableName": table_name,
+                    "fileName": f"{table_name}.csv",
+                    "rowCount": count,
+                    "grain": grain,
+                    "description": description,
+                    "storage": "sqlite+csv",
+                }
+            )
+
+        manifest = [
+            {"key": "generatedAtUtc", "value": generated_at},
+            {"key": "baseUrl", "value": BASE_URL},
+            {"key": "datasetCount", "value": len(catalog_rows)},
+            {"key": "errorCount", "value": len(data.errors)},
+            {
+                "key": "transactionEndpoint",
+                "value": "/v2/transactions",
+            },
+            {"key": "sqliteDatabase", "value": SQLITE_DATABASE_NAME},
+            {
+                "key": "sqliteSchemaVersion",
+                "value": SQLITE_SCHEMA_VERSION,
+            },
+            {"key": "syncId", "value": sync_id},
+            {"key": "fullSnapshot", "value": int(full_snapshot)},
+        ]
+
+        upsert_sqlite_dataset(
+            connection,
+            "dataset_catalog",
+            catalog_rows,
+            sync_id=sync_id,
+            full_snapshot=True,
+            defaults=[
+                "tableName",
+                "fileName",
+                "rowCount",
+                "grain",
+                "description",
+                "storage",
+            ],
+        )
+        upsert_sqlite_dataset(
+            connection,
+            "manifest",
+            manifest,
+            sync_id=sync_id,
+            full_snapshot=True,
+            defaults=["key", "value"],
+        )
+
+        ensure_sqlite_indexes(connection)
+
+        connection.execute(
+            """
+            UPDATE "_cf_sync_runs"
+            SET finishedAtUtc = ?, status = ?, rowCount = ?
+            WHERE syncId = ?
+            """,
+            (
+                utc_now_iso(),
+                "SUCCESS",
+                total_rows,
+                sync_id,
+            ),
+        )
+
+    return database_path
+
+
+def migrate_csv_bundle_to_sqlite(
+    output_dir: Path,
+    *,
+    database_path: Optional[Path] = None,
+) -> Optional[Path]:
+    """
+    Cria `controlefin.db` a partir dos CSVs existentes sem remover os CSVs.
+    """
+    output_dir = Path(output_dir)
+    catalog_path = output_dir / "dataset_catalog.csv"
+
+    if not catalog_path.exists():
+        return None
+
+    with catalog_path.open(
+        "r",
+        encoding="utf-8-sig",
+        newline="",
+    ) as handle:
+        catalog_rows = list(csv.DictReader(handle))
+
+    if not catalog_rows:
+        return None
+
+    data = ExtractedData()
+
+    for catalog_row in catalog_rows:
+        table_name = str(
+            catalog_row.get("tableName") or ""
+        ).strip()
+        file_name = str(
+            catalog_row.get("fileName") or ""
+        ).strip()
+
+        if not table_name or not file_name:
+            continue
+
+        sqlite_table_name(table_name)
+        csv_path = output_dir / file_name
+        if not csv_path.exists():
+            continue
+
+        with csv_path.open(
+            "r",
+            encoding="utf-8-sig",
+            newline="",
+        ) as handle:
+            data.tables[table_name] = list(csv.DictReader(handle))
+
+    data.errors = list(data.tables.get("api_errors", []))
+
+    migrated_path = database_path or (
+        output_dir / SQLITE_DATABASE_NAME
+    )
+    if migrated_path.name != SQLITE_DATABASE_NAME:
+        raise ValueError(
+            f"O banco de migração deve se chamar "
+            f"{SQLITE_DATABASE_NAME}."
+        )
+
+    generated_at = utc_now_iso()
+    manifest_path = output_dir / "manifest.csv"
+
+    if manifest_path.exists():
+        try:
+            with manifest_path.open(
+                "r",
+                encoding="utf-8-sig",
+                newline="",
+            ) as handle:
+                manifest_rows = list(csv.DictReader(handle))
+            manifest_map = {
+                str(row.get("key") or ""): row.get("value")
+                for row in manifest_rows
+            }
+            generated_at = str(
+                manifest_map.get("generatedAtUtc")
+                or generated_at
+            )
+        except Exception:
+            pass
+
+    return export_sqlite_bundle(
+        data,
+        output_dir,
+        generated_at=generated_at,
+        full_snapshot=True,
+        sync_id=f"csv_migration_{utc_now_iso()}",
+    )
 
 
 # ---------------------------------------------------------------------------
@@ -1797,7 +2369,7 @@ def validate_date_arg(value: Optional[str], flag_name: str) -> Optional[str]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Exporta dados financeiros da Pluggy para CSVs consumíveis por um dashboard local."
+        description="Exporta dados financeiros da Pluggy para CSV + SQLite consumíveis por um dashboard local."
     )
     parser.add_argument(
         "--item-id",
@@ -1861,8 +2433,9 @@ def run_export(
 
     O backend informa explicitamente a pasta permanente `data` do ControleFin.
     Ela fica fora de `dist`, para que recompilar o executável não apague os dados.
-    Os CSVs existentes são sobrescritos pelo export_csv_bundle(), pois
-    write_csv() abre cada arquivo em modo "w".
+    Os CSVs continuam sendo sobrescritos para compatibilidade e backup.
+    Em paralelo, `controlefin.db` é atualizado por UPSERT e passa a ser a
+    fonte primária do dashboard quando executado pelo backend local.
     """
     output_dir = Path(output_dir)
     env_file = Path(env_file)
@@ -1920,11 +2493,27 @@ def run_export(
     extractor = PluggyFinanceExtractor(client, resolved_item_ids, options)
     data = extractor.run()
 
-    # write_csv() usa modo "w", então cada execução substitui os CSVs anteriores.
-    export_csv_bundle(data, output_dir)
+    generated_at = utc_now_iso()
+    full_snapshot = not date_from and not date_to
+
+    # CSV continua disponível para fallback, inspeção e exportação manual.
+    export_csv_bundle(
+        data,
+        output_dir,
+        generated_at=generated_at,
+    )
+
+    # SQLite é a fonte primária do dashboard no modo servidor.
+    database_path = export_sqlite_bundle(
+        data,
+        output_dir,
+        generated_at=generated_at,
+        full_snapshot=full_snapshot,
+    )
 
     print("\nExportação concluída.")
     print(f"Diretório: {output_dir.resolve()}")
+    print(f"SQLite: {database_path.resolve()}")
     print(f"Tabelas: {len(DATASET_DESCRIPTIONS)} + catálogo/manifest")
     print(f"Erros/avisos registrados: {len(data.errors)}")
     print("Use dataset_catalog.csv para saber o propósito e a granularidade de cada arquivo.")

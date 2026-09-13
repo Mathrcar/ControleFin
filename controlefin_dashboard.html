@@ -81,7 +81,7 @@
           <div class="mode-card" id="spending-pix" data-method-filter="PIX"><span class="mode-primary-label">Média mensal · PIX</span><strong id="methodPixAvg">—</strong><div class="mode-total">Total na janela: <b id="methodPixTotal">—</b></div><div class="share" id="methodPixShare">—</div></div>
           <div class="mode-card" id="spending-boleto" data-method-filter="Boleto"><span class="mode-primary-label">Média mensal · Boleto</span><strong id="methodBoletoAvg">—</strong><div class="mode-total">Total na janela: <b id="methodBoletoTotal">—</b></div><div class="share" id="methodBoletoShare">—</div></div>
         </div>
-        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><span class="chip" id="excludedMovementsChip">Movimentações patrimoniais excluídas: —</span><span class="chip" id="expectedReimbursementsChip">Resarcimentos previstos: —</span></div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap"><span class="chip" id="excludedMovementsChip">Movimentações / faturas consolidadas excluídas: —</span><span class="chip" id="expectedReimbursementsChip">Resarcimentos previstos: —</span></div>
       </article>
 
       <article class="panel control-dock" id="spending-filters" style="margin-top:10px">
@@ -277,6 +277,43 @@
 
     <section id="transactionsView" class="view-panel">
       <div class="section-head" id="transactions-header"><div><div class="section-kicker">Ajustes</div><h2>Transações e reclassificação</h2><p>Corrija categoria, merchant, meio ou natureza. Todos os gráficos são atualizados imediatamente.</p></div><div style="display:flex;gap:8px"><button id="exportOverridesBtn">Exportar ajustes</button><button id="clearOverridesBtn" class="ghost">Limpar ajustes</button></div></div>
+
+      <article class="panel panel-pad" id="spending-audit-panel" style="margin-bottom:14px">
+        <div class="panel-head">
+          <div>
+            <h3>Auditoria local de inclusão em Gastos</h3>
+            <p>Pesquise merchant, descrição ou ID. A auditoria examina inclusive transações pendentes ou normalmente excluídas e mostra por que entram ou não na aba Gastos.</p>
+          </div>
+          <span class="chip" id="spendingAuditCount">—</span>
+        </div>
+        <div class="editor-toolbar">
+          <label style="min-width:min(420px,100%)">Pesquisar transação
+            <input id="spendingAuditSearch" type="search" placeholder="Ex.: Spotify, merchant, descrição ou ID">
+          </label>
+          <button id="spendingAuditBtn" type="button">Auditar</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Data</th>
+                <th>Status</th>
+                <th>Conta</th>
+                <th>Descrição / merchant</th>
+                <th class="num">Valor</th>
+                <th>Tipo</th>
+                <th>Natureza efetiva</th>
+                <th>Em Gastos?</th>
+                <th>Diagnóstico</th>
+              </tr>
+            </thead>
+            <tbody id="spendingAuditTable">
+              <tr><td colspan="9" class="empty">Digite um termo e clique em Auditar.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </article>
+
       <article class="panel panel-pad" id="transactions-editor"><div class="editor-toolbar" id="transactions-editor-toolbar"><label>Buscar<input id="txSearch" type="search" placeholder="Descrição, merchant…"></label><label>Natureza<select id="txKindFilter"><option value="all">Todas</option><option value="EXPENSE">Gastos</option><option value="INCOME">Entradas</option><option value="TRANSFER">Transferências próprias</option><option value="INVESTMENT_TRANSFER">Aportes / transferências para investimentos</option><option value="CARD_BILL">Pagamento de fatura</option><option value="REFUND">Estornos</option><option value="IGNORE">Ignoradas</option></select></label><label>Conta<select id="txAccountFilter"><option value="all">Todas</option></select></label></div><div class="table-wrap" id="transactions-table"><table><thead><tr><th>Data</th><th>Conta</th><th>Descrição</th><th class="num">Valor</th><th>Natureza</th><th>Categoria</th><th>Fixo / variável</th><th>Resarcimento</th><th>Merchant</th><th>Meio</th><th></th></tr></thead><tbody id="transactionsEditorTable"></tbody></table></div><div class="footnote" id="txEditorFootnote"></div></article>
     </section>
 
@@ -292,6 +329,7 @@
   const state = {
     tables: new Map(),
     files: new Map(),
+    dataSource: 'none',
     manifest: {},
     catalog: [],
     currency: null,
@@ -299,6 +337,7 @@
     loadedAt: null,
     transactionOverrides: new Map(),
     internalTransferKeys: new Set(),
+    pendingCardDuplicateKeys: new Set(),
     chartLegendHidden: new Map(),
     txPage: 0,
     txPageSize: 100,
@@ -309,6 +348,13 @@
     overridesStorageKey: 'controlefin.transactionOverrides.v2',
     customCategories: new Set(),
     categoriesStorageKey: 'controlefin.customCategories.v1',
+    customCategoryTranslations: [],
+    customCategoryTranslationsStorageKey: 'controlefin.customCategoryTranslations.v1',
+    customCategoryTranslationIndex: new Map(),
+    pluggyCategoryById: new Map(),
+    pluggyCategoryAlias: new Map(),
+    categoryDisplayCache: new Map(),
+    categoryStorageCache: new Map(),
     categoryRules: [],
     rulesStorageKey: 'controlefin.categoryRules.v1',
     fixedExpenseRules: [],
@@ -346,7 +392,7 @@
   const safeText = (v) => v == null || v === '' ? '—' : String(v);
   const esc = (v) => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 
-  const UI_EN_EXACT = {"ControleFin — Saúde Financeira":"ControleFin — Financial Health","Dashboard local — nenhum dado carregado":"Local dashboard — no data loaded","Abrir dados":"Open data","Carregar ./data":"Load ./data","Mostrar IDs":"Show IDs","Ocultar IDs":"Hide IDs","Exibir identificadores dos blocos":"Show block identifiers","Controle financeiro pessoal":"Personal finance control","Veja onde seu dinheiro está indo.":"See where your money is going.","Um painel local, focado em gastos de cartão, PIX e boletos. Filtre, investigue e reclassifique cada transação sem enviar seus dados para fora do computador.":"A local dashboard focused on card, PIX, and boleto spending. Filter, investigate, and reclassify each transaction without sending your data outside your computer.","100% local no navegador. Sem APIs ou bibliotecas externas.":"100% local in your browser. No external APIs or libraries.","Carregue seus dados":"Load your data","Selecione a pasta":"Select the","gerada pelo Python ou, em localhost, carregue automaticamente.":"folder generated by Python or, on localhost, load it automatically.","Selecionar pasta":"Select folder","Como executar":"How to run","Aguardando dados.":"Waiting for data.","Gastos":"Expenses","Entradas":"Income","Visão geral":"Overview","Transações":"Transactions","Navegação do dashboard":"Dashboard navigation","Moeda":"Currency","Janela":"Window","3 meses":"3 months","6 meses":"6 months","12 meses":"12 months","Tudo":"All","Contas: aguardando":"Accounts: waiting","Gastos consolidados":"Consolidated expenses","Gasto médio mensal da janela":"Average monthly expense in the window","Total na janela:":"Total in window:","transações consideradas":"transactions considered","Média mensal · Cartão":"Monthly average · Card","Média mensal · PIX":"Monthly average · PIX","Média mensal · Boleto":"Monthly average · Boleto","Movimentações patrimoniais excluídas: —":"Excluded asset movements: —","Resarcimentos previstos: —":"Expected reimbursements: —","Mês":"Month","Todos":"All","Conta / cartão":"Account / card","Todas":"All","Meio":"Method","Fixo / variável":"Fixed / variable","Fixos":"Fixed","Variáveis":"Variable","Categoria":"Category","Merchant":"Merchant","Buscar":"Search","Valor mín.":"Min. amount","Valor máx.":"Max. amount","Limpar filtros":"Clear filters","Gerenciar categorias personalizadas e salvamento":"Manage custom categories and saving","Nova categoria":"New category","Criar categoria":"Create category","Salvamento automático ativo.":"Automatic saving is active.","Categorias, reclassificações, regras automáticas e padrões de gastos fixos são gravados pelo backend em":"Categories, reclassifications, automatic rules, and fixed-expense patterns are saved by the backend in",". O navegador apenas envia e lê os ajustes; o arquivo permanente fica na pasta local do ControleFin.":". The browser only sends and reads the settings; the permanent file stays in the local ControleFin folder.","Baixar backup dos ajustes":"Download settings backup","Restaurar backup":"Restore backup","Nenhuma alteração nesta sessão":"No changes in this session","Regras automáticas de categorização":"Automatic categorization rules","Campo":"Field","Descrição":"Description","Banco":"Bank","Tipo de gasto":"Expense type","Condição":"Condition","contém":"contains","é igual a":"equals","começa com":"starts with","Valor a procurar":"Value to match","Classificar como":"Classify as","Criar regra":"Create rule","A primeira regra ativa que combinar com a transação é aplicada. Ajustes manuais de uma transação sempre têm prioridade sobre as regras. Use ↑ e ↓ para alterar a prioridade.":"The first active rule that matches the transaction is applied. Manual transaction adjustments always take priority over rules. Use ↑ and ↓ to change priority.","Padrões automáticos de gastos fixos":"Automatic fixed-expense patterns","Ao marcar uma transação como":"When you mark a transaction as","Fixo":"Fixed",", o ControleFin aprende um padrão pela descrição/merchant e usa valor, conta e meio de pagamento como sinais de proximidade. Transações semelhantes passam a ser classificadas como fixas automaticamente. Excluir um padrão faz com que essas transações voltem ao padrão":", ControleFin learns a pattern from the description/merchant and uses amount, account, and payment method as similarity signals. Similar transactions are then automatically classified as fixed. Deleting a pattern makes those transactions return to the default","Variável":"Variable",", salvo quando houver um ajuste manual específico.":", unless there is a specific manual adjustment.","Mês a mês":"Month by month","Quanto gasto e onde gasto?":"How much do I spend and where?","Os gráficos usam a janela selecionada e os filtros ativos; valores exibidos já descontam resarcimentos previstos e mostram somente a parcela efetivamente atribuída a você. O filtro de mês não corta a tendência.":"Charts use the selected window and active filters; displayed amounts already deduct expected reimbursements and show only the share actually attributed to you. The month filter does not truncate the trend.","gastos visíveis":"visible expenses","Gastos mensais em reais":"Monthly expenses in reais","Barras lado a lado por mês. O total do mês aparece acima do grupo.":"Side-by-side bars by month. The monthly total appears above the group.","Agrupar por":"Group by","Fixo x variável":"Fixed vs variable","Clique nas legendas para ocultar ou exibir séries sem perder o contexto mensal.":"Click legend items to hide or show series without losing monthly context.","Composição percentual do mês":"Monthly percentage composition","Cada coluna representa 100% do gasto do mês; os segmentos mostram onde o dinheiro foi gasto.":"Each column represents 100% of the month's spending; segments show where the money was spent.","Compor por":"Break down by","Passe o mouse para ver valor e percentual. As legendas continuam clicáveis.":"Hover to see amount and percentage. Legend items remain clickable.","Onde":"Where","Principais destinos do gasto":"Top spending destinations","Clique em uma categoria ou merchant para aplicar o filtro imediatamente.":"Click a category or merchant to apply the filter immediately.","Categorias":"Categories","Ranking da seleção atual.":"Ranking for the current selection.","Merchants":"Merchants","Estabelecimentos e beneficiários com maior gasto.":"Merchants and recipients with the highest spending.","Transações de gastos":"Expense transactions","Detalhe completo dos gastos considerados nesta aba. Edite a categoria e marque cada gasto como fixo ou variável. Variável é o padrão; ao marcar Fixo, transações semelhantes também serão reconhecidas automaticamente.":"Full detail of the expenses considered on this tab. Edit the category and mark each expense as fixed or variable. Variable is the default; when you mark Fixed, similar transactions will also be recognized automatically.","Data":"Date","Banco / conta":"Bank / account","Resarcimento":"Reimbursement","Seu gasto":"Your expense","Detalhes":"Details","Ação":"Action","Entradas consolidadas":"Consolidated income","Entradas identificadas como RENDIMENTO ou RESGATE RDB são ignoradas nesta aba.":"Entries identified as RENDIMENTO or RESGATE RDB are ignored on this tab.","Entrada média mensal da janela":"Average monthly income in the window","Média mensal · Transferências":"Monthly average · Transfers","Média mensal · Outros":"Monthly average · Other","Resarcimentos excluídos: —":"Excluded reimbursements: —","Conta":"Account","Fixas":"Fixed","Origem":"Source","Padrões automáticos de entradas fixas":"Automatic fixed-income patterns","Toda entrada é":"Every income transaction is","por padrão. Ao marcar uma entrada como":"by default. When you mark an income transaction as","Fixa":"Fixed",", o ControleFin aprende um padrão por descrição/origem e usa valor, conta e meio de pagamento como sinais de proximidade para reconhecer entradas semelhantes antigas e futuras. Categorias personalizadas e regras automáticas de categoria são compartilhadas com a aba Gastos.":", ControleFin learns a pattern from description/source and uses amount, account, and payment method as similarity signals to recognize similar past and future income transactions. Custom categories and automatic category rules are shared with the Expenses tab.","Regras automáticas de salário por origem":"Automatic salary rules by source","Ao salvar uma entrada como":"When you save an income transaction as","Salário":"Salary","ou":"or",", o ControleFin cria uma regra persistente para a mesma origem. O":", ControleFin creates a persistent rule for the same source. The","tem prioridade; quando ele não existe, merchant/descrição são usados de forma mais conservadora.":"takes priority; when it is unavailable, merchant/description are used more conservatively.","Quanto entra e de onde vem?":"How much comes in and where does it come from?","Os gráficos usam a janela selecionada e os filtros de conta, meio, fixo/variável, categoria, origem, busca e valor. O filtro de mês não corta a tendência.":"Charts use the selected window and account, method, fixed/variable, category, source, search, and amount filters. The month filter does not truncate the trend.","entradas visíveis":"visible income transactions","Entradas mensais em reais":"Monthly income in reais","Tipo de entrada":"Income type","Clique nas legendas para ocultar ou exibir séries.":"Click legend items to hide or show series.","Cada coluna representa 100% das entradas do mês e mostra sua origem.":"Each column represents 100% of the month's income and shows its source.","Passe o mouse para ver valor e percentual. As legendas são clicáveis.":"Hover to see amount and percentage. Legend items are clickable.","Principais fontes das entradas":"Top income sources","Clique em uma categoria ou origem para aplicar o filtro imediatamente.":"Click a category or source to apply the filter immediately.","Origens":"Sources","Pagadores/origens com maior entrada.":"Payers/sources with the highest income.","Transações de entradas":"Income transactions","Edite a categoria e marque cada entrada como fixa ou variável. Alterações recalculam os visuais imediatamente e são persistidas.":"Edit the category and mark each income transaction as fixed or variable. Changes immediately recalculate the visuals and are persisted.","Pagador":"Payer","Resarcimento / vínculo":"Reimbursement / link","Valor":"Amount","Posição financeira":"Financial position","Resumo patrimonial sem competir com a leitura de gastos.":"Net-worth summary without competing with the spending view.","Patrimônio líquido":"Net worth","Estimado":"Estimated","Saldo bancário":"Bank balance","Investimentos":"Investments","Cartões em aberto":"Open card balances","Caixa médio mensal":"Average monthly cash flow","Fluxo de caixa":"Cash flow","Entradas e saídas bancárias mensais.":"Monthly bank inflows and outflows.","Saúde financeira":"Financial health","Heurística explicável sobre os dados disponíveis.":"Explainable heuristic based on the available data.","Leitura automática":"Automatic insights","Sinais relevantes do fluxo, gastos, patrimônio e qualidade dos dados.":"Relevant signals from cash flow, expenses, net worth, and data quality.","Contas":"Accounts","BTG Banking, BTG Investimentos e Nubank tratados separadamente.":"BTG Banking, BTG Investments, and Nubank are handled separately.","Investimentos e detalhes técnicos":"Investments and technical details","Alocação de investimentos":"Investment allocation","Posições por instituição":"Positions by institution","Ajustes":"Settings","Transações e reclassificação":"Transactions and reclassification","Corrija categoria, merchant, meio ou natureza. Todos os gráficos são atualizados imediatamente.":"Correct category, merchant, method, or nature. All charts update immediately.","Exportar ajustes":"Export settings","Limpar ajustes":"Clear adjustments","Natureza":"Nature","Transferências próprias":"Own-account transfers","Aportes / transferências para investimentos":"Contributions / transfers to investments","Pagamento de fatura":"Card bill payment","Estornos":"Refunds","Ignoradas":"Ignored","Os dados financeiros permanecem locais. Categorias, reclassificações, regras automáticas, padrões de gastos/entradas fixos, resarcimentos, vínculos e regras de salário por origem são salvos em user_data/ajustes.json pelo backend; pagamentos de fatura, transferências próprias e aportes/resgates ficam fora de Gastos e Entradas para evitar dupla contagem patrimonial.":"Financial data remains local. Categories, reclassifications, automatic rules, fixed expense/income patterns, reimbursements, links, and salary-by-source rules are saved by the backend in user_data/ajustes.json; card bill payments, own-account transfers, and investment contributions/redemptions are excluded from Expenses and Income to avoid double-counting.","Sem saída média suficiente":"Not enough average outflow data","Geração de caixa":"Cash generation","Sem entrada média suficiente":"Not enough average inflow data","Dívida sem ativos líquidos identificados":"Debt without identified liquid assets","Uso de crédito":"Credit utilization","Sem limite comparável":"No comparable limit","Sem carteira comparável":"No comparable portfolio","Diversificação":"Diversification","Sem dados de conexão":"No connection data","Atualização dos dados":"Data freshness","Dados insuficientes":"Insufficient data","Não foi possível calcular uma leitura consolidada.":"A consolidated assessment could not be calculated.","Saúde forte":"Strong health","Liquidez, caixa e obrigações estão relativamente equilibrados dentro das métricas disponíveis.":"Liquidity, cash flow, and obligations are relatively balanced within the available metrics.","Saúde razoável":"Fair health","A estrutura geral é funcional, mas há pontos que merecem acompanhamento.":"The overall structure is functional, but some areas deserve monitoring.","Atenção":"Attention","Existem pressões relevantes de caixa, dívida, crédito ou qualidade dos dados.":"There are meaningful pressures in cash flow, debt, credit, or data quality.","Pressão elevada":"High pressure","Os dados disponíveis indicam fragilidade em mais de uma dimensão financeira.":"Available data indicates weakness in more than one financial dimension.","Score indisponível":"Score unavailable","Sem dados":"No data","Saídas de caixa":"Cash outflows","Líquido":"Net","Obrigações financeiras":"Financial obligations","Não há saldo de cartão ou empréstimo identificado nessa moeda nos KPIs atuais.":"No card balance or loan is identified in this currency in the current KPIs.","Sem categoria":"Uncategorized","Maior categoria de consumo":"Largest consumption category","Qualidade dos dados":"Data quality","As conexões carregadas não exibem erro e não há atraso superior a 7 dias nas datas disponíveis.":"Loaded connections show no errors and no available timestamp is more than 7 days stale.","Faturas próximas":"Upcoming bills","Cartões":"Cards","Empréstimos":"Loans","Não identificado":"Not identified","Cartão":"Card","Conta bancária":"Bank account","Empréstimo":"Loan","Outra conta":"Other account","Não identificada":"Not identified","Conta não identificada":"Unidentified account","Não":"No","Sim":"Yes","Cartão de crédito":"Credit card","Transferência":"Transfer","Débito / compra em conta":"Debit / account purchase","Backend indisponível — usando armazenamento local temporariamente":"Backend unavailable — temporarily using browser storage","Erro ao salvar ajustes":"Error saving settings","Alteração pendente de salvamento…":"Change pending save…","Ativar regra":"Enable rule","Desativar regra":"Disable rule","Informe o valor que a regra deve procurar.":"Enter the value the rule should match.","Informe a categoria que será aplicada.":"Enter the category to apply.","Use um valor de regra com até 120 caracteres.":"Use a rule value of up to 120 characters.","Use uma categoria com até 80 caracteres.":"Use a category of up to 80 characters.","Essa regra já existe.":"This rule already exists.","Regra automática criada e salva.":"Automatic rule created and saved.","Regra ativada.":"Rule enabled.","Regra desativada.":"Rule disabled.","Regra excluída.":"Rule deleted.","Sem resarcimento":"No reimbursement","100% resarcido — não fiz parte":"100% reimbursed — I was not part of the expense","Compartilhado — fiz parte":"Shared — I was part of the expense","Aplicado pelo padrão do gasto fixo":"Applied by fixed-expense pattern","Ajuste desta transação":"Adjustment for this transaction","Somente para gastos":"Expenses only","Pessoas":"People","Gasto fixo":"Fixed expense","valor não disponível":"amount unavailable","sem resarcimento":"no reimbursement","Padrão":"Pattern","padrão por similaridade":"similarity pattern","gasto fixo":"fixed expense","Entrada fixa":"Fixed income","entrada fixa":"fixed income","Digite um nome para a nova categoria.":"Enter a name for the new category.","Formato de reclassificações inválido":"Invalid reclassification format","Backup de categorias, reclassificações, resarcimentos, vínculos e regras automáticas restaurado.":"Backup of categories, reclassifications, reimbursements, links, and automatic rules restored.","Não foi possível restaurar esse backup JSON.":"Could not restore this JSON backup.","Todos da janela":"All in window","Todas as contas":"All accounts","Todos os meios":"All methods","Todas as categorias":"All categories","Todos os merchants":"All merchants","Automático por similaridade":"Automatic by similarity","Padrão: Variável":"Default: Variable","Entrada normal":"Normal income","Gasto não encontrado":"Expense not found","Gasto":"Expense","Selecionar gasto…":"Select expense…","Sem vínculo específico":"No specific link","Remover vínculo":"Remove link","Todas as origens":"All sources","Pagador não informado pela transação":"Payer not provided by the transaction","Excluído dos gráficos de entradas.":"Excluded from income charts.","Considerado normalmente nos gráficos.":"Included normally in charts.","Entrada marcada como resarcimento e excluída dos gráficos.":"Income marked as reimbursement and excluded from charts.","Entrada marcada como Fixa.":"Income marked as Fixed.","Entrada atualizada e salva.":"Income updated and saved.","Sem entradas na janela":"No income in the window","Sem entradas identificadas na janela.":"No income identified in the window.","Entrada":"Income","Transferência própria":"Own-account transfer","Aporte / transferência de investimento":"Investment contribution / transfer","Estorno/crédito cartão":"Refund/card credit","Automático":"Automatic","automático por similaridade":"automatic by similarity","padrão":"default","Somente para gastos e entradas":"Expenses and income only","Classificação atualizada e salva.":"Classification updated and saved.","Não há ajustes salvos.":"There are no saved adjustments.","Remover todas as reclassificações locais? As categorias personalizadas serão mantidas.":"Remove all local reclassifications? Custom categories will be kept.","Reclassificações removidas; categorias personalizadas mantidas.":"Reclassifications removed; custom categories kept.","Estornos/créditos":"Refunds/credits","Maior categoria de gasto":"Largest expense category","Principal meio de gasto":"Main spending method","Movimentações patrimoniais separadas":"Separated asset movements","Cobertura: sem fluxo":"Coverage: no cash flow","Sincronização: —":"Sync: —","Dados carregados.":"Data loaded.","Dados financeiros e ajustes carregados localmente.":"Financial data and settings loaded locally.","Nenhum CSV encontrado na pasta selecionada.":"No CSV files found in the selected folder.","Tentando carregar ./data/dataset_catalog.csv…":"Trying to load ./data/dataset_catalog.csv…","dataset_catalog.csv não encontrado":"dataset_catalog.csv not found","Nenhum CSV foi lido":"No CSV file was read","Carregamento automático indisponível. Se abriu o HTML como arquivo, selecione a pasta data/.":"Automatic loading unavailable. If you opened the HTML as a file, select the data/ folder.","Use “Selecionar pasta data/” ou sirva o projeto via localhost.":"Use “Select data/ folder” or serve the project via localhost.","Classificação restaurada para automático.":"Classification restored to automatic.","Excluir regra":"Delete rule","Excluir padrão automático":"Delete automatic pattern","Remover categoria personalizada":"Remove custom category","Ver dados":"View data","Salvar":"Save","Resetar":"Reset","Anterior":"Previous","Próxima":"Next","Sem limite":"No limit","Descrição, merchant…":"Description, merchant…","Descrição, origem, pagador, categoria…":"Description, source, payer, category…","Ex.: IFOOD, UBER, SPOTIFY…":"e.g. IFOOD, UBER, SPOTIFY…","Ex.: Alimentação":"e.g. Food","Nenhuma regra automática criada. Crie uma regra acima para categorizar novas transações automaticamente.":"No automatic rule created. Create a rule above to categorize new transactions automatically.","Nenhum padrão aprendido ainda. Marque um gasto recorrente como Fixo para criar o primeiro padrão.":"No learned pattern yet. Mark a recurring expense as Fixed to create the first pattern.","Nenhum padrão aprendido ainda. Marque uma entrada recorrente como Fixa para criar o primeiro padrão.":"No learned pattern yet. Mark recurring income as Fixed to create the first pattern.","Nenhuma regra de salário por origem criada ainda.":"No salary-by-source rule created yet.","Sem dados para esta seleção.":"No data for this selection.","Sem gastos mensais para esta seleção.":"No monthly expenses for this selection.","Sem gastos para esta seleção.":"No expenses for this selection.","Nenhum gasto encontrado para os filtros atuais.":"No expenses found for the current filters.","Sem gastos mensais para os filtros atuais.":"No monthly expenses for the current filters.","Sem gastos na janela":"No expenses in the window","Nenhuma conta ou posição encontrada nesta moeda.":"No account or position found in this currency.","Sem entradas para esta seleção.":"No income for this selection.","Nenhuma entrada encontrada para os filtros atuais.":"No income found for the current filters.","Nenhuma transação encontrada.":"No transaction found.","Nenhum cartão encontrado nesta moeda.":"No card found in this currency.","Sem contas para esta moeda.":"No accounts for this currency.","Nenhum cartão nessa moeda.":"No card in this currency.","Sem posições financeiras nessa moeda.":"No financial positions in this currency.","Sem connection_health.csv.":"No connection_health.csv.","Nenhum erro ou aviso registrado.":"No errors or warnings recorded.","Sem fluxo bancário para a moeda/janela selecionada.":"No bank cash flow for the selected currency/window.","Sem atividade de cartões para a seleção.":"No card activity for this selection.","Sem posições nessa moeda.":"No positions in this currency.","Sem sinais suficientes.":"Not enough signals."};
+  const UI_EN_EXACT = {"ControleFin — Saúde Financeira":"ControleFin — Financial Health","Dashboard local — nenhum dado carregado":"Local dashboard — no data loaded","Abrir dados":"Open data","Carregar ./data":"Load ./data","Mostrar IDs":"Show IDs","Ocultar IDs":"Hide IDs","Exibir identificadores dos blocos":"Show block identifiers","Controle financeiro pessoal":"Personal finance control","Veja onde seu dinheiro está indo.":"See where your money is going.","Um painel local, focado em gastos de cartão, PIX e boletos. Filtre, investigue e reclassifique cada transação sem enviar seus dados para fora do computador.":"A local dashboard focused on card, PIX, and boleto spending. Filter, investigate, and reclassify each transaction without sending your data outside your computer.","100% local no navegador. Sem APIs ou bibliotecas externas.":"100% local in your browser. No external APIs or libraries.","Carregue seus dados":"Load your data","Selecione a pasta":"Select the","gerada pelo Python ou, em localhost, carregue automaticamente.":"folder generated by Python or, on localhost, load it automatically.","Selecionar pasta":"Select folder","Como executar":"How to run","Aguardando dados.":"Waiting for data.","Gastos":"Expenses","Entradas":"Income","Visão geral":"Overview","Transações":"Transactions","Navegação do dashboard":"Dashboard navigation","Moeda":"Currency","Janela":"Window","3 meses":"3 months","6 meses":"6 months","12 meses":"12 months","Tudo":"All","Contas: aguardando":"Accounts: waiting","Gastos consolidados":"Consolidated expenses","Gasto médio mensal da janela":"Average monthly expense in the window","Total na janela:":"Total in window:","transações consideradas":"transactions considered","Média mensal · Cartão":"Monthly average · Card","Média mensal · PIX":"Monthly average · PIX","Média mensal · Boleto":"Monthly average · Boleto","Movimentações patrimoniais excluídas: —":"Excluded asset movements: —","Movimentações / faturas consolidadas excluídas: —":"Excluded movements / consolidated card bills: —","Resarcimentos previstos: —":"Expected reimbursements: —","Mês":"Month","Todos":"All","Conta / cartão":"Account / card","Todas":"All","Meio":"Method","Fixo / variável":"Fixed / variable","Fixos":"Fixed","Variáveis":"Variable","Categoria":"Category","Merchant":"Merchant","Buscar":"Search","Valor mín.":"Min. amount","Valor máx.":"Max. amount","Limpar filtros":"Clear filters","Gerenciar categorias personalizadas e salvamento":"Manage custom categories and saving","Nova categoria":"New category","Criar categoria":"Create category","Salvamento automático ativo.":"Automatic saving is active.","Categorias, reclassificações, regras automáticas e padrões de gastos fixos são gravados pelo backend em":"Categories, reclassifications, automatic rules, and fixed-expense patterns are saved by the backend in",". O navegador apenas envia e lê os ajustes; o arquivo permanente fica na pasta local do ControleFin.":". The browser only sends and reads the settings; the permanent file stays in the local ControleFin folder.","Baixar backup dos ajustes":"Download settings backup","Restaurar backup":"Restore backup","Nenhuma alteração nesta sessão":"No changes in this session","Regras automáticas de categorização":"Automatic categorization rules","Campo":"Field","Descrição":"Description","Banco":"Bank","Tipo de gasto":"Expense type","Condição":"Condition","contém":"contains","é igual a":"equals","começa com":"starts with","Valor a procurar":"Value to match","Classificar como":"Classify as","Criar regra":"Create rule","A primeira regra ativa que combinar com a transação é aplicada. Ajustes manuais de uma transação sempre têm prioridade sobre as regras. Use ↑ e ↓ para alterar a prioridade.":"The first active rule that matches the transaction is applied. Manual transaction adjustments always take priority over rules. Use ↑ and ↓ to change priority.","Padrões automáticos de gastos fixos":"Automatic fixed-expense patterns","Ao marcar uma transação como":"When you mark a transaction as","Fixo":"Fixed",", o ControleFin aprende um padrão pela descrição/merchant e usa valor, conta e meio de pagamento como sinais de proximidade. Transações semelhantes passam a ser classificadas como fixas automaticamente. Excluir um padrão faz com que essas transações voltem ao padrão":", ControleFin learns a pattern from the description/merchant and uses amount, account, and payment method as similarity signals. Similar transactions are then automatically classified as fixed. Deleting a pattern makes those transactions return to the default","Variável":"Variable",", salvo quando houver um ajuste manual específico.":", unless there is a specific manual adjustment.","Mês a mês":"Month by month","Quanto gasto e onde gasto?":"How much do I spend and where?","Os gráficos usam a janela selecionada e os filtros ativos; valores exibidos já descontam resarcimentos previstos e mostram somente a parcela efetivamente atribuída a você. O filtro de mês não corta a tendência.":"Charts use the selected window and active filters; displayed amounts already deduct expected reimbursements and show only the share actually attributed to you. The month filter does not truncate the trend.","gastos visíveis":"visible expenses","Gastos mensais em reais":"Monthly expenses in reais","Barras lado a lado por mês. O total do mês aparece acima do grupo.":"Side-by-side bars by month. The monthly total appears above the group.","Agrupar por":"Group by","Fixo x variável":"Fixed vs variable","Clique nas legendas para ocultar ou exibir séries sem perder o contexto mensal.":"Click legend items to hide or show series without losing monthly context.","Composição percentual do mês":"Monthly percentage composition","Cada coluna representa 100% do gasto do mês; os segmentos mostram onde o dinheiro foi gasto.":"Each column represents 100% of the month's spending; segments show where the money was spent.","Compor por":"Break down by","Passe o mouse para ver valor e percentual. As legendas continuam clicáveis.":"Hover to see amount and percentage. Legend items remain clickable.","Onde":"Where","Principais destinos do gasto":"Top spending destinations","Clique em uma categoria ou merchant para aplicar o filtro imediatamente.":"Click a category or merchant to apply the filter immediately.","Categorias":"Categories","Ranking da seleção atual.":"Ranking for the current selection.","Merchants":"Merchants","Estabelecimentos e beneficiários com maior gasto.":"Merchants and recipients with the highest spending.","Transações de gastos":"Expense transactions","Detalhe completo dos gastos considerados nesta aba. Edite a categoria e marque cada gasto como fixo ou variável. Variável é o padrão; ao marcar Fixo, transações semelhantes também serão reconhecidas automaticamente.":"Full detail of the expenses considered on this tab. Edit the category and mark each expense as fixed or variable. Variable is the default; when you mark Fixed, similar transactions will also be recognized automatically.","Data":"Date","Banco / conta":"Bank / account","Resarcimento":"Reimbursement","Seu gasto":"Your expense","Detalhes":"Details","Ação":"Action","Entradas consolidadas":"Consolidated income","Entradas identificadas como RENDIMENTO ou RESGATE RDB são ignoradas nesta aba.":"Entries identified as RENDIMENTO or RESGATE RDB are ignored on this tab.","Entrada média mensal da janela":"Average monthly income in the window","Média mensal · Transferências":"Monthly average · Transfers","Média mensal · Outros":"Monthly average · Other","Resarcimentos excluídos: —":"Excluded reimbursements: —","Conta":"Account","Fixas":"Fixed","Origem":"Source","Padrões automáticos de entradas fixas":"Automatic fixed-income patterns","Toda entrada é":"Every income transaction is","por padrão. Ao marcar uma entrada como":"by default. When you mark an income transaction as","Fixa":"Fixed",", o ControleFin aprende um padrão por descrição/origem e usa valor, conta e meio de pagamento como sinais de proximidade para reconhecer entradas semelhantes antigas e futuras. Categorias personalizadas e regras automáticas de categoria são compartilhadas com a aba Gastos.":", ControleFin learns a pattern from description/source and uses amount, account, and payment method as similarity signals to recognize similar past and future income transactions. Custom categories and automatic category rules are shared with the Expenses tab.","Regras automáticas de salário por origem":"Automatic salary rules by source","Ao salvar uma entrada como":"When you save an income transaction as","Salário":"Salary","ou":"or",", o ControleFin cria uma regra persistente para a mesma origem. O":", ControleFin creates a persistent rule for the same source. The","tem prioridade; quando ele não existe, merchant/descrição são usados de forma mais conservadora.":"takes priority; when it is unavailable, merchant/description are used more conservatively.","Quanto entra e de onde vem?":"How much comes in and where does it come from?","Os gráficos usam a janela selecionada e os filtros de conta, meio, fixo/variável, categoria, origem, busca e valor. O filtro de mês não corta a tendência.":"Charts use the selected window and account, method, fixed/variable, category, source, search, and amount filters. The month filter does not truncate the trend.","entradas visíveis":"visible income transactions","Entradas mensais em reais":"Monthly income in reais","Tipo de entrada":"Income type","Clique nas legendas para ocultar ou exibir séries.":"Click legend items to hide or show series.","Cada coluna representa 100% das entradas do mês e mostra sua origem.":"Each column represents 100% of the month's income and shows its source.","Passe o mouse para ver valor e percentual. As legendas são clicáveis.":"Hover to see amount and percentage. Legend items are clickable.","Principais fontes das entradas":"Top income sources","Clique em uma categoria ou origem para aplicar o filtro imediatamente.":"Click a category or source to apply the filter immediately.","Origens":"Sources","Pagadores/origens com maior entrada.":"Payers/sources with the highest income.","Transações de entradas":"Income transactions","Edite a categoria e marque cada entrada como fixa ou variável. Alterações recalculam os visuais imediatamente e são persistidas.":"Edit the category and mark each income transaction as fixed or variable. Changes immediately recalculate the visuals and are persisted.","Pagador":"Payer","Resarcimento / vínculo":"Reimbursement / link","Valor":"Amount","Posição financeira":"Financial position","Resumo patrimonial sem competir com a leitura de gastos.":"Net-worth summary without competing with the spending view.","Patrimônio líquido":"Net worth","Estimado":"Estimated","Saldo bancário":"Bank balance","Investimentos":"Investments","Cartões em aberto":"Open card balances","Caixa médio mensal":"Average monthly cash flow","Fluxo de caixa":"Cash flow","Entradas e saídas bancárias mensais.":"Monthly bank inflows and outflows.","Saúde financeira":"Financial health","Heurística explicável sobre os dados disponíveis.":"Explainable heuristic based on the available data.","Leitura automática":"Automatic insights","Sinais relevantes do fluxo, gastos, patrimônio e qualidade dos dados.":"Relevant signals from cash flow, expenses, net worth, and data quality.","Contas":"Accounts","BTG Banking, BTG Investimentos e Nubank tratados separadamente.":"BTG Banking, BTG Investments, and Nubank are handled separately.","Investimentos e detalhes técnicos":"Investments and technical details","Alocação de investimentos":"Investment allocation","Posições por instituição":"Positions by institution","Ajustes":"Settings","Transações e reclassificação":"Transactions and reclassification","Auditoria local de inclusão em Gastos":"Local expense inclusion audit","Pesquise merchant, descrição ou ID. A auditoria examina inclusive transações pendentes ou normalmente excluídas e mostra por que entram ou não na aba Gastos.":"Search merchant, description, or ID. The audit also examines pending or normally excluded transactions and shows why they are or are not included in Expenses.","Pesquisar transação":"Search transaction","Auditar":"Audit","Em Gastos?":"In Expenses?","Diagnóstico":"Diagnosis","Digite um termo e clique em Auditar.":"Enter a term and click Audit.","Nenhuma transação bruta encontrada. Nesse caso, o registro não chegou ao dataset transactions da Pluggy/exportador.":"No raw transaction found. In that case, the record did not reach the Pluggy/exporter transactions dataset.","Corrija categoria, merchant, meio ou natureza. Todos os gráficos são atualizados imediatamente.":"Correct category, merchant, method, or nature. All charts update immediately.","Exportar ajustes":"Export settings","Limpar ajustes":"Clear adjustments","Natureza":"Nature","Transferências próprias":"Own-account transfers","Aportes / transferências para investimentos":"Contributions / transfers to investments","Pagamento de fatura":"Card bill payment","CardBankslip · ":"CardBankslip · ","Estornos":"Refunds","Ignoradas":"Ignored","Os dados financeiros permanecem locais. Categorias, reclassificações, regras automáticas, padrões de gastos/entradas fixos, resarcimentos, vínculos e regras de salário por origem são salvos em user_data/ajustes.json pelo backend; pagamentos de fatura, transferências próprias e aportes/resgates ficam fora de Gastos e Entradas para evitar dupla contagem patrimonial.":"Financial data remains local. Categories, reclassifications, automatic rules, fixed expense/income patterns, reimbursements, links, and salary-by-source rules are saved by the backend in user_data/ajustes.json; card bill payments, own-account transfers, and investment contributions/redemptions are excluded from Expenses and Income to avoid double-counting.","Sem saída média suficiente":"Not enough average outflow data","Geração de caixa":"Cash generation","Sem entrada média suficiente":"Not enough average inflow data","Dívida sem ativos líquidos identificados":"Debt without identified liquid assets","Uso de crédito":"Credit utilization","Sem limite comparável":"No comparable limit","Sem carteira comparável":"No comparable portfolio","Diversificação":"Diversification","Sem dados de conexão":"No connection data","Atualização dos dados":"Data freshness","Dados insuficientes":"Insufficient data","Não foi possível calcular uma leitura consolidada.":"A consolidated assessment could not be calculated.","Saúde forte":"Strong health","Liquidez, caixa e obrigações estão relativamente equilibrados dentro das métricas disponíveis.":"Liquidity, cash flow, and obligations are relatively balanced within the available metrics.","Saúde razoável":"Fair health","A estrutura geral é funcional, mas há pontos que merecem acompanhamento.":"The overall structure is functional, but some areas deserve monitoring.","Atenção":"Attention","Existem pressões relevantes de caixa, dívida, crédito ou qualidade dos dados.":"There are meaningful pressures in cash flow, debt, credit, or data quality.","Pressão elevada":"High pressure","Os dados disponíveis indicam fragilidade em mais de uma dimensão financeira.":"Available data indicates weakness in more than one financial dimension.","Score indisponível":"Score unavailable","Sem dados":"No data","Saídas de caixa":"Cash outflows","Líquido":"Net","Obrigações financeiras":"Financial obligations","Não há saldo de cartão ou empréstimo identificado nessa moeda nos KPIs atuais.":"No card balance or loan is identified in this currency in the current KPIs.","Sem categoria":"Uncategorized","Maior categoria de consumo":"Largest consumption category","Qualidade dos dados":"Data quality","As conexões carregadas não exibem erro e não há atraso superior a 7 dias nas datas disponíveis.":"Loaded connections show no errors and no available timestamp is more than 7 days stale.","Faturas próximas":"Upcoming bills","Cartões":"Cards","Empréstimos":"Loans","Não identificado":"Not identified","Cartão":"Card","Conta bancária":"Bank account","Empréstimo":"Loan","Outra conta":"Other account","Não identificada":"Not identified","Conta não identificada":"Unidentified account","Não":"No","Sim":"Yes","Cartão de crédito":"Credit card","Transferência":"Transfer","Débito / compra em conta":"Debit / account purchase","Backend indisponível — usando armazenamento local temporariamente":"Backend unavailable — temporarily using browser storage","Erro ao salvar ajustes":"Error saving settings","Alteração pendente de salvamento…":"Change pending save…","Ativar regra":"Enable rule","Desativar regra":"Disable rule","Informe o valor que a regra deve procurar.":"Enter the value the rule should match.","Informe a categoria que será aplicada.":"Enter the category to apply.","Use um valor de regra com até 120 caracteres.":"Use a rule value of up to 120 characters.","Use uma categoria com até 80 caracteres.":"Use a category of up to 80 characters.","Essa regra já existe.":"This rule already exists.","Regra automática criada e salva.":"Automatic rule created and saved.","Regra ativada.":"Rule enabled.","Regra desativada.":"Rule disabled.","Regra excluída.":"Rule deleted.","Sem resarcimento":"No reimbursement","100% resarcido — não fiz parte":"100% reimbursed — I was not part of the expense","Compartilhado — fiz parte":"Shared — I was part of the expense","Aplicado pelo padrão do gasto fixo":"Applied by fixed-expense pattern","Ajuste desta transação":"Adjustment for this transaction","Somente para gastos":"Expenses only","Pessoas":"People","Gasto fixo":"Fixed expense","valor não disponível":"amount unavailable","sem resarcimento":"no reimbursement","Padrão":"Pattern","padrão por similaridade":"similarity pattern","gasto fixo":"fixed expense","Entrada fixa":"Fixed income","entrada fixa":"fixed income","Digite um nome para a nova categoria.":"Enter a name for the new category.","Formato de reclassificações inválido":"Invalid reclassification format","Backup de categorias, reclassificações, resarcimentos, vínculos e regras automáticas restaurado.":"Backup of categories, reclassifications, reimbursements, links, and automatic rules restored.","Não foi possível restaurar esse backup JSON.":"Could not restore this JSON backup.","Todos da janela":"All in window","Todas as contas":"All accounts","Todos os meios":"All methods","Todas as categorias":"All categories","Todos os merchants":"All merchants","Automático por similaridade":"Automatic by similarity","Padrão: Variável":"Default: Variable","Entrada normal":"Normal income","Gasto não encontrado":"Expense not found","Gasto":"Expense","Selecionar gasto…":"Select expense…","Sem vínculo específico":"No specific link","Remover vínculo":"Remove link","Todas as origens":"All sources","Pagador não informado pela transação":"Payer not provided by the transaction","Excluído dos gráficos de entradas.":"Excluded from income charts.","Considerado normalmente nos gráficos.":"Included normally in charts.","Entrada marcada como resarcimento e excluída dos gráficos.":"Income marked as reimbursement and excluded from charts.","Entrada marcada como Fixa.":"Income marked as Fixed.","Entrada atualizada e salva.":"Income updated and saved.","Sem entradas na janela":"No income in the window","Sem entradas identificadas na janela.":"No income identified in the window.","Entrada":"Income","Transferência própria":"Own-account transfer","Aporte / transferência de investimento":"Investment contribution / transfer","Estorno/crédito cartão":"Refund/card credit","Automático":"Automatic","automático por similaridade":"automatic by similarity","padrão":"default","Somente para gastos e entradas":"Expenses and income only","Classificação atualizada e salva.":"Classification updated and saved.","Não há ajustes salvos.":"There are no saved adjustments.","Remover todas as reclassificações locais? As categorias personalizadas serão mantidas.":"Remove all local reclassifications? Custom categories will be kept.","Reclassificações removidas; categorias personalizadas mantidas.":"Reclassifications removed; custom categories kept.","Estornos/créditos":"Refunds/credits","Maior categoria de gasto":"Largest expense category","Principal meio de gasto":"Main spending method","Movimentações patrimoniais separadas":"Separated asset movements","Cobertura: sem fluxo":"Coverage: no cash flow","Sincronização: —":"Sync: —","Dados carregados.":"Data loaded.","Dados financeiros e ajustes carregados localmente.":"Financial data and settings loaded locally.","Nenhum CSV encontrado na pasta selecionada.":"No CSV files found in the selected folder.","tradução(ões) semântica(s)":"semantic translation(s)","Carregando dados do SQLite…":"Loading data from SQLite…","Tentando carregar ./data/dataset_catalog.csv…":"Trying to load ./data/dataset_catalog.csv…","dataset_catalog.csv não encontrado":"dataset_catalog.csv not found","Nenhum CSV foi lido":"No CSV file was read","Carregamento automático indisponível. Se abriu o HTML como arquivo, selecione a pasta data/.":"Automatic loading unavailable. If you opened the HTML as a file, select the data/ folder.","Use “Selecionar pasta data/” ou sirva o projeto via localhost.":"Use “Select data/ folder” or serve the project via localhost.","Classificação restaurada para automático.":"Classification restored to automatic.","Excluir regra":"Delete rule","Excluir padrão automático":"Delete automatic pattern","Remover categoria personalizada":"Remove custom category","Ver dados":"View data","Salvar":"Save","Resetar":"Reset","Anterior":"Previous","Próxima":"Next","Sem limite":"No limit","Descrição, merchant…":"Description, merchant…","Descrição, origem, pagador, categoria…":"Description, source, payer, category…","Ex.: IFOOD, UBER, SPOTIFY…":"e.g. IFOOD, UBER, SPOTIFY…","Ex.: Alimentação":"e.g. Food","Nenhuma regra automática criada. Crie uma regra acima para categorizar novas transações automaticamente.":"No automatic rule created. Create a rule above to categorize new transactions automatically.","Nenhum padrão aprendido ainda. Marque um gasto recorrente como Fixo para criar o primeiro padrão.":"No learned pattern yet. Mark a recurring expense as Fixed to create the first pattern.","Nenhum padrão aprendido ainda. Marque uma entrada recorrente como Fixa para criar o primeiro padrão.":"No learned pattern yet. Mark recurring income as Fixed to create the first pattern.","Nenhuma regra de salário por origem criada ainda.":"No salary-by-source rule created yet.","Sem dados para esta seleção.":"No data for this selection.","Sem gastos mensais para esta seleção.":"No monthly expenses for this selection.","Sem gastos para esta seleção.":"No expenses for this selection.","Nenhum gasto encontrado para os filtros atuais.":"No expenses found for the current filters.","Sem gastos mensais para os filtros atuais.":"No monthly expenses for the current filters.","Sem gastos na janela":"No expenses in the window","Nenhuma conta ou posição encontrada nesta moeda.":"No account or position found in this currency.","Sem entradas para esta seleção.":"No income for this selection.","Nenhuma entrada encontrada para os filtros atuais.":"No income found for the current filters.","Nenhuma transação encontrada.":"No transaction found.","Nenhum cartão encontrado nesta moeda.":"No card found in this currency.","Sem contas para esta moeda.":"No accounts for this currency.","Nenhum cartão nessa moeda.":"No card in this currency.","Sem posições financeiras nessa moeda.":"No financial positions in this currency.","Sem connection_health.csv.":"No connection_health.csv.","Nenhum erro ou aviso registrado.":"No errors or warnings recorded.","Sem fluxo bancário para a moeda/janela selecionada.":"No bank cash flow for the selected currency/window.","Sem atividade de cartões para a seleção.":"No card activity for this selection.","Sem posições nessa moeda.":"No positions in this currency.","Sem sinais suficientes.":"Not enough signals."};
   const i18nOriginalText = new WeakMap();
   const i18nOriginalAttrs = new WeakMap();
   let i18nApplying = false;
@@ -382,6 +428,7 @@
     if ((m=text.match(/^Resarcimentos previstos: (.+)$/))) return `${leading}Expected reimbursements: ${m[1].replace(' transação(ões) · ',' transaction(s) · ').replace(' a receber',' receivable')}${trailing}`;
     if ((m=text.match(/^Resarcimentos excluídos: (.+)$/))) return `${leading}Excluded reimbursements: ${m[1]}${trailing}`;
     if ((m=text.match(/^Movimentações patrimoniais \/ categorias ignoradas: (.+)$/))) return `${leading}Asset movements / ignored categories: ${m[1].replace(' transação(ões) · ',' transaction(s) · ').replace(' em saídas',' in outflows')}${trailing}`;
+    if ((m=text.match(/^Movimentações \/ faturas consolidadas excluídas: (.+)$/))) return `${leading}Excluded movements / consolidated card bills: ${m[1].replace(' transação(ões) · ',' transaction(s) · ').replace(' em saídas',' in outflows')}${trailing}`;
     if ((m=text.match(/^(\d+) transação\(ões\) semelhante\(s\) · (.+)$/))) return `${leading}${m[1]} similar transaction(s) · ${m[2]}${trailing}`;
     if ((m=text.match(/^(\d+) entrada\(s\) semelhante\(s\) · (.+)$/))) return `${leading}${m[1]} similar income transaction(s) · ${m[2]}${trailing}`;
     if ((m=text.match(/^(\d+) entrada\(s\) da mesma origem reconhecida\(s\)$/))) return `${leading}${m[1]} income transaction(s) from the same source recognized${trailing}`;
@@ -577,9 +624,116 @@
     state.files.set(filename.split('/').pop(), text);
   }
 
+  function isTerminalInvalidStatus(status) {
+    const s=String(status || '').toUpperCase();
+    return /(CANCEL|REJECT|FAILED|ERROR|VOID|SCHEDULED)/.test(s);
+  }
+
+  function isPendingStatus(status) {
+    return /PENDING/.test(
+      String(status || '').toUpperCase()
+    );
+  }
+
   function isUsableStatus(status) {
     const s = String(status || '').toUpperCase();
     return !/(PENDING|CANCEL|REJECT|FAILED|ERROR|VOID|SCHEDULED)/.test(s);
+  }
+
+  function isCreditCardExpenseCandidate(r) {
+    return (
+      String(r?.accountType || '').toUpperCase()==='CREDIT'
+      && val(r?.normalizedExpense)>0
+    );
+  }
+
+  function normalizedAuditText(value) {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .trim()
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g,' ')
+      .replace(/\s+/g,' ')
+      .trim();
+  }
+
+  function pendingCardFingerprint(r) {
+    const merchant=originalMerchant(r);
+    const description=String(r?.description || '');
+    const label=normalizedAuditText(
+      merchant || description
+    );
+
+    return [
+      String(r?.accountId || ''),
+      transactionCurrency(r),
+      transactionAbsAmount(r).toFixed(2),
+      label
+    ].join('|');
+  }
+
+  function buildPendingCardDuplicateIndex() {
+    state.pendingCardDuplicateKeys.clear();
+
+    const postedByFingerprint=new Map();
+    const pending=[];
+
+    table('transactions').forEach(r=>{
+      if(!isCreditCardExpenseCandidate(r)) return;
+      if(isTerminalInvalidStatus(r.status)) return;
+
+      const key=pendingCardFingerprint(r);
+      if(!key) return;
+
+      if(isPendingStatus(r.status)) {
+        pending.push(r);
+        return;
+      }
+
+      if(!postedByFingerprint.has(key)) {
+        postedByFingerprint.set(key,[]);
+      }
+
+      const day=dayStamp(r.date);
+      postedByFingerprint.get(key).push({
+        row:r,
+        day
+      });
+    });
+
+    pending.forEach(r=>{
+      const key=pendingCardFingerprint(r);
+      const day=dayStamp(r.date);
+      const candidates=postedByFingerprint.get(key) || [];
+
+      const hasPostedTwin=candidates.some(item=>{
+        if(day==null || item.day==null) return true;
+        return Math.abs(day-item.day)<=3;
+      });
+
+      if(hasPostedTwin) {
+        state.pendingCardDuplicateKeys.add(
+          txKey(r)
+        );
+      }
+    });
+  }
+
+  function isUsableTransaction(r) {
+    if(!r || typeof r!=='object') return false;
+    if(isTerminalInvalidStatus(r.status)) return false;
+
+    if(isPendingStatus(r.status)) {
+      return (
+        isCreditCardExpenseCandidate(r)
+        && !state.pendingCardDuplicateKeys.has(
+          txKey(r)
+        )
+      );
+    }
+
+    return true;
   }
 
   function currencyRows(name, field='currencyCode') {
@@ -733,6 +887,11 @@
 
   function compact(v) { try{return new Intl.NumberFormat(uiLocale(),{notation:'compact',maximumFractionDigits:1}).format(v)}catch{return Math.round(v).toString()} }
 
+  function renderableBarValue(value) {
+    const n=num(value);
+    return n!=null && Number.isFinite(n) && n>0 ? n : null;
+  }
+
   function hiddenSeries(chartId) {
     if(!state.chartLegendHidden.has(chartId)) state.chartLegendHidden.set(chartId,new Set());
     return state.chartLegendHidden.get(chartId);
@@ -764,7 +923,7 @@
     else push('good','Obrigações financeiras','Não há saldo de cartão ou empréstimo identificado nessa moeda nos KPIs atuais.');
 
     const cats = periodRows('monthly_spending_by_category').filter(r=>r.sourceGroup==='CREDIT_CARD').sort((a,b)=>val(b.expense)-val(a.expense));
-    const grouped=new Map(); cats.forEach(r=>grouped.set(r.category || 'Sem categoria',(grouped.get(r.category || 'Sem categoria')||0)+val(r.expense))); const arr=[...grouped.entries()].sort((a,b)=>b[1]-a[1]); const total=arr.reduce((a,x)=>a+x[1],0); if(arr.length&&total>0) push('info','Maior categoria de consumo',`${arr[0][0]} representa ${pct(arr[0][1]/total*100)} do consumo em cartão na janela (${money(arr[0][1])}).`);
+    const grouped=new Map(); cats.forEach(r=>{const category=categoryDisplay(categoryStorageValue(r.category || categoryConceptStorage('uncategorized'),null,{categoryId:r.categoryId}));grouped.set(category,(grouped.get(category)||0)+val(r.expense));}); const arr=[...grouped.entries()].sort((a,b)=>b[1]-a[1]); const total=arr.reduce((a,x)=>a+x[1],0); if(arr.length&&total>0) push('info','Maior categoria de consumo',`${arr[0][0]} representa ${pct(arr[0][1]/total*100)} do consumo em cartão na janela (${money(arr[0][1])}).`);
 
     const conns=table('connection_health'); const broken=conns.filter(r=>String(r.hasError).toLowerCase()==='true'); const stale=conns.filter(r=>(daysSince(r.lastUpdatedAt||r.updatedAt)??0)>7); if(broken.length||stale.length) push('warn','Qualidade dos dados',`${broken.length} conexão(ões) com erro e ${stale.length} com atualização superior a 7 dias podem reduzir a confiabilidade da leitura.`); else if(conns.length) push('good','Qualidade dos dados','As conexões carregadas não exibem erro e não há atraso superior a 7 dias nas datas disponíveis.');
 
@@ -788,14 +947,59 @@
     const m=new Map(); rows.forEach(r=>{const k=r[keyField]||'Não identificado'; m.set(k,(m.get(k)||0)+val(r[valueField]));}); return [...m.entries()].sort((a,b)=>b[1]-a[1]);
   }
   function renderBars(elId, entries, formatter=money, limit=10) {
-    const arr=entries.filter(x=>x[1]>0).slice(0,limit), max=Math.max(...arr.map(x=>x[1]),1);
+    const arr=entries.map(([label,value])=>[label,renderableBarValue(value)]).filter(x=>x[1]!=null).slice(0,limit), max=Math.max(...arr.map(x=>x[1]),1);
     $(elId).innerHTML=arr.map(([label,v])=>`<div class="bar-row" data-tooltip="${esc(`${label}\n${formatter(v)}`)}"><div class="bar-label" title="${esc(label)}">${esc(label)}</div><div class="bar-bg"><div class="bar-fg" style="width:${v/max*100}%"></div></div><div class="bar-value">${esc(formatter(v))}</div></div>`).join('') || '<div class="empty">Sem dados para esta seleção.</div>';
   }
 
   function renderCardActivity() {
-    const rows=periodRows('monthly_credit_card_spending'); const by=new Map(); rows.forEach(r=>{const x=by.get(r.month)||{month:r.month,charges:0,credits:0};x.charges+=val(r.cardCharges);x.credits+=val(r.cardCreditsOrPayments);by.set(r.month,x)}); const arr=[...by.values()].sort((a,b)=>a.month.localeCompare(b.month));
-    if(!arr.length) return $('cardActivityChart').innerHTML='<div class="empty">Sem atividade de cartões para a seleção.</div>';
-    const W=900,H=270,p={l:55,r:15,t:18,b:42}; const max=Math.max(...arr.flatMap(x=>[x.charges,x.credits]),1); const group=(W-p.l-p.r)/arr.length; const bw=Math.min(28,group*.28); const y=v=>p.t+(H-p.t-p.b)*(1-v/max); let bars=''; arr.forEach((r,i)=>{const cx=p.l+group*i+group/2; bars+=`<rect x="${cx-bw-2}" y="${y(r.charges)}" width="${bw}" height="${H-p.b-y(r.charges)}" rx="4" fill="var(--bad)"/><rect x="${cx+2}" y="${y(r.credits)}" width="${bw}" height="${H-p.b-y(r.credits)}" rx="4" fill="var(--good)"/><text x="${cx}" y="${H-14}" text-anchor="middle" fill="var(--muted)" font-size="11">${r.month.slice(5)}/${r.month.slice(2,4)}</text>`}); $('cardActivityChart').innerHTML=`<svg viewBox="0 0 ${W} ${H}"><line x1="${p.l}" x2="${W-p.r}" y1="${H-p.b}" y2="${H-p.b}" stroke="var(--line)"/>${bars}</svg><div class="legend"><span><i style="background:var(--bad)"></i>Compras</span><span><i style="background:var(--good)"></i>Créditos/pagamentos</span></div>`;
+    const rows=periodRows('monthly_credit_card_spending');
+    const by=new Map();
+
+    rows.forEach(r=>{
+      const x=by.get(r.month)||{month:r.month,charges:0,credits:0};
+      const charges=renderableBarValue(r.cardCharges);
+      const credits=renderableBarValue(r.cardCreditsOrPayments);
+      if(charges!=null) x.charges+=charges;
+      if(credits!=null) x.credits+=credits;
+      by.set(r.month,x);
+    });
+
+    const arr=[...by.values()]
+      .filter(r=>renderableBarValue(r.charges)!=null || renderableBarValue(r.credits)!=null)
+      .sort((a,b)=>a.month.localeCompare(b.month));
+
+    if(!arr.length) {
+      return $('cardActivityChart').innerHTML='<div class="empty">Sem atividade de cartões para a seleção.</div>';
+    }
+
+    const W=900,H=270,p={l:55,r:15,t:18,b:42};
+    const max=Math.max(...arr.flatMap(r=>[r.charges,r.credits].filter(v=>renderableBarValue(v)!=null)),1);
+    const group=(W-p.l-p.r)/arr.length;
+    const gap=4;
+    const bw=Math.min(28,Math.max(7,(group*.62-gap)/2));
+    const y=v=>p.t+(H-p.t-p.b)*(1-v/max);
+
+    let bars='';
+
+    arr.forEach((r,i)=>{
+      const cx=p.l+group*i+group/2;
+      const active=[
+        {value:renderableBarValue(r.charges),color:'var(--bad)'},
+        {value:renderableBarValue(r.credits),color:'var(--good)'}
+      ].filter(item=>item.value!=null);
+
+      const clusterW=active.length*bw+Math.max(active.length-1,0)*gap;
+
+      active.forEach((item,j)=>{
+        const xx=cx-clusterW/2+j*(bw+gap);
+        const yy=y(item.value);
+        bars+=`<rect x="${xx}" y="${yy}" width="${bw}" height="${H-p.b-yy}" rx="4" fill="${item.color}"/>`;
+      });
+
+      bars+=`<text x="${cx}" y="${H-14}" text-anchor="middle" fill="var(--muted)" font-size="11">${r.month.slice(5)}/${r.month.slice(2,4)}</text>`;
+    });
+
+    $('cardActivityChart').innerHTML=`<svg viewBox="0 0 ${W} ${H}"><line x1="${p.l}" x2="${W-p.r}" y1="${H-p.b}" y2="${H-p.b}" stroke="var(--line)"/>${bars}</svg><div class="legend"><span><i style="background:var(--bad)"></i>Compras</span><span><i style="background:var(--good)"></i>Créditos/pagamentos</span></div>`;
   }
 
   function renderCreditTable() {
@@ -964,8 +1168,7 @@
   }
 
   function isSalaryCategory(value) {
-    const normalized = normalizedFinanceText(value);
-    return normalized === 'salario' || normalized === 'salary';
+    return categoryConceptKey(value,null)==='salary';
   }
 
   function incomeSourceIdentity(r) {
@@ -1013,7 +1216,7 @@
 
         const sourceType = String(rule.sourceType || '').trim();
         const sourceSignature = String(rule.sourceSignature || '').trim();
-        const category = String(rule.category || '').trim();
+        const category = categoryStorageValue(rule.category,null);
 
         if (!['payer','merchant','description'].includes(sourceType)) return null;
         if (!sourceSignature || !category) return null;
@@ -1059,7 +1262,11 @@
 
   function upsertIncomeSourceCategoryRule(transaction, category) {
     const identity = incomeSourceIdentity(transaction);
-    if (!identity || !isSalaryCategory(category)) return null;
+    const storedCategory=categoryStorageValue(
+      category,
+      state.uiLanguage
+    );
+    if (!identity || !isSalaryCategory(storedCategory)) return null;
 
     let rule = state.incomeSourceCategoryRules.find(item =>
       item.sourceType === identity.sourceType &&
@@ -1086,13 +1293,13 @@
         sourceLabel: identity.sourceLabel,
         accountId: identity.sourceType === 'description' ? String(transaction.accountId || '') : '',
         institution: identity.sourceType === 'description' ? normalizeInstitution(transaction) : '',
-        category: String(category).trim(),
+        category: storedCategory,
         createdAt: new Date().toISOString(),
       };
 
       state.incomeSourceCategoryRules.push(rule);
     } else {
-      rule.category = String(category).trim();
+      rule.category = storedCategory;
       rule.sourceLabel = identity.sourceLabel;
       rule.enabled = true;
     }
@@ -1133,7 +1340,7 @@
       return `<div class="rule-row" data-income-source-rule-id="${esc(rule.id)}">
         <div class="rule-toggle"><span class="pill">${esc(sourceTypeLabel)}</span></div>
         <div class="rule-main">
-          <div class="rule-expression"><strong>${esc(rule.sourceLabel || rule.sourceSignature)}</strong><span class="rule-arrow">→</span><strong>${esc(rule.category)}</strong></div>
+          <div class="rule-expression"><strong>${esc(rule.sourceLabel || rule.sourceSignature)}</strong><span class="rule-arrow">→</span><strong>${esc(categoryDisplay(rule.category))}</strong></div>
           <div class="rule-meta">${integer(matches)} entrada(s) da mesma origem reconhecida(s)</div>
         </div>
         <div class="rule-actions">
@@ -1156,11 +1363,61 @@
     toast('Regra automática de salário por origem excluída.');
   }
 
+  const cardBankslipDetectionCache = new WeakMap();
+
+  function normalizedTransactionMarker(value) {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g,'')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g,'');
+  }
+
+  function isCardBankslipTransaction(r) {
+    if(!r || typeof r!=='object') return false;
+
+    if(cardBankslipDetectionCache.has(r)) {
+      return cardBankslipDetectionCache.get(r);
+    }
+
+    let found=false;
+
+    for(const value of Object.values(r)) {
+      if(
+        value==null
+        || typeof value==='object'
+      ) {
+        continue;
+      }
+
+      const raw=String(value);
+
+      // Atalho barato para evitar normalizar todos os campos.
+      if(
+        !/card/i.test(raw)
+        || !/slip/i.test(raw)
+      ) {
+        continue;
+      }
+
+      const marker=normalizedTransactionMarker(raw);
+
+      if(marker.includes('cardbankslip')) {
+        found=true;
+        break;
+      }
+    }
+
+    cardBankslipDetectionCache.set(r,found);
+    return found;
+  }
+
   function searchableTransactionText(r) {
     return Object.entries(r).filter(([k,v])=>v && /(description|merchant|payment|method|operation|transfer|transaction|category|type|receiver|payer|beneficiary)/i.test(k)).map(([,v])=>String(v)).join(' ').toLowerCase();
   }
 
   function inferPaymentMethod(r) {
+    if(isCardBankslipTransaction(r)) return 'Pagamento de fatura';
     if(String(r.accountType).toUpperCase()==='CREDIT' || String(r.accountGroup).toUpperCase()==='CREDIT_CARD') return 'Cartão de crédito';
     const t=searchableTransactionText(r);
     if(/fatura|pagamento.{0,20}cart[aã]o|cart[aã]o.{0,20}pagamento/.test(t)) return 'Pagamento de fatura';
@@ -1175,6 +1432,7 @@
     const legacy = {
       transactionOverrides: {},
       customCategories: [],
+      customCategoryTranslations: [],
       categoryRules: [],
       fixedExpenseRules: [],
       fixedIncomeRules: [],
@@ -1199,6 +1457,22 @@
       }
     } catch (e) {
       console.warn('Não foi possível ler categorias antigas do localStorage.', e);
+    }
+
+    try {
+      const parsed = JSON.parse(
+        localStorage.getItem(
+          state.customCategoryTranslationsStorageKey
+        ) || '[]'
+      );
+      if (Array.isArray(parsed)) {
+        legacy.customCategoryTranslations = parsed;
+      }
+    } catch (e) {
+      console.warn(
+        'Não foi possível ler traduções antigas de categorias.',
+        e
+      );
     }
 
     try {
@@ -1236,15 +1510,725 @@
     return legacy;
   }
 
+  const CATEGORY_CONCEPT_PREFIX = '@cf:';
+  const PLUGGY_CATEGORY_PREFIX = '@pluggy:';
+
+  const CATEGORY_CONCEPTS = [{"key":"uncategorized","ptBR":"Sem categoria","enUS":"Uncategorized","aliases":{"pt-BR":["sem categoria","nao categorizado","não categorizado"],"en-US":["uncategorized","no category"]}},{"key":"food","ptBR":"Alimentação","enUS":"Food","aliases":{"pt-BR":["alimentacao","alimentação","comida","alimentacao e bebidas","alimentação e bebidas","refeicoes","refeições"],"en-US":["food","food and drink","food & drink","food and beverages","food & beverages","meals"]}},{"key":"groceries","ptBR":"Supermercado","enUS":"Groceries","aliases":{"pt-BR":["supermercado","mercado","mercearia","compras de mercado"],"en-US":["groceries","grocery","supermarket"]}},{"key":"restaurant","ptBR":"Restaurante","enUS":"Restaurant","aliases":{"pt-BR":["restaurante","restaurantes","refeicao","refeição"],"en-US":["restaurant","restaurants","dining"]}},{"key":"bars","ptBR":"Bares","enUS":"Bars","aliases":{"pt-BR":["bar","bares","bebidas"],"en-US":["bar","bars","drinks"]}},{"key":"delivery","ptBR":"Delivery","enUS":"Delivery","aliases":{"pt-BR":["delivery","entrega de comida","comida por aplicativo"],"en-US":["delivery","food delivery"]}},{"key":"transport","ptBR":"Transporte","enUS":"Transportation","aliases":{"pt-BR":["transporte","transportes","mobilidade"],"en-US":["transportation","transport","transit","commuting","mobility"]}},{"key":"ride_hailing","ptBR":"Aplicativos de transporte","enUS":"Ride-hailing","aliases":{"pt-BR":["aplicativos de transporte","uber","99","taxi","táxi"],"en-US":["ride hailing","ride-hailing","uber","taxi"]}},{"key":"fuel","ptBR":"Combustível","enUS":"Fuel","aliases":{"pt-BR":["combustivel","combustível","gasolina","etanol","posto"],"en-US":["fuel","gasoline","gas","petrol"]}},{"key":"parking","ptBR":"Estacionamento","enUS":"Parking","aliases":{"pt-BR":["estacionamento","estacionamentos"],"en-US":["parking"]}},{"key":"tolls","ptBR":"Pedágios","enUS":"Tolls","aliases":{"pt-BR":["pedagio","pedágio","pedagios","pedágios"],"en-US":["toll","tolls"]}},{"key":"housing","ptBR":"Moradia","enUS":"Housing","aliases":{"pt-BR":["moradia","habitacao","habitação"],"en-US":["housing"]}},{"key":"rent","ptBR":"Aluguel","enUS":"Rent","aliases":{"pt-BR":["aluguel","alugueis","aluguéis"],"en-US":["rent","rental"]}},{"key":"condominium","ptBR":"Condomínio","enUS":"Condo fees","aliases":{"pt-BR":["condominio","condomínio","condominio residencial"],"en-US":["condo","condo fees","condominium"]}},{"key":"utilities","ptBR":"Contas e utilidades","enUS":"Bills & utilities","aliases":{"pt-BR":["contas e utilidades","contas","utilidades"],"en-US":["bills and utilities","bills & utilities","utilities","bills"]}},{"key":"electricity","ptBR":"Energia elétrica","enUS":"Electricity","aliases":{"pt-BR":["energia","energia eletrica","energia elétrica","luz"],"en-US":["electricity","power"]}},{"key":"water","ptBR":"Água","enUS":"Water","aliases":{"pt-BR":["agua","água","conta de agua","conta de água"],"en-US":["water","water bill"]}},{"key":"gas_utility","ptBR":"Gás","enUS":"Gas utility","aliases":{"pt-BR":["gas","gás","gas encanado","gás encanado"],"en-US":["gas utility","natural gas"]}},{"key":"internet","ptBR":"Internet","enUS":"Internet","aliases":{"pt-BR":["internet","banda larga"],"en-US":["internet","broadband"]}},{"key":"phone","ptBR":"Telefone","enUS":"Phone","aliases":{"pt-BR":["telefone","celular","telefonia"],"en-US":["phone","mobile","cell phone","telecom"]}},{"key":"health","ptBR":"Saúde","enUS":"Health","aliases":{"pt-BR":["saude","saúde","cuidados de saude","cuidados de saúde"],"en-US":["health","healthcare","health care","medical care"]}},{"key":"pharmacy","ptBR":"Farmácia","enUS":"Pharmacy","aliases":{"pt-BR":["farmacia","farmácia","drogaria"],"en-US":["pharmacy","drugstore"]}},{"key":"medical","ptBR":"Médico","enUS":"Medical","aliases":{"pt-BR":["medico","médico","medicos","médicos","consulta medica","consulta médica"],"en-US":["medical","doctor","doctors"]}},{"key":"dental","ptBR":"Dentista","enUS":"Dental","aliases":{"pt-BR":["dentista","odontologia","dental"],"en-US":["dentist","dental"]}},{"key":"insurance","ptBR":"Seguros","enUS":"Insurance","aliases":{"pt-BR":["seguro","seguros"],"en-US":["insurance"]}},{"key":"education","ptBR":"Educação","enUS":"Education","aliases":{"pt-BR":["educacao","educação","escola","faculdade","universidade"],"en-US":["education","school","college","university"]}},{"key":"courses","ptBR":"Cursos","enUS":"Courses","aliases":{"pt-BR":["curso","cursos","treinamento","treinamentos"],"en-US":["course","courses","training"]}},{"key":"entertainment","ptBR":"Entretenimento","enUS":"Entertainment","aliases":{"pt-BR":["entretenimento","lazer","diversao","diversão"],"en-US":["entertainment","leisure","recreation","fun"]}},{"key":"cinema","ptBR":"Cinema","enUS":"Movies","aliases":{"pt-BR":["cinema","filmes"],"en-US":["movies","movie","cinema","theater"]}},{"key":"concert","ptBR":"Show","enUS":"Concert","aliases":{"pt-BR":["show","shows","concerto","concertos","musica ao vivo","música ao vivo"],"en-US":["concert","concerts","live music","gig","gigs"]}},{"key":"streaming","ptBR":"Streaming","enUS":"Streaming","aliases":{"pt-BR":["streaming","video por assinatura","vídeo por assinatura"],"en-US":["streaming"]}},{"key":"games","ptBR":"Jogos","enUS":"Games","aliases":{"pt-BR":["jogo","jogos","videogame","video game"],"en-US":["game","games","gaming","video games"]}},{"key":"travel","ptBR":"Viagens","enUS":"Travel","aliases":{"pt-BR":["viagem","viagens","turismo"],"en-US":["travel","travels","tourism","trip","trips","vacation","vacations"]}},{"key":"lodging","ptBR":"Hospedagem","enUS":"Lodging","aliases":{"pt-BR":["hospedagem","hotel","hoteis","hotéis","pousada","acomodacao","acomodação","acomodacoes","acomodações"],"en-US":["lodging","hotel","hotels","accommodation","accommodations","accomodation","accomodations","hotel accommodation","travel accommodation"]}},{"key":"flights","ptBR":"Passagens aéreas","enUS":"Flights","aliases":{"pt-BR":["passagem aerea","passagem aérea","passagens aereas","passagens aéreas","voo","voos"],"en-US":["flight","flights","airfare","air travel"]}},{"key":"shopping","ptBR":"Compras","enUS":"Shopping","aliases":{"pt-BR":["compra","compras","shopping"],"en-US":["shopping","purchase","purchases","retail","retail shopping"]}},{"key":"clothing","ptBR":"Roupas","enUS":"Clothing","aliases":{"pt-BR":["roupa","roupas","vestuario","vestuário"],"en-US":["clothing","clothes","apparel"]}},{"key":"electronics","ptBR":"Eletrônicos","enUS":"Electronics","aliases":{"pt-BR":["eletronico","eletrônico","eletronicos","eletrônicos","tecnologia"],"en-US":["electronics","technology","tech"]}},{"key":"home","ptBR":"Casa","enUS":"Home","aliases":{"pt-BR":["casa","lar","casa e jardim"],"en-US":["home","home and garden","home & garden"]}},{"key":"services","ptBR":"Serviços","enUS":"Services","aliases":{"pt-BR":["servico","serviço","servicos","serviços"],"en-US":["service","services"]}},{"key":"subscriptions","ptBR":"Assinaturas","enUS":"Subscriptions","aliases":{"pt-BR":["assinatura","assinaturas","mensalidades"],"en-US":["subscription","subscriptions","membership","memberships","recurring subscription","recurring subscriptions"]}},{"key":"software","ptBR":"Software","enUS":"Software","aliases":{"pt-BR":["software","aplicativos","apps"],"en-US":["software","apps","applications"]}},{"key":"beauty","ptBR":"Beleza","enUS":"Beauty","aliases":{"pt-BR":["beleza","salao","salão","cabeleireiro"],"en-US":["beauty","salon","hair"]}},{"key":"fitness","ptBR":"Academia e fitness","enUS":"Gym & fitness","aliases":{"pt-BR":["academia","fitness","atividade fisica","atividade física"],"en-US":["gym","fitness","gym & fitness"]}},{"key":"pets","ptBR":"Pets","enUS":"Pets","aliases":{"pt-BR":["pet","pets","animais","veterinario","veterinário"],"en-US":["pet","pets","veterinary"]}},{"key":"gifts","ptBR":"Presentes","enUS":"Gifts","aliases":{"pt-BR":["presente","presentes"],"en-US":["gift","gifts"]}},{"key":"donations","ptBR":"Doações","enUS":"Donations","aliases":{"pt-BR":["doacao","doação","doacoes","doações","caridade"],"en-US":["donation","donations","charity"]}},{"key":"taxes","ptBR":"Impostos","enUS":"Taxes","aliases":{"pt-BR":["imposto","impostos","tributo","tributos"],"en-US":["tax","taxes"]}},{"key":"fees","ptBR":"Taxas","enUS":"Fees","aliases":{"pt-BR":["taxa","taxas","tarifa","tarifas","encargos"],"en-US":["fee","fees","charges"]}},{"key":"debt","ptBR":"Dívidas","enUS":"Debt","aliases":{"pt-BR":["divida","dívida","dividas","dívidas"],"en-US":["debt","debts"]}},{"key":"loans","ptBR":"Empréstimos","enUS":"Loans","aliases":{"pt-BR":["emprestimo","empréstimo","emprestimos","empréstimos","financiamento"],"en-US":["loan","loans","financing"]}},{"key":"salary","ptBR":"Salário","enUS":"Salary","aliases":{"pt-BR":["salario","salário","salarios","salários","remuneracao","remuneração"],"en-US":["salary","wage","wages","paycheck"]}},{"key":"bonus","ptBR":"Bônus","enUS":"Bonus","aliases":{"pt-BR":["bonus","bônus","premio","prêmio"],"en-US":["bonus","bonuses"]}},{"key":"freelance","ptBR":"Freelance","enUS":"Freelance","aliases":{"pt-BR":["freelance","freela","trabalho autonomo","trabalho autônomo"],"en-US":["freelance","freelancing"]}},{"key":"business_income","ptBR":"Receita de negócio","enUS":"Business income","aliases":{"pt-BR":["receita de negocio","receita de negócio","receita empresarial","faturamento"],"en-US":["business income","business revenue","revenue"]}},{"key":"reimbursement","ptBR":"Resarcimento","enUS":"Reimbursement","aliases":{"pt-BR":["resarcimento","reembolso"],"en-US":["reimbursement","refund reimbursement"]}},{"key":"cashback","ptBR":"Cashback","enUS":"Cashback","aliases":{"pt-BR":["cashback"],"en-US":["cashback"]}},{"key":"interest","ptBR":"Juros","enUS":"Interest","aliases":{"pt-BR":["juros","rendimento de juros"],"en-US":["interest","interest income"]}},{"key":"dividends","ptBR":"Dividendos","enUS":"Dividends","aliases":{"pt-BR":["dividendo","dividendos"],"en-US":["dividend","dividends"]}},{"key":"investments","ptBR":"Investimentos","enUS":"Investments","aliases":{"pt-BR":["investimento","investimentos","aplicacoes","aplicações"],"en-US":["investment","investments"]}},{"key":"transfer","ptBR":"Transferências","enUS":"Transfers","aliases":{"pt-BR":["transferencia","transferência","transferencias","transferências"],"en-US":["transfer","transfers"]}},{"key":"same_person_transfer","ptBR":"Transferência própria","enUS":"Same person transfer","aliases":{"pt-BR":["transferencia propria","transferência própria","mesma titularidade","entre contas proprias","entre contas próprias"],"en-US":["same person transfer","same person transfers","own account transfer"]}},{"key":"card_payment","ptBR":"Pagamento de fatura","enUS":"Card bill payment","aliases":{"pt-BR":["pagamento de fatura","fatura de cartao","fatura de cartão"],"en-US":["card bill payment","credit card payment"]}},{"key":"refund","ptBR":"Estorno","enUS":"Refund","aliases":{"pt-BR":["estorno","estornos","devolucao","devolução"],"en-US":["refund","refunds","reversal"]}},{"key":"income","ptBR":"Renda","enUS":"Income","aliases":{"pt-BR":["renda","receita"],"en-US":["income"]}},{"key":"other","ptBR":"Outros","enUS":"Other","aliases":{"pt-BR":["outro","outros","outras","diversos","diversas"],"en-US":["other","others","misc","miscellaneous","miscellaneous expenses","uncategorised","uncategorized other"]}},{"key":"childcare","ptBR":"Cuidados infantis","enUS":"Childcare","aliases":{"pt-BR":["cuidados infantis","creche","baba","babá"],"en-US":["childcare","child care","daycare","babysitting"]}},{"key":"personal_care","ptBR":"Cuidados pessoais","enUS":"Personal care","aliases":{"pt-BR":["cuidados pessoais","higiene pessoal"],"en-US":["personal care","personal hygiene"]}},{"key":"automotive","ptBR":"Automotivo","enUS":"Automotive","aliases":{"pt-BR":["automotivo","automovel","automóvel"],"en-US":["automotive","auto","automobile"]}},{"key":"maintenance","ptBR":"Manutenção","enUS":"Maintenance","aliases":{"pt-BR":["manutencao","manutenção","reparos"],"en-US":["maintenance","repairs","repair"]}},{"key":"home_improvement","ptBR":"Melhorias para casa","enUS":"Home improvement","aliases":{"pt-BR":["melhorias para casa","reforma","reformas"],"en-US":["home improvement","home improvements","renovation","renovations"]}},{"key":"government","ptBR":"Governo","enUS":"Government","aliases":{"pt-BR":["governo","servicos publicos","serviços públicos"],"en-US":["government","government services","public services"]}},{"key":"sports","ptBR":"Esportes","enUS":"Sports","aliases":{"pt-BR":["esporte","esportes"],"en-US":["sport","sports"]}},{"key":"books","ptBR":"Livros","enUS":"Books","aliases":{"pt-BR":["livro","livros","livraria"],"en-US":["book","books","bookstore"]}},{"key":"coffee","ptBR":"Cafés","enUS":"Coffee shops","aliases":{"pt-BR":["cafe","café","cafes","cafés","cafeteria"],"en-US":["coffee","coffee shop","coffee shops","cafe","cafes"]}},{"key":"cash_withdrawal","ptBR":"Saque","enUS":"Cash withdrawal","aliases":{"pt-BR":["saque","saques","retirada de dinheiro"],"en-US":["cash withdrawal","cash withdrawals","atm withdrawal","atm withdrawals"]}},{"key":"cash_deposit","ptBR":"Depósito em dinheiro","enUS":"Cash deposit","aliases":{"pt-BR":["deposito em dinheiro","depósito em dinheiro","deposito","depósito"],"en-US":["cash deposit","cash deposits","deposit"]}}];
+  const CATEGORY_CONCEPT_BY_KEY = new Map(
+    CATEGORY_CONCEPTS.map(item => [item.key, item])
+  );
+
+  const PLUGGY_CATEGORY_FALLBACK_EN_PT = new Map(
+    Object.entries({"Income":"Renda","Salary":"Salário","Retirement":"Aposentadoria","Entrepreneurial activities":"Atividades empreendedoras","Government aid":"Auxílio governamental","Non-recurring income":"Renda não recorrente","Loans and Financing":"Empréstimos e financiamentos","Late payment and overdraft costs":"Custos de atraso e cheque especial","Interests charged":"Juros cobrados","Loans":"Empréstimos","Financing":"Financiamento","Real estate financing":"Financiamento imobiliário","Vehicle Financing":"Financiamento de veículo","Student loan":"Financiamento estudantil","Investments":"Investimentos","Automatic investment":"Investimento automático","Fixed income":"Renda fixa","Mutual funds":"Fundos de investimento","Variable income":"Renda variável","Margin":"Margem","Proceeds interests and dividends":"Rendimentos, juros e dividendos","Pension":"Previdência","Same person transfer":"Transferência própria","Same person transfer - Cash":"Transferência própria - Dinheiro","Same person transfer - PIX":"Transferência própria - PIX","Same person transfer - TED":"Transferência própria - TED","Transfers":"Transferências","Transfer - Bank slip (Boleto)":"Transferência - Boleto","Transfer - Cash":"Transferência - Dinheiro","Transfer - Check":"Transferência - Cheque","Transfer - DOC":"Transferência - DOC","Transfer - Foreign exchange":"Transferência - Câmbio","Transfer - Internal":"Transferência - Interna","Transfer - PIX":"Transferência - PIX","Transfer - TED":"Transferência - TED","Credit card payment":"Pagamento de fatura de cartão","Third-party transfers":"Transferências de terceiros","Bank slip":"Boleto","Debt card":"Cartão de débito","Debit card":"Cartão de débito","DOC":"DOC","PIX":"PIX","TED":"TED","Legal obligations":"Obrigações legais","Blocked balances":"Saldos bloqueados","Alimony":"Pensão alimentícia","Services":"Serviços","Telecommunications":"Telecomunicações","Internet":"Internet","Mobile":"Celular","TV":"TV","Education":"Educação","Online Courses":"Cursos online","University":"Universidade","School":"Escola","Kindergarten":"Educação infantil","Wellness and fitness":"Bem-estar e fitness","Gyms and fitness centers":"Academias e centros de fitness","Sports practice":"Prática esportiva","Wellness":"Bem-estar","Tickets":"Ingressos","Stadiums and arenas":"Estádios e arenas","Landmarks and museums":"Pontos turísticos e museus","Cinema, theater and concerts":"Cinema, teatro e shows","Shopping":"Compras","Online shopping":"Compras online","Electronics":"Eletrônicos","Pet supplies and vet":"Produtos para pets e veterinário","Clothing":"Roupas","Kids and toys":"Crianças e brinquedos","Bookstore":"Livraria","Sports goods":"Artigos esportivos","Office Supplies":"Material de escritório","Cashback":"Cashback","Digital services":"Serviços digitais","Gaming":"Jogos","Video streaming":"Streaming de vídeo","Music streaming":"Streaming de música","Groceries":"Supermercado","Food and drinks":"Alimentação e bebidas","Eating out":"Refeições fora de casa","Food delivery":"Delivery de comida","Travel":"Viagens","Airport and airlines":"Aeroportos e companhias aéreas","Accommodation":"Hospedagem","Accommodations":"Hospedagem","Accomodation":"Hospedagem","Accomodations":"Hospedagem","Mileage programs":"Programas de milhas","Bus tickets":"Passagens de ônibus","Donations":"Doações","Gambling":"Jogos de azar","Lottery":"Loteria","Online bet":"Apostas online","Taxes":"Impostos","Income taxes":"Imposto de renda","Taxes on investments":"Impostos sobre investimentos","Tax on financial operations":"IOF","Bank fees":"Tarifas bancárias","Account fees":"Tarifas de conta","Wire transfer fees and ATM fees":"Tarifas de transferência e caixa eletrônico","Credit card fees":"Tarifas de cartão de crédito","Housing":"Moradia","Rent":"Aluguel","Houseware":"Utilidades domésticas","Urban land and building tax":"IPTU","Utilities":"Contas e utilidades","Water":"Água","Electricity":"Energia elétrica","Gas":"Gás","Healthcare":"Saúde","Dentist":"Dentista","Pharmacy":"Farmácia","Optometry":"Ótica e optometria","Hospital clinics and labs":"Hospitais, clínicas e laboratórios","Transportation":"Transporte","Taxi and ride-hailing":"Táxi e aplicativos de transporte","Public transportation":"Transporte público","Car rental":"Aluguel de carro","Bicycle":"Bicicleta","Automotive":"Automotivo","Gas stations":"Postos de combustível","Gas Stations":"Postos de combustível","Parking":"Estacionamento","Tolls and in-vehicle payment":"Pedágios e pagamento veicular","Vehicle ownership taxes and fees":"Impostos e taxas de veículos","Vehicle maintenance":"Manutenção de veículo","Traffic tickets":"Multas de trânsito","Insurance":"Seguros","Life insurance":"Seguro de vida","Home Insurance":"Seguro residencial","Health insurance":"Plano de saúde","Vehicle insurance":"Seguro de veículo","Leisure":"Lazer","Other":"Outros","Kids & Toys":"Crianças e brinquedos","Kids and Toys":"Crianças e brinquedos","Children and toys":"Crianças e brinquedos","Children & Toys":"Crianças e brinquedos","Gas station":"Posto de combustível","Gas Station":"Posto de combustível","Fuel stations":"Postos de combustível","Fuel station":"Posto de combustível","Home and garden":"Casa e jardim","Home & Garden":"Casa e jardim","Personal care":"Cuidados pessoais","Childcare":"Cuidados infantis","Child care":"Cuidados infantis","Home improvement":"Melhorias para casa","Coffee shops":"Cafés","Coffee shop":"Café","Cash withdrawal":"Saque","Cash deposit":"Depósito em dinheiro","Professional services":"Serviços profissionais","Personal services":"Serviços pessoais","Business services":"Serviços empresariais","Beauty and personal care":"Beleza e cuidados pessoais","Health and wellness":"Saúde e bem-estar","Arts and entertainment":"Artes e entretenimento","Travel and accommodation":"Viagens e hospedagem","Restaurants and dining":"Restaurantes e refeições","Food and dining":"Alimentação e restaurantes","Pets and animals":"Pets e animais","Books and supplies":"Livros e materiais","Gifts and donations":"Presentes e doações","Government services":"Serviços governamentais","Financial services":"Serviços financeiros","Banking":"Serviços bancários"})
+  );
+
+  const CATEGORY_WORD_TRANSLATIONS = {
+    'en-US>pt-BR': new Map(Object.entries({"account":"conta","accounts":"contas","activity":"atividade","activities":"atividades","aid":"auxílio","airline":"companhia aérea","airlines":"companhias aéreas","airport":"aeroporto","airports":"aeroportos","alcohol":"bebidas alcoólicas","and":"e","animals":"animais","apparel":"roupas","arena":"arena","arenas":"arenas","art":"arte","arts":"artes","atm":"caixa eletrônico","auto":"automotivo","automotive":"automotivo","baby":"bebê","bank":"banco","banking":"bancário","banks":"bancos","bar":"bar","bars":"bares","beauty":"beleza","bet":"aposta","bets":"apostas","bicycle":"bicicleta","bicycles":"bicicletas","bill":"conta","bills":"contas","book":"livro","books":"livros","bookstore":"livraria","bus":"ônibus","business":"empresarial","businesses":"empresas","card":"cartão","cards":"cartões","car":"carro","cars":"carros","cash":"dinheiro","cashback":"cashback","care":"cuidados","charity":"caridade","check":"cheque","child":"criança","children":"crianças","childcare":"cuidados infantis","cinema":"cinema","clinic":"clínica","clinics":"clínicas","clothes":"roupas","clothing":"roupas","coffee":"café","college":"faculdade","concert":"show","concerts":"shows","condo":"condomínio","course":"curso","courses":"cursos","credit":"crédito","daycare":"creche","debit":"débito","delivery":"delivery","dental":"odontológico","dentist":"dentista","digital":"digitais","dining":"refeições","donation":"doação","donations":"doações","drink":"bebida","drinks":"bebidas","education":"educação","electronics":"eletrônicos","electricity":"energia elétrica","entertainment":"entretenimento","fee":"tarifa","fees":"tarifas","financial":"financeiros","financing":"financiamento","fitness":"fitness","flight":"voo","flights":"voos","food":"alimentação","foreign":"estrangeiro","fuel":"combustível","fund":"fundo","funds":"fundos","furniture":"móveis","gambling":"jogos de azar","game":"jogo","games":"jogos","gaming":"jogos","garden":"jardim","gas":"combustível","gift":"presente","gifts":"presentes","government":"governamental","groceries":"supermercado","grocery":"supermercado","gym":"academia","gyms":"academias","health":"saúde","healthcare":"saúde","home":"casa","hospital":"hospital","hospitals":"hospitais","hotel":"hotel","hotels":"hotéis","house":"casa","household":"domésticos","houseware":"utilidades domésticas","improvement":"melhorias","income":"renda","insurance":"seguro","interest":"juros","interests":"juros","internet":"internet","investment":"investimento","investments":"investimentos","kid":"criança","kids":"crianças","kindergarten":"educação infantil","lab":"laboratório","labs":"laboratórios","leisure":"lazer","life":"vida","loan":"empréstimo","loans":"empréstimos","lodging":"hospedagem","lottery":"loteria","maintenance":"manutenção","medical":"médico","membership":"assinatura","memberships":"assinaturas","mileage":"milhas","mobile":"celular","museum":"museu","museums":"museus","music":"música","office":"escritório","online":"online","optometry":"optometria","other":"outros","parking":"estacionamento","payment":"pagamento","payments":"pagamentos","personal":"pessoais","pet":"pet","pets":"pets","pharmacy":"farmácia","phone":"telefone","public":"público","purchase":"compra","purchases":"compras","recreation":"lazer","rent":"aluguel","rental":"aluguel","repairs":"manutenção","restaurant":"restaurante","restaurants":"restaurantes","retail":"varejo","retirement":"aposentadoria","salary":"salário","school":"escola","service":"serviço","services":"serviços","shopping":"compras","software":"software","sport":"esporte","sports":"esportes","station":"posto","stations":"postos","streaming":"streaming","student":"estudantil","subscription":"assinatura","subscriptions":"assinaturas","supplies":"materiais","tax":"imposto","taxes":"impostos","taxi":"táxi","telecommunications":"telecomunicações","theater":"teatro","tickets":"ingressos","toll":"pedágio","tolls":"pedágios","toy":"brinquedo","toys":"brinquedos","traffic":"trânsito","training":"treinamento","transfer":"transferência","transfers":"transferências","transport":"transporte","transportation":"transporte","travel":"viagens","university":"universidade","utilities":"utilidades","vehicle":"veículo","vehicles":"veículos","video":"vídeo","water":"água","wellness":"bem-estar","withdrawal":"saque","withdrawals":"saques"})),
+    'pt-BR>en-US': new Map(Object.entries({"academia":"gym","academias":"gyms","alimentacao":"food","aposta":"bet","apostas":"bets","aposentadoria":"retirement","automotivo":"automotive","agua":"water","banco":"bank","bancos":"banks","beleza":"beauty","bebida":"drink","bebidas":"drinks","bicicleta":"bicycle","brinquedo":"toy","brinquedos":"toys","cafe":"coffee","cafes":"coffee shops","casa":"home","cartao":"card","cartoes":"cards","celular":"mobile","cinema":"cinema","clinica":"clinic","clinicas":"clinics","combustivel":"fuel","compra":"purchase","compras":"shopping","conta":"account","contas":"bills","crianca":"child","criancas":"kids","curso":"course","cursos":"courses","cuidados":"care","debito":"debit","dentista":"dentist","dinheiro":"cash","doacao":"donation","doacoes":"donations","domesticos":"household","educacao":"education","eletronicos":"electronics","energia":"electricity","entretenimento":"entertainment","escola":"school","escritorio":"office","esporte":"sport","esportes":"sports","estacionamento":"parking","farmacia":"pharmacy","financiamento":"financing","fitness":"fitness","gas":"gas","governo":"government","hospedagem":"accommodation","hospital":"hospital","hospitais":"hospitals","imposto":"tax","impostos":"taxes","ingresso":"ticket","ingressos":"tickets","internet":"internet","investimento":"investment","investimentos":"investments","jardim":"garden","jogo":"game","jogos":"games","juros":"interest","lazer":"leisure","livro":"book","livros":"books","livraria":"bookstore","manutencao":"maintenance","material":"supplies","milhas":"mileage","museu":"museum","museus":"museums","musica":"music","outros":"other","pagamento":"payment","pedagio":"toll","pedagios":"tolls","pet":"pet","pets":"pets","posto":"station","postos":"stations","presente":"gift","presentes":"gifts","refeicoes":"dining","renda":"income","roupas":"clothing","salario":"salary","saque":"withdrawal","saques":"withdrawals","saude":"health","seguro":"insurance","seguros":"insurance","servico":"service","servicos":"services","show":"concert","shows":"concerts","supermercado":"groceries","tarifa":"fee","tarifas":"fees","taxa":"fee","taxas":"fees","telefone":"phone","teatro":"theater","transferencia":"transfer","transferencias":"transfers","transito":"traffic","transporte":"transportation","universidade":"university","utilidades":"utilities","veiculo":"vehicle","veiculos":"vehicles","viagem":"travel","viagens":"travel"})),
+  };
+
+  const CATEGORY_STATIC_ALIAS_INDEX = {
+    'pt-BR': new Map(),
+    'en-US': new Map(),
+  };
+
+  const CATEGORY_FALLBACK_EN_PT_INDEX = new Map();
+  const CATEGORY_FALLBACK_PT_EN_INDEX = new Map();
+
+  function normalizeCategorySemantic(value) {
+    return String(value || '')
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim()
+      .toLowerCase()
+      .replace(/&/g, ' and ')
+      .replace(/\baccomodation\b/g, 'accommodation')
+      .replace(/\baccomodations\b/g, 'accommodations')
+      .replace(/\s+/g, ' ')
+      .replace(/[^a-z0-9]+/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+  }
+
+  function categorySemanticVariants(value) {
+    const normalized=normalizeCategorySemantic(value);
+    if(!normalized) return [];
+
+    const variants=new Set([normalized]);
+
+    const tokens=normalized.split(' ');
+    const singularized=tokens.map(token=>{
+      if(token.endsWith('ies') && token.length>4) {
+        return token.slice(0,-3)+'y';
+      }
+      if(
+        token.endsWith('es')
+        && token.length>4
+        && /(ches|shes|xes|zes|sses)$/.test(token)
+      ) {
+        return token.slice(0,-2);
+      }
+      if(
+        token.endsWith('s')
+        && token.length>3
+        && !/(ss|us|is)$/.test(token)
+      ) {
+        return token.slice(0,-1);
+      }
+      return token;
+    }).join(' ');
+
+    variants.add(singularized);
+    variants.add(normalized.replace(/\s+and\s+/g,' '));
+
+    return [...variants].filter(Boolean);
+  }
+
+  function compileCategoryStaticIndexes() {
+    CATEGORY_STATIC_ALIAS_INDEX['pt-BR'].clear();
+    CATEGORY_STATIC_ALIAS_INDEX['en-US'].clear();
+    CATEGORY_FALLBACK_EN_PT_INDEX.clear();
+    CATEGORY_FALLBACK_PT_EN_INDEX.clear();
+
+    CATEGORY_CONCEPTS.forEach(concept=>{
+      for(const language of ['pt-BR','en-US']) {
+        const labels=language==='en-US'
+          ? [concept.enUS,...(concept.aliases?.['en-US'] || [])]
+          : [concept.ptBR,...(concept.aliases?.['pt-BR'] || [])];
+
+        labels.forEach(label=>{
+          categorySemanticVariants(label).forEach(alias=>{
+            if(!CATEGORY_STATIC_ALIAS_INDEX[language].has(alias)) {
+              CATEGORY_STATIC_ALIAS_INDEX[language].set(alias,concept.key);
+            }
+          });
+        });
+      }
+    });
+
+    PLUGGY_CATEGORY_FALLBACK_EN_PT.forEach((pt,en)=>{
+      categorySemanticVariants(en).forEach(alias=>{
+        CATEGORY_FALLBACK_EN_PT_INDEX.set(alias,pt);
+      });
+      categorySemanticVariants(pt).forEach(alias=>{
+        if(!CATEGORY_FALLBACK_PT_EN_INDEX.has(alias)) {
+          CATEGORY_FALLBACK_PT_EN_INDEX.set(alias,en);
+        }
+      });
+    });
+  }
+
+  compileCategoryStaticIndexes();
+
+  function clearCategoryCaches() {
+    state.categoryDisplayCache?.clear();
+    state.categoryStorageCache?.clear();
+  }
+
+  function buildPluggyCategoryRuntimeIndex() {
+    state.pluggyCategoryById.clear();
+    state.pluggyCategoryAlias.clear();
+    clearCategoryCaches();
+
+    table('categories').forEach(row=>{
+      const id=String(
+        row.id
+        || row.categoryId
+        || ''
+      ).trim();
+
+      const en=String(
+        row.description
+        || row.name
+        || row.category
+        || ''
+      ).trim();
+
+      const pt=String(
+        row.descriptionTranslated
+        || row.descriptionPtBr
+        || row.descriptionPTBR
+        || row.translatedDescription
+        || ''
+      ).trim();
+
+      if(!id && !en && !pt) return;
+
+      const fallbackPt=en
+        ? fallbackCategoryTranslation(en,'pt-BR','en-US')
+        : '';
+
+      const entry={
+        id:id || `text:${normalizeCategorySemantic(en || pt)}`,
+        en:en || (
+          pt
+            ? fallbackCategoryTranslation(pt,'en-US','pt-BR')
+            : ''
+        ),
+        pt:pt || fallbackPt || en,
+      };
+
+      state.pluggyCategoryById.set(entry.id,entry);
+
+      [entry.en,entry.pt].filter(Boolean).forEach(label=>{
+        categorySemanticVariants(label).forEach(alias=>{
+          if(!state.pluggyCategoryAlias.has(alias)) {
+            state.pluggyCategoryAlias.set(alias,entry);
+          }
+        });
+      });
+    });
+  }
+
+  function lookupPluggyCategory(value, categoryId=null) {
+    const id=String(categoryId || '').trim();
+    if(id && state.pluggyCategoryById.has(id)) {
+      return state.pluggyCategoryById.get(id);
+    }
+
+    const raw=String(value || '').trim();
+    if(!raw) return null;
+
+    if(raw.startsWith(PLUGGY_CATEGORY_PREFIX)) {
+      const storedId=raw.slice(PLUGGY_CATEGORY_PREFIX.length);
+      return state.pluggyCategoryById.get(storedId) || null;
+    }
+
+    for(const alias of categorySemanticVariants(raw)) {
+      const entry=state.pluggyCategoryAlias.get(alias);
+      if(entry) return entry;
+    }
+
+    return null;
+  }
+
+  function categoryConceptKey(value, sourceLanguage=null) {
+    const raw=String(value || '').trim();
+    if(!raw) return null;
+
+    if(raw.startsWith(CATEGORY_CONCEPT_PREFIX)) {
+      const key=raw.slice(CATEGORY_CONCEPT_PREFIX.length);
+      return CATEGORY_CONCEPT_BY_KEY.has(key) ? key : null;
+    }
+
+    if(raw.startsWith(PLUGGY_CATEGORY_PREFIX)) return null;
+
+    const variants=categorySemanticVariants(raw);
+    if(!variants.length) return null;
+
+    const languages=sourceLanguage
+      ? [sourceLanguage]
+      : ['pt-BR','en-US'];
+
+    for(const language of languages) {
+      const index=CATEGORY_STATIC_ALIAS_INDEX[language];
+      for(const alias of variants) {
+        const key=index.get(alias);
+        if(key) return key;
+      }
+    }
+
+    if(sourceLanguage) {
+      const other=sourceLanguage==='en-US'
+        ? 'pt-BR'
+        : 'en-US';
+
+      // "show" in English is intentionally not interpreted as concert.
+      if(!(sourceLanguage==='en-US' && variants.includes('show'))) {
+        const index=CATEGORY_STATIC_ALIAS_INDEX[other];
+        for(const alias of variants) {
+          const key=index.get(alias);
+          if(key) return key;
+        }
+      }
+    }
+
+    return null;
+  }
+
+  function categoryConceptStorage(key) {
+    return key && CATEGORY_CONCEPT_BY_KEY.has(key)
+      ? `${CATEGORY_CONCEPT_PREFIX}${key}`
+      : '';
+  }
+
+  function sanitizeCustomCategoryTranslations(items) {
+    if(!Array.isArray(items)) return [];
+
+    const seen=new Set();
+
+    return items
+      .filter(item=>
+        item
+        && typeof item==='object'
+        && !Array.isArray(item)
+      )
+      .map((item,index)=>{
+        const canonical=String(
+          item.canonical || ''
+        ).trim();
+
+        if(!canonical) return null;
+
+        let id=String(
+          item.id
+          || `custom_category_translation_${index+1}`
+        ).trim();
+
+        if(!id || seen.has(id)) {
+          id=`custom_category_translation_${Date.now()}_${index+1}`;
+        }
+
+        seen.add(id);
+
+        const sourceLanguage=[
+          'pt-BR',
+          'en-US'
+        ].includes(item.sourceLanguage)
+          ? item.sourceLanguage
+          : 'pt-BR';
+
+        return {
+          id,
+          canonical,
+          sourceLanguage,
+          ptBR:String(item.ptBR || canonical).trim() || canonical,
+          enUS:String(item.enUS || canonical).trim() || canonical,
+        };
+      })
+      .filter(Boolean);
+  }
+
+  function rebuildCustomCategoryTranslationIndex() {
+    state.customCategoryTranslationIndex.clear();
+
+    state.customCategoryTranslations.forEach(item=>{
+      [
+        item.canonical,
+        item.ptBR,
+        item.enUS
+      ].filter(Boolean).forEach(label=>{
+        categorySemanticVariants(label).forEach(alias=>{
+          if(!state.customCategoryTranslationIndex.has(alias)) {
+            state.customCategoryTranslationIndex.set(alias,item);
+          }
+        });
+      });
+    });
+
+    clearCategoryCaches();
+  }
+
+  function findCustomCategoryTranslation(value) {
+    for(const alias of categorySemanticVariants(value)) {
+      const item=state.customCategoryTranslationIndex.get(alias);
+      if(item) return item;
+    }
+    return null;
+  }
+
+  function categoryCaseLike(source, translated) {
+    const raw=String(source || '');
+    const text=String(translated || '');
+    if(!text) return raw;
+
+    if(
+      raw
+      && raw===raw.toUpperCase()
+      && /[A-ZÀ-Ú]/i.test(raw)
+    ) {
+      return text.toUpperCase();
+    }
+
+    if(
+      raw
+      && raw[0]===raw[0]?.toUpperCase()
+    ) {
+      return text.charAt(0).toUpperCase()+text.slice(1);
+    }
+
+    return text;
+  }
+
+  function inferCategorySourceLanguage(value) {
+    const raw=String(value || '').trim();
+    if(!raw) return state.uiLanguage;
+
+    const normalized=normalizeCategorySemantic(raw);
+    const tokens=normalized.split(' ').filter(Boolean);
+
+    let enScore=0;
+    let ptScore=0;
+
+    if(/[áàâãéêíóôõúç]/i.test(raw)) {
+      ptScore+=3;
+    }
+
+    if(CATEGORY_FALLBACK_EN_PT_INDEX.has(normalized)) enScore+=5;
+    if(CATEGORY_FALLBACK_PT_EN_INDEX.has(normalized)) ptScore+=5;
+
+    const enToPt=CATEGORY_WORD_TRANSLATIONS['en-US>pt-BR'];
+    const ptToEn=CATEGORY_WORD_TRANSLATIONS['pt-BR>en-US'];
+
+    tokens.forEach(token=>{
+      if(enToPt.has(token)) enScore++;
+      if(ptToEn.has(token)) ptScore++;
+    });
+
+    if(ptScore>enScore) return 'pt-BR';
+    if(enScore>ptScore) return 'en-US';
+
+    // Pluggy transaction categories are supplied in English by default.
+    return 'en-US';
+  }
+
+  function fallbackCategoryTranslation(
+    value,
+    targetLanguage,
+    sourceLanguage=null
+  ) {
+    const raw=String(value || '').trim();
+    if(!raw) return raw;
+
+    const source=sourceLanguage || inferCategorySourceLanguage(raw);
+    if(source===targetLanguage) return raw;
+
+    const normalized=normalizeCategorySemantic(raw);
+
+    if(source==='en-US' && targetLanguage==='pt-BR') {
+      const exact=CATEGORY_FALLBACK_EN_PT_INDEX.get(normalized);
+      if(exact) return categoryCaseLike(raw,exact);
+    }
+
+    if(source==='pt-BR' && targetLanguage==='en-US') {
+      const exact=CATEGORY_FALLBACK_PT_EN_INDEX.get(normalized);
+      if(exact) return categoryCaseLike(raw,exact);
+    }
+
+    const route=`${source}>${targetLanguage}`;
+    const dictionary=CATEGORY_WORD_TRANSLATIONS[route];
+
+    if(!dictionary) return raw;
+
+    const originalTokens=normalized.split(' ').filter(Boolean);
+    if(!originalTokens.length) return raw;
+
+    let changed=0;
+    const translatedTokens=originalTokens.map(token=>{
+      const translated=dictionary.get(token);
+      if(translated) {
+        changed++;
+        return translated;
+      }
+
+      if(token==='and') {
+        changed++;
+        return targetLanguage==='pt-BR' ? 'e' : 'and';
+      }
+
+      if(token==='of') {
+        changed++;
+        return targetLanguage==='pt-BR' ? 'de' : 'of';
+      }
+
+      if(token==='the') {
+        changed++;
+        return targetLanguage==='pt-BR' ? '' : 'the';
+      }
+
+      return token;
+    }).filter(Boolean);
+
+    if(!changed) return raw;
+
+    const translated=translatedTokens
+      .join(' ')
+      .replace(/\s+/g,' ')
+      .trim();
+
+    return categoryCaseLike(raw,translated);
+  }
+
+  function semanticTranslateCustomCategory(
+    value,
+    targetLanguage,
+    sourceLanguage
+  ) {
+    return fallbackCategoryTranslation(
+      value,
+      targetLanguage,
+      sourceLanguage
+    );
+  }
+
+  function registerCustomCategoryTranslation(
+    value,
+    sourceLanguage=state.uiLanguage
+  ) {
+    const raw=String(value || '')
+      .trim()
+      .replace(/\s+/g,' ');
+
+    if(!raw) return null;
+
+    const existing=findCustomCategoryTranslation(raw);
+    if(existing) return existing;
+
+    const normalizedSource=[
+      'pt-BR',
+      'en-US'
+    ].includes(sourceLanguage)
+      ? sourceLanguage
+      : state.uiLanguage;
+
+    const ptBR=normalizedSource==='pt-BR'
+      ? raw
+      : fallbackCategoryTranslation(
+          raw,
+          'pt-BR',
+          'en-US'
+        );
+
+    const enUS=normalizedSource==='en-US'
+      ? raw
+      : fallbackCategoryTranslation(
+          raw,
+          'en-US',
+          'pt-BR'
+        );
+
+    const id=(
+      globalThis.crypto
+      && typeof globalThis.crypto.randomUUID==='function'
+    )
+      ? `custom_category_translation_${globalThis.crypto.randomUUID()}`
+      : `custom_category_translation_${Date.now()}_${Math.random().toString(36).slice(2,8)}`;
+
+    const record={
+      id,
+      canonical:raw,
+      sourceLanguage:normalizedSource,
+      ptBR:ptBR || raw,
+      enUS:enUS || raw,
+    };
+
+    state.customCategoryTranslations.push(record);
+    rebuildCustomCategoryTranslationIndex();
+
+    return record;
+  }
+
+  function categoryStorageValue(
+    value,
+    sourceLanguage=null,
+    {
+      registerCustom=false,
+      categoryId=null
+    }={}
+  ) {
+    const raw=String(value || '')
+      .trim()
+      .replace(/\s+/g,' ');
+
+    if(!raw) return '';
+
+    if(
+      raw.startsWith(CATEGORY_CONCEPT_PREFIX)
+      || raw.startsWith(PLUGGY_CATEGORY_PREFIX)
+    ) {
+      return raw;
+    }
+
+    const storageCacheKey=[
+      sourceLanguage || '',
+      categoryId || '',
+      raw
+    ].join('\x1f');
+
+    const cached=state.categoryStorageCache.get(storageCacheKey);
+    if(cached) return cached;
+
+    const pluggy=lookupPluggyCategory(raw,categoryId);
+    if(pluggy) {
+      const storage=`${PLUGGY_CATEGORY_PREFIX}${pluggy.id}`;
+      state.categoryStorageCache.set(storageCacheKey,storage);
+      return storage;
+    }
+
+    const directKey=categoryConceptKey(raw,sourceLanguage);
+    if(directKey) {
+      const storage=categoryConceptStorage(directKey);
+      state.categoryStorageCache.set(storageCacheKey,storage);
+      return storage;
+    }
+
+    const custom=findCustomCategoryTranslation(raw);
+    if(custom) {
+      state.categoryStorageCache.set(
+        storageCacheKey,
+        custom.canonical
+      );
+      return custom.canonical;
+    }
+
+    if(registerCustom) {
+      const record=registerCustomCategoryTranslation(
+        raw,
+        sourceLanguage || state.uiLanguage
+      );
+      const storage=record?.canonical || raw;
+      state.categoryStorageCache.set(storageCacheKey,storage);
+      return storage;
+    }
+
+    state.categoryStorageCache.set(storageCacheKey,raw);
+    return raw;
+  }
+
+  function categoryDisplay(
+    value,
+    language=state.uiLanguage,
+    categoryId=null
+  ) {
+    const raw=String(value || '').trim();
+
+    const cacheKey=[
+      language,
+      categoryId || '',
+      raw
+    ].join('\x1f');
+
+    if(state.categoryDisplayCache.has(cacheKey)) {
+      return state.categoryDisplayCache.get(cacheKey);
+    }
+
+    if(!raw) {
+      const uncategorized=CATEGORY_CONCEPT_BY_KEY.get('uncategorized');
+      const label=language==='en-US'
+        ? uncategorized.enUS
+        : uncategorized.ptBR;
+      state.categoryDisplayCache.set(cacheKey,label);
+      return label;
+    }
+
+    const pluggy=lookupPluggyCategory(raw,categoryId);
+    if(pluggy) {
+      const label=language==='en-US'
+        ? (pluggy.en || pluggy.pt)
+        : (
+            pluggy.pt
+            || fallbackCategoryTranslation(
+              pluggy.en,
+              'pt-BR',
+              'en-US'
+            )
+            || pluggy.en
+          );
+
+      state.categoryDisplayCache.set(cacheKey,label);
+      return label;
+    }
+
+    const conceptKey=categoryConceptKey(raw,null);
+    if(conceptKey) {
+      const concept=CATEGORY_CONCEPT_BY_KEY.get(conceptKey);
+      const label=language==='en-US'
+        ? concept.enUS
+        : concept.ptBR;
+
+      state.categoryDisplayCache.set(cacheKey,label);
+      return label;
+    }
+
+    const custom=findCustomCategoryTranslation(raw);
+    if(custom) {
+      const label=language==='en-US'
+        ? (custom.enUS || custom.canonical)
+        : (custom.ptBR || custom.canonical);
+
+      state.categoryDisplayCache.set(cacheKey,label);
+      return label;
+    }
+
+    const source=inferCategorySourceLanguage(raw);
+    const label=fallbackCategoryTranslation(
+      raw,
+      language,
+      source
+    );
+
+    state.categoryDisplayCache.set(cacheKey,label);
+    return label;
+  }
+
+  function localizedCustomCategories() {
+    return [...state.customCategories]
+      .map(storage=>({
+        storage,
+        label:categoryDisplay(storage)
+      }))
+      .sort((a,b)=>
+        a.label.localeCompare(
+          b.label,
+          uiLocale()
+        )
+      );
+  }
+
   function applySettingsPayload(settings) {
     state.transactionOverrides.clear();
     state.customCategories.clear();
 
+    let localLanguage = null;
+    try {
+      localLanguage = localStorage.getItem(
+        state.uiLanguageStorageKey
+      );
+    } catch {}
+
+    const serverLanguage = ['pt-BR','en-US'].includes(
+      settings?.uiLanguage
+    )
+      ? settings.uiLanguage
+      : 'pt-BR';
+
+    state.uiLanguage = ['pt-BR','en-US'].includes(localLanguage)
+      ? localLanguage
+      : serverLanguage;
+
+    try {
+      localStorage.setItem(
+        state.uiLanguageStorageKey,
+        state.uiLanguage
+      );
+    } catch {}
+
+    state.customCategoryTranslations =
+      sanitizeCustomCategoryTranslations(
+        settings?.customCategoryTranslations
+      );
+    rebuildCustomCategoryTranslationIndex();
+
     const overrides = settings?.transactionOverrides || {};
-    if (overrides && typeof overrides === 'object' && !Array.isArray(overrides)) {
+    if (
+      overrides
+      && typeof overrides === 'object'
+      && !Array.isArray(overrides)
+    ) {
       Object.entries(overrides).forEach(([key, value]) => {
-        if (value && typeof value === 'object' && !Array.isArray(value)) {
-          state.transactionOverrides.set(key, value);
+        if (
+          value
+          && typeof value === 'object'
+          && !Array.isArray(value)
+        ) {
+          const normalized={...value};
+          if(normalized.category) {
+            normalized.category=categoryStorageValue(
+              normalized.category,
+              null
+            );
+          }
+          state.transactionOverrides.set(key, normalized);
         }
       });
     }
@@ -1254,30 +2238,44 @@
       : [];
 
     categories.forEach(value => {
-      const category = String(value || '').trim();
+      const category = categoryStorageValue(
+        value,
+        null,
+        {registerCustom:true}
+      );
       if (category) state.customCategories.add(category);
     });
 
-    state.categoryRules = sanitizeCategoryRules(settings?.categoryRules);
-    state.fixedExpenseRules = sanitizeFixedExpenseRules(settings?.fixedExpenseRules);
-    state.fixedIncomeRules = sanitizeFixedIncomeRules(settings?.fixedIncomeRules);
-    state.incomeSourceCategoryRules = sanitizeIncomeSourceCategoryRules(settings?.incomeSourceCategoryRules);
+    state.categoryRules =
+      sanitizeCategoryRules(settings?.categoryRules);
+    state.fixedExpenseRules =
+      sanitizeFixedExpenseRules(settings?.fixedExpenseRules);
+    state.fixedIncomeRules =
+      sanitizeFixedIncomeRules(settings?.fixedIncomeRules);
+    state.incomeSourceCategoryRules =
+      sanitizeIncomeSourceCategoryRules(
+        settings?.incomeSourceCategoryRules
+      );
 
-    let localLanguage = null;
-    try { localLanguage = localStorage.getItem(state.uiLanguageStorageKey); } catch {}
-    const serverLanguage = ['pt-BR','en-US'].includes(settings?.uiLanguage) ? settings.uiLanguage : 'pt-BR';
-    state.uiLanguage = ['pt-BR','en-US'].includes(localLanguage) ? localLanguage : serverLanguage;
-    try { localStorage.setItem(state.uiLanguageStorageKey, state.uiLanguage); } catch {}
     applyUiLanguage(document);
   }
 
   function currentSettingsPayload() {
     return {
-      version: 7,
+      version: 8,
       customCategories: [...state.customCategories]
         .map(v => String(v || '').trim())
         .filter(Boolean)
-        .sort((a, b) => a.localeCompare(b, uiLocale())),
+        .sort((a, b) =>
+          categoryDisplay(a).localeCompare(
+            categoryDisplay(b),
+            uiLocale()
+          )
+        ),
+      customCategoryTranslations:
+        sanitizeCustomCategoryTranslations(
+          state.customCategoryTranslations
+        ),
       transactionOverrides: Object.fromEntries(state.transactionOverrides),
       categoryRules: sanitizeCategoryRules(state.categoryRules),
       fixedExpenseRules: sanitizeFixedExpenseRules(state.fixedExpenseRules),
@@ -1306,6 +2304,7 @@
       const backendEmpty =
         state.transactionOverrides.size === 0 &&
         state.customCategories.size === 0 &&
+        state.customCategoryTranslations.length === 0 &&
         state.categoryRules.length === 0 &&
         state.fixedExpenseRules.length === 0 &&
         state.fixedIncomeRules.length === 0 &&
@@ -1316,6 +2315,7 @@
         const hasLegacy =
           Object.keys(legacy.transactionOverrides || {}).length > 0 ||
           (legacy.customCategories || []).length > 0 ||
+          (legacy.customCategoryTranslations || []).length > 0 ||
           (legacy.categoryRules || []).length > 0 ||
           (legacy.fixedExpenseRules || []).length > 0 ||
           (legacy.fixedIncomeRules || []).length > 0 ||
@@ -1328,6 +2328,9 @@
           // Após migração bem-sucedida, remove apenas as chaves antigas do ControleFin.
           localStorage.removeItem(state.overridesStorageKey);
           localStorage.removeItem(state.categoriesStorageKey);
+          localStorage.removeItem(
+            state.customCategoryTranslationsStorageKey
+          );
           localStorage.removeItem(state.rulesStorageKey);
           localStorage.removeItem(state.fixedExpenseRulesStorageKey);
           localStorage.removeItem(state.fixedIncomeRulesStorageKey);
@@ -1341,7 +2344,7 @@
       }
 
       updatePersistenceStatus(
-        `${state.transactionOverrides.size} ajuste(s) · ${state.customCategories.size} categoria(s) · ${state.categoryRules.length} regra(s) de categoria · ${state.fixedExpenseRules.length} padrão(ões) de gasto fixo · ${state.fixedIncomeRules.length} padrão(ões) de entrada fixa · ${state.incomeSourceCategoryRules.length} regra(s) de salário por origem carregados`
+        `${state.transactionOverrides.size} ajuste(s) · ${state.customCategories.size} categoria(s) · ${state.customCategoryTranslations.length} tradução(ões) semântica(s) · ${state.categoryRules.length} regra(s) de categoria · ${state.fixedExpenseRules.length} padrão(ões) de gasto fixo · ${state.fixedIncomeRules.length} padrão(ões) de entrada fixa · ${state.incomeSourceCategoryRules.length} regra(s) de salário por origem carregados`
       );
     } catch (error) {
       console.error('Backend de persistência indisponível:', error);
@@ -1390,6 +2393,10 @@
       localStorage.setItem(
         state.categoriesStorageKey,
         JSON.stringify(payload.customCategories)
+      );
+      localStorage.setItem(
+        state.customCategoryTranslationsStorageKey,
+        JSON.stringify(payload.customCategoryTranslations)
       );
       localStorage.setItem(
         state.rulesStorageKey,
@@ -1483,7 +2490,7 @@
         const field = String(rule.field || '').trim();
         const operator = String(rule.operator || '').trim();
         const value = String(rule.value || '').trim();
-        const category = String(rule.category || '').trim();
+        const category = categoryStorageValue(rule.category,null);
 
         if (!allowedFields.has(field) || !allowedOperators.has(operator) || !value || !category) {
           return null;
@@ -1554,8 +2561,28 @@
   function categoryWithoutManualOverride(transaction) {
     const method=inferPaymentMethod(transaction);
     const kind=autoKind(transaction,method);
-    const sourceRule=kind==='INCOME' ? matchingIncomeSourceCategoryRule(transaction) : null;
-    return sourceRule?.category || automaticCategory(transaction) || transaction.category || 'Sem categoria';
+    const sourceRule=kind==='INCOME'
+      ? matchingIncomeSourceCategoryRule(transaction)
+      : null;
+    const automatic=automaticCategory(transaction);
+    const sourceCategory=
+      sourceRule?.category
+      || automatic
+      || transaction.category
+      || categoryConceptStorage('uncategorized');
+
+    return categoryStorageValue(
+      sourceCategory,
+      null,
+      {
+        categoryId:(
+          !sourceRule?.category
+          && !automatic
+        )
+          ? transaction.categoryId
+          : null
+      }
+    );
   }
 
   function ruleFieldLabel(field) {
@@ -1604,7 +2631,7 @@
           <input type="checkbox" data-rule-action="toggle" ${rule.enabled === false ? '' : 'checked'}>
         </label>
         <div class="rule-main">
-          <div class="rule-expression"><strong>${esc(ruleFieldLabel(rule.field))}</strong> ${esc(ruleOperatorLabel(rule.operator))} <strong>“${esc(rule.value)}”</strong><span class="rule-arrow">→</span><strong>${esc(rule.category)}</strong></div>
+          <div class="rule-expression"><strong>${esc(ruleFieldLabel(rule.field))}</strong> ${esc(ruleOperatorLabel(rule.operator))} <strong>“${esc(rule.value)}”</strong><span class="rule-arrow">→</span><strong>${esc(categoryDisplay(rule.category))}</strong></div>
           <div class="rule-meta">Prioridade ${index + 1} · ${integer(matches)} transação(ões) compatíveis na moeda atual${rule.enabled === false ? ' · regra desativada' : ''}</div>
         </div>
         <div class="rule-actions">
@@ -1620,18 +2647,25 @@
     const field = String($('ruleField')?.value || '').trim();
     const operator = String($('ruleOperator')?.value || '').trim();
     const value = String($('ruleValue')?.value || '').trim().replace(/\s+/g, ' ');
-    const category = String($('ruleCategory')?.value || '').trim().replace(/\s+/g, ' ');
+    const categoryInput = String(
+      $('ruleCategory')?.value || ''
+    ).trim().replace(/\s+/g, ' ');
+    const category = categoryStorageValue(
+      categoryInput,
+      state.uiLanguage,
+      {registerCustom:true}
+    );
 
     if (!value) return toast('Informe o valor que a regra deve procurar.');
-    if (!category) return toast('Informe a categoria que será aplicada.');
+    if (!categoryInput) return toast('Informe a categoria que será aplicada.');
     if (value.length > 120) return toast('Use um valor de regra com até 120 caracteres.');
-    if (category.length > 80) return toast('Use uma categoria com até 80 caracteres.');
+    if (categoryInput.length > 80) return toast('Use uma categoria com até 80 caracteres.');
 
     const duplicate = state.categoryRules.some(rule =>
       rule.field === field &&
       rule.operator === operator &&
       normalizeRuleText(rule.value) === normalizeRuleText(value) &&
-      normalizeRuleText(rule.category) === normalizeRuleText(category)
+      categoryStorageValue(rule.category,null) === category
     );
 
     if (duplicate) return toast('Essa regra já existe.');
@@ -1653,7 +2687,11 @@
     // entre as categorias personalizadas disponíveis para edição manual.
     const knownOriginalCategories = new Set(
       table('transactions')
-        .map(r => String(r.category || '').trim())
+        .map(r => categoryStorageValue(
+          r.category,
+          null,
+          {categoryId:r.categoryId}
+        ))
         .filter(Boolean)
     );
     if (!knownOriginalCategories.has(category)) {
@@ -1686,7 +2724,7 @@
   function deleteCategoryRule(ruleId) {
     const rule = state.categoryRules.find(item => item.id === ruleId);
     if (!rule) return;
-    if (!confirmUi(`Excluir a regra “${rule.value} → ${rule.category}”?`)) return;
+    if (!confirmUi(`Excluir a regra “${rule.value} → ${categoryDisplay(rule.category)}”?`)) return;
 
     state.categoryRules = state.categoryRules.filter(item => item.id !== ruleId);
     persistCategoryRules();
@@ -1862,7 +2900,7 @@
           institution: String(rule.institution || '').trim(),
           accountId: String(rule.accountId || '').trim(),
           method: String(rule.method || '').trim(),
-          category: String(rule.category || '').trim(),
+          category: categoryStorageValue(rule.category,null),
           amount: val(rule.amount),
           reimbursementMode: sanitizeReimbursementMode(rule.reimbursementMode),
           splitPeople: normalizeSplitPeople(rule.splitPeople),
@@ -2030,7 +3068,7 @@
       institution: normalizeInstitution(transaction),
       accountId: String(transaction.accountId || ''),
       method: transaction._method || inferPaymentMethod(transaction),
-      category: transaction._category || categoryWithoutManualOverride(transaction),
+      category: transaction._categoryStorage || categoryWithoutManualOverride(transaction),
       amount: transactionAbsAmount(transaction),
       reimbursementMode: 'NONE',
       splitPeople: 2,
@@ -2161,7 +3199,7 @@
           institution: String(rule.institution || '').trim(),
           accountId: String(rule.accountId || '').trim(),
           method: String(rule.method || '').trim(),
-          category: String(rule.category || '').trim(),
+          category: categoryStorageValue(rule.category,null),
           amount: val(rule.amount),
           sourceLabel: String(rule.sourceLabel || '').trim(),
           sourceTransactionKey: String(rule.sourceTransactionKey || '').trim(),
@@ -2257,7 +3295,7 @@
       institution: normalizeInstitution(transaction),
       accountId: String(transaction.accountId || ''),
       method: transaction._method || inferPaymentMethod(transaction),
-      category: transaction._category || categoryWithoutManualOverride(transaction),
+      category: transaction._categoryStorage || categoryWithoutManualOverride(transaction),
       amount: transactionAbsAmount(transaction),
       sourceLabel: String(
         fixedMerchantText(transaction) ||
@@ -2319,28 +3357,66 @@
   }
 
   function allSpendCategories() {
-    return uniq([...spendingBaseRows().map(r=>r._category),...state.customCategories]).sort((a,b)=>String(a).localeCompare(String(b),'pt-BR'));
+    return uniq([
+      ...spendingBaseRows().map(r=>r._category),
+      ...localizedCustomCategories().map(item=>item.label)
+    ]).sort(
+      (a,b)=>String(a).localeCompare(String(b),uiLocale())
+    );
   }
 
   function renderCustomCategoryManager() {
-    const el=$('customCategoryChips'); if(!el)return;
-    const cats=[...state.customCategories].sort((a,b)=>a.localeCompare(b,'pt-BR'));
-    el.innerHTML=cats.length?cats.map(c=>`<span class="category-chip" data-custom-category="${esc(c)}"><span>${esc(c)}</span><button type="button" data-remove-category="${esc(c)}" title="Remover categoria personalizada">×</button></span>`).join(''):'<span class="muted" style="font-size:.7rem">Nenhuma categoria personalizada criada ainda.</span>';
+    const el=$('customCategoryChips');
+    if(!el) return;
+
+    const cats=localizedCustomCategories();
+
+    el.innerHTML=cats.length
+      ? cats.map(item=>`<span class="category-chip" data-custom-category="${esc(item.storage)}"><span>${esc(item.label)}</span><button type="button" data-remove-category="${esc(item.storage)}" title="Remover categoria personalizada">×</button></span>`).join('')
+      : '<span class="muted" style="font-size:.7rem">Nenhuma categoria personalizada criada ainda.</span>';
   }
 
   function createCustomCategory() {
-    const input=$('newSpendCategoryInput'); const category=String(input?.value||'').trim().replace(/\s+/g,' ');
-    if(!category)return toast('Digite um nome para a nova categoria.');
-    if(category.length>80)return toast('Use uma categoria com até 80 caracteres.');
-    state.customCategories.add(category); persistCustomCategories(); if(input)input.value=''; renderCustomCategoryManager(); renderSpending(); toast(`Categoria “${category}” criada.`);
+    const input=$('newSpendCategoryInput');
+    const typed=String(input?.value||'')
+      .trim()
+      .replace(/\s+/g,' ');
+
+    if(!typed) {
+      return toast('Digite um nome para a nova categoria.');
+    }
+    if(typed.length>80) {
+      return toast('Use uma categoria com até 80 caracteres.');
+    }
+
+    const category=categoryStorageValue(
+      typed,
+      state.uiLanguage,
+      {registerCustom:true}
+    );
+
+    state.customCategories.add(category);
+    persistCustomCategories();
+
+    if(input) input.value='';
+    renderCustomCategoryManager();
+    renderSpending();
+
+    toast(`Categoria “${categoryDisplay(category)}” criada.`);
   }
 
   function removeCustomCategory(category) {
-    state.customCategories.delete(category); persistCustomCategories(); renderCustomCategoryManager(); renderSpending(); toast(`Categoria “${category}” removida da lista personalizada.`);
+    const storage=categoryStorageValue(category,null);
+    const label=categoryDisplay(storage);
+    state.customCategories.delete(storage);
+    persistCustomCategories();
+    renderCustomCategoryManager();
+    renderSpending();
+    toast(`Categoria “${label}” removida da lista personalizada.`);
   }
 
   function exportFinanceConfig() {
-    const payload={version:7,exportedAt:new Date().toISOString(),app:'ControleFin',transactionOverrides:Object.fromEntries(state.transactionOverrides),customCategories:[...state.customCategories].sort((a,b)=>a.localeCompare(b,'pt-BR')),categoryRules:sanitizeCategoryRules(state.categoryRules),fixedExpenseRules:sanitizeFixedExpenseRules(state.fixedExpenseRules),fixedIncomeRules:sanitizeFixedIncomeRules(state.fixedIncomeRules),incomeSourceCategoryRules:sanitizeIncomeSourceCategoryRules(state.incomeSourceCategoryRules),uiLanguage:state.uiLanguage};
+    const payload={version:8,exportedAt:new Date().toISOString(),app:'ControleFin',transactionOverrides:Object.fromEntries(state.transactionOverrides),customCategories:[...state.customCategories].sort((a,b)=>categoryDisplay(a).localeCompare(categoryDisplay(b),uiLocale())),customCategoryTranslations:sanitizeCustomCategoryTranslations(state.customCategoryTranslations),categoryRules:sanitizeCategoryRules(state.categoryRules),fixedExpenseRules:sanitizeFixedExpenseRules(state.fixedExpenseRules),fixedIncomeRules:sanitizeFixedIncomeRules(state.fixedIncomeRules),incomeSourceCategoryRules:sanitizeIncomeSourceCategoryRules(state.incomeSourceCategoryRules),uiLanguage:state.uiLanguage};
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='controlefin_ajustes_backup.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
   }
 
@@ -2351,12 +3427,24 @@
       const overrides=payload.transactionOverrides || payload.overrides || {};
       if(!overrides || typeof overrides!=='object' || Array.isArray(overrides)) throw new Error('Formato de reclassificações inválido');
       const cats=Array.isArray(payload.customCategories)?payload.customCategories:[];
+      state.customCategoryTranslations=sanitizeCustomCategoryTranslations(
+        payload.customCategoryTranslations
+      );
+      rebuildCustomCategoryTranslationIndex();
       const rules=sanitizeCategoryRules(payload.categoryRules);
       const fixedRules=sanitizeFixedExpenseRules(payload.fixedExpenseRules);
       const fixedIncomeRules=sanitizeFixedIncomeRules(payload.fixedIncomeRules);
       const incomeSourceCategoryRules=sanitizeIncomeSourceCategoryRules(payload.incomeSourceCategoryRules);
       state.transactionOverrides.clear(); Object.entries(overrides).forEach(([k,v])=>{if(v&&typeof v==='object')state.transactionOverrides.set(k,v)});
-      state.customCategories.clear(); cats.forEach(v=>{const c=String(v||'').trim();if(c)state.customCategories.add(c)});
+      state.customCategories.clear();
+      cats.forEach(v=>{
+        const c=categoryStorageValue(
+          v,
+          null,
+          {registerCustom:true}
+        );
+        if(c) state.customCategories.add(c);
+      });
       state.categoryRules=rules;
       state.fixedExpenseRules=fixedRules;
       state.fixedIncomeRules=fixedIncomeRules;
@@ -2432,6 +3520,7 @@
 
   function autoKind(r, method) {
     if(isIgnoredYieldIncome(r)) return 'IGNORE';
+    if(isCardBankslipTransaction(r)) return 'CARD_BILL';
     if(state.internalTransferKeys.has(txKey(r)) || isExplicitSelfTransfer(r, method)) return 'TRANSFER';
     if(isInvestmentMovement(r, method)) return 'INVESTMENT_TRANSFER';
     if(String(r.accountType).toUpperCase()==='BANK' && val(r.normalizedOutflow)>0 && method==='Pagamento de fatura') return 'CARD_BILL';
@@ -2443,11 +3532,40 @@
 
   function effectiveTransaction(r) {
     const key=txKey(r), ov=state.transactionOverrides.get(key)||{};
-    const baseMethod=inferPaymentMethod(r), method=ov.method || baseMethod;
-    const kind=ov.kind || autoKind(r, method);
+    const hardCardBankslip=isCardBankslipTransaction(r);
+    const baseMethod=inferPaymentMethod(r);
+    const method=hardCardBankslip
+      ? 'Pagamento de fatura'
+      : (ov.method || baseMethod);
+    const kind=hardCardBankslip
+      ? 'CARD_BILL'
+      : (ov.kind || autoKind(r, method));
     const categoryRule=matchingCategoryRule(r);
-    const incomeSourceCategoryRule=kind==='INCOME' ? matchingIncomeSourceCategoryRule(r) : null;
-    const category=ov.category || incomeSourceCategoryRule?.category || categoryRule?.category || r.category || 'Sem categoria';
+    const incomeSourceCategoryRule=kind==='INCOME'
+      ? matchingIncomeSourceCategoryRule(r)
+      : null;
+    const categorySource=
+      ov.category
+      || incomeSourceCategoryRule?.category
+      || categoryRule?.category
+      || r.category
+      || categoryConceptStorage('uncategorized');
+
+    const categoryUsesPluggySource=
+      !ov.category
+      && !incomeSourceCategoryRule?.category
+      && !categoryRule?.category;
+
+    const categoryStorage=categoryStorageValue(
+      categorySource,
+      null,
+      {
+        categoryId:categoryUsesPluggySource
+          ? r.categoryId
+          : null
+      }
+    );
+    const category=categoryDisplay(categoryStorage);
     const merchant=ov.merchant || originalMerchant(r);
     const fixedExpenseRule=kind==='EXPENSE' ? matchingFixedExpenseRule(r) : null;
     const expenseClass=kind==='EXPENSE'
@@ -2499,18 +3617,36 @@
     const incomeClassLabelValue=expenseClassLabel(incomeClass);
     const outflow=(String(r.accountType).toUpperCase()==='BANK' && ['EXPENSE','CARD_BILL'].includes(kind)) ? (val(r.normalizedOutflow)>0?val(r.normalizedOutflow):abs) : 0;
     const entity=normalizeInstitution(r);
-    return {...r,_key:key,_override:ov,_categoryRule:categoryRule,_incomeSourceCategoryRule:incomeSourceCategoryRule,_fixedExpenseRule:fixedExpenseRule,_fixedIncomeRule:fixedIncomeRule,_isIncomeReimbursement:kind==='INCOME'&&ov.incomePurpose==='REIMBURSEMENT',_linkedExpenseKey:String(ov.linkedExpenseKey||''),_kind:kind,_category:category,_merchant:merchant,_method:method,_expenseClass:expenseClass,_expenseClassLabel:expenseClassLabelValue,_expenseClassSource:expenseClassSource,_incomeClass:incomeClass,_incomeClassLabel:incomeClassLabelValue,_incomeClassSource:incomeClassSource,_grossExpense:grossExpense,_reimbursementMode:reimbursement.mode,_reimbursementSplitPeople:reimbursement.splitPeople,_reimbursementReceivable:reimbursement.receivable,_reimbursementSource:reimbursementProfile.source,_expense:expense,_income:income,_bankOutflow:outflow,_institution:entity,_accountLabel:`${entity} · ${r.accountName || r.name || r.accountId || 'Conta'}`,_month:transactionMonth(r),_abs:abs};
+    return {...r,_key:key,_override:ov,_categoryRule:categoryRule,_incomeSourceCategoryRule:incomeSourceCategoryRule,_fixedExpenseRule:fixedExpenseRule,_fixedIncomeRule:fixedIncomeRule,_isCardBankslip:hardCardBankslip,_isIncomeReimbursement:kind==='INCOME'&&ov.incomePurpose==='REIMBURSEMENT',_linkedExpenseKey:String(ov.linkedExpenseKey||''),_kind:kind,_categoryStorage:categoryStorage,_category:category,_merchant:merchant,_method:method,_expenseClass:expenseClass,_expenseClassLabel:expenseClassLabelValue,_expenseClassSource:expenseClassSource,_incomeClass:incomeClass,_incomeClassLabel:incomeClassLabelValue,_incomeClassSource:incomeClassSource,_grossExpense:grossExpense,_reimbursementMode:reimbursement.mode,_reimbursementSplitPeople:reimbursement.splitPeople,_reimbursementReceivable:reimbursement.receivable,_reimbursementSource:reimbursementProfile.source,_expense:expense,_income:income,_bankOutflow:outflow,_institution:entity,_accountLabel:`${entity} · ${r.accountName || r.name || r.accountId || 'Conta'}`,_month:transactionMonth(r),_abs:abs};
   }
 
   function transactionMonths() {
-    const months=uniq(table('transactions').filter(r=>transactionCurrency(r)===state.currency && isUsableStatus(r.status)).map(transactionMonth)).filter(m=>/^\d{4}-\d{2}$/.test(m)).sort();
+    const months=uniq(
+      table('transactions')
+        .filter(r=>
+          transactionCurrency(r)===state.currency
+          && isUsableTransaction(r)
+        )
+        .map(transactionMonth)
+    )
+      .filter(m=>/^\d{4}-\d{2}$/.test(m))
+      .sort();
+
     if(state.period==='all') return months;
     return months.slice(-Number(state.period));
   }
 
   function windowTransactions() {
     const months=new Set(transactionMonths());
-    return table('transactions').filter(r=>transactionCurrency(r)===state.currency && isUsableStatus(r.status) && months.has(transactionMonth(r)) && !isIgnoredYieldIncome(r)).map(effectiveTransaction);
+
+    return table('transactions')
+      .filter(r=>
+        transactionCurrency(r)===state.currency
+        && isUsableTransaction(r)
+        && months.has(transactionMonth(r))
+        && !isIgnoredYieldIncome(r)
+      )
+      .map(effectiveTransaction);
   }
 
   function setSelectOptions(id, options, allLabel, valueKey=x=>x, labelKey=x=>x) {
@@ -2527,23 +3663,55 @@
   }
 
   function isDefaultIgnoredSpendingCategory(r) {
-    const c=normalizeCategoryToken(r?._category ?? r?.category);
-    return c==='same person transfer' || c==='same person transfers' || c==='investment' || c==='investments';
+    const key=categoryConceptKey(
+      r?._categoryStorage ?? r?.category,
+      null
+    );
+    if(['same_person_transfer','investments'].includes(key)) {
+      return true;
+    }
+
+    const c=normalizeCategoryToken(
+      r?._category ?? r?.category
+    );
+    return c==='same person transfer'
+      || c==='same person transfers'
+      || c==='investment'
+      || c==='investments';
   }
 
   function spendingBaseRows() {
-    return windowTransactions().filter(r=>r._kind==='EXPENSE' && r._grossExpense>0 && !isDefaultIgnoredSpendingCategory(r));
+    return windowTransactions().filter(
+      r=>
+        r._kind==='EXPENSE'
+        && r._grossExpense>0
+        && !r._isCardBankslip
+        && !isDefaultIgnoredSpendingCategory(r)
+    );
   }
 
   function refreshAnalysisFilters() {
     const txs=windowTransactions();
-    const expenses=txs.filter(r=>r._kind==='EXPENSE'&&r._grossExpense>0&&!isDefaultIgnoredSpendingCategory(r));
+    const expenses=txs.filter(
+      r=>
+        r._kind==='EXPENSE'
+        && r._grossExpense>0
+        && !r._isCardBankslip
+        && !isDefaultIgnoredSpendingCategory(r)
+    );
     const months=uniq(txs.map(r=>r._month)).sort(); setSelectOptions('spendMonthSelect',months,'Todos da janela');
     const accounts=[...new Map(txs.filter(r=>r.accountId).map(r=>[String(r.accountId),{id:String(r.accountId),label:accountLabel(r)}])).values()].sort((a,b)=>a.label.localeCompare(b.label));
     setSelectOptions('spendAccountSelect',accounts,'Todas as contas',x=>x.id,x=>x.label);
     setSelectOptions('txAccountFilter',accounts,'Todas as contas',x=>x.id,x=>x.label);
     setSelectOptions('spendMethodSelect',uniq(expenses.map(r=>r._method)).sort(),'Todos os meios');
-    setSelectOptions('spendCategorySelect',uniq([...expenses.map(r=>r._category),...state.customCategories]).sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')),'Todas as categorias');
+    setSelectOptions(
+      'spendCategorySelect',
+      uniq([
+        ...expenses.map(r=>r._category),
+        ...localizedCustomCategories().map(item=>item.label)
+      ]).sort((a,b)=>String(a).localeCompare(String(b),uiLocale())),
+      'Todas as categorias'
+    );
     setSelectOptions('spendMerchantSelect',uniq(expenses.map(r=>r._merchant)).sort(),'Todos os merchants');
   }
 
@@ -2566,12 +3734,46 @@
   }
 
   function renderSingleMonthlyChart(elId, rows, valueField, emptyText) {
-    const by=new Map(); rows.forEach(r=>by.set(r._month,(by.get(r._month)||0)+val(r[valueField])));
-    const months=transactionMonths().filter(m=>by.has(m)); const arr=months.map(m=>({month:m,value:by.get(m)||0}));
-    if(!arr.length) { $(elId).innerHTML=`<div class="empty">${esc(emptyText)}</div>`; return; }
-    const W=900,H=290,p={l:62,r:18,t:34,b:44}; const max=Math.max(...arr.map(x=>x.value),1); const group=(W-p.l-p.r)/arr.length, bw=Math.min(48,group*.58); const y=v=>p.t+(H-p.t-p.b)*(1-v/max);
-    let grid=''; for(let i=0;i<=4;i++){const v=max*i/4, yy=y(v);grid+=`<line x1="${p.l}" x2="${W-p.r}" y1="${yy}" y2="${yy}" stroke="var(--line)"/><text class="chart-axis-label" x="${p.l-8}" y="${yy+4}" text-anchor="end">${esc(compact(v))}</text>`;}
-    let bars=''; arr.forEach((r,i)=>{const cx=p.l+group*i+group/2, yy=y(r.value), h=H-p.b-yy; bars+=`<rect x="${cx-bw/2}" y="${yy}" width="${bw}" height="${h}" rx="5" fill="var(--accent)" data-tooltip="${esc(`${r.month.slice(5)}/${r.month.slice(0,4)}\n${money(r.value)}`)}"/><text class="chart-value-label" x="${cx}" y="${Math.max(yy-7,12)}" text-anchor="middle">${esc(compact(r.value))}</text><text x="${cx}" y="${H-14}" text-anchor="middle" fill="var(--muted)" font-size="11">${r.month.slice(5)}/${r.month.slice(2,4)}</text>`});
+    const by=new Map();
+
+    rows.forEach(r=>{
+      const value=renderableBarValue(r[valueField]);
+      if(value==null) return;
+      by.set(r._month,(by.get(r._month)||0)+value);
+    });
+
+    const arr=transactionMonths()
+      .filter(month=>renderableBarValue(by.get(month))!=null)
+      .map(month=>({month,value:by.get(month)}));
+
+    if(!arr.length) {
+      $(elId).innerHTML=`<div class="empty">${esc(emptyText)}</div>`;
+      return;
+    }
+
+    const W=900,H=290,p={l:62,r:18,t:34,b:44};
+    const max=Math.max(...arr.map(x=>x.value),1);
+    const group=(W-p.l-p.r)/arr.length;
+    const bw=Math.min(48,group*.58);
+    const y=v=>p.t+(H-p.t-p.b)*(1-v/max);
+
+    let grid='';
+    for(let i=0;i<=4;i++){
+      const v=max*i/4, yy=y(v);
+      grid+=`<line x1="${p.l}" x2="${W-p.r}" y1="${yy}" y2="${yy}" stroke="var(--line)"/><text class="chart-axis-label" x="${p.l-8}" y="${yy+4}" text-anchor="end">${esc(compact(v))}</text>`;
+    }
+
+    let bars='';
+    arr.forEach((r,i)=>{
+      const cx=p.l+group*i+group/2;
+      const yy=y(r.value);
+      const h=H-p.b-yy;
+
+      bars+=`<rect x="${cx-bw/2}" y="${yy}" width="${bw}" height="${h}" rx="5" fill="var(--accent)" data-tooltip="${esc(`${r.month.slice(5)}/${r.month.slice(0,4)}\n${money(r.value)}`)}"/>`;
+      bars+=`<text class="chart-value-label" x="${cx}" y="${Math.max(yy-7,12)}" text-anchor="middle">${esc(compact(r.value))}</text>`;
+      bars+=`<text x="${cx}" y="${H-14}" text-anchor="middle" fill="var(--muted)" font-size="11">${r.month.slice(5)}/${r.month.slice(2,4)}</text>`;
+    });
+
     $(elId).innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img">${grid}<line x1="${p.l}" x2="${W-p.r}" y1="${H-p.b}" y2="${H-p.b}" stroke="var(--line)"/>${bars}</svg>`;
   }
 
@@ -2646,31 +3848,77 @@
     const {field,label}=spendingDimensionMeta(dimensionValue);
     const series=spendingSeries(rows,field,6);
     const {months,data}=monthlyDimensionData(rows,field,series);
-    if(!months.length || !rows.length || !series.names.length) { el.innerHTML='<div class="empty">Sem gastos para esta seleção.</div>'; return; }
-    const hidden=hiddenSeries(elId), visible=series.names.filter(n=>!hidden.has(n));
-    const monthlyVisibleTotals=months.map(m=>visible.reduce((a,n)=>a+(data.get(m)?.get(n)||0),0));
-    const max=Math.max(...months.flatMap(m=>visible.map(n=>data.get(m)?.get(n)||0)),...monthlyVisibleTotals,1);
+
+    if(!months.length || !rows.length || !series.names.length) {
+      el.innerHTML='<div class="empty">Sem gastos para esta seleção.</div>';
+      return;
+    }
+
+    const hidden=hiddenSeries(elId);
+    const visible=series.names.filter(n=>!hidden.has(n));
+
+    if(!visible.length) {
+      el.innerHTML=`<div class="empty">Sem dados para esta seleção.</div>${legendMarkup(elId,series.meta)}`;
+      bindLegend(elId,()=>renderMonthlyDimensionBars(elId,rows,dimensionValue));
+      return;
+    }
+
+    const monthEntries=months.map(month=>{
+      const active=visible
+        .map(name=>({name,value:renderableBarValue(data.get(month)?.get(name))}))
+        .filter(item=>item.value!=null);
+      const total=active.reduce((sum,item)=>sum+item.value,0);
+      return {month,active,total};
+    }).filter(entry=>entry.active.length>0);
+
+    if(!monthEntries.length) {
+      el.innerHTML=`<div class="empty">Sem gastos para esta seleção.</div>${legendMarkup(elId,series.meta)}`;
+      bindLegend(elId,()=>renderMonthlyDimensionBars(elId,rows,dimensionValue));
+      return;
+    }
+
+    const max=Math.max(
+      ...monthEntries.flatMap(entry=>entry.active.map(item=>item.value)),
+      ...monthEntries.map(entry=>entry.total),
+      1
+    );
+
     const W=900,H=365,p={l:68,r:18,t:52,b:48};
-    const groupW=(W-p.l-p.r)/Math.max(months.length,1);
+    const groupW=(W-p.l-p.r)/Math.max(monthEntries.length,1);
     const gap=3;
-    const bw=Math.max(5,Math.min(34,(groupW*.72-Math.max(visible.length-1,0)*gap)/Math.max(visible.length,1)));
+    const maxActive=Math.max(...monthEntries.map(entry=>entry.active.length),1);
+    const bw=Math.max(5,Math.min(34,(groupW*.72-Math.max(maxActive-1,0)*gap)/maxActive));
     const y=v=>p.t+(H-p.t-p.b)*(1-v/max);
-    let grid=''; for(let i=0;i<=4;i++){const v=max*i/4,yy=y(v);grid+=`<line x1="${p.l}" x2="${W-p.r}" y1="${yy}" y2="${yy}" stroke="var(--line)"/><text class="chart-axis-label" x="${p.l-8}" y="${yy+4}" text-anchor="end">${esc(compact(v))}</text>`;}
+
+    let grid='';
+    for(let i=0;i<=4;i++){
+      const v=max*i/4,yy=y(v);
+      grid+=`<line x1="${p.l}" x2="${W-p.r}" y1="${yy}" y2="${yy}" stroke="var(--line)"/><text class="chart-axis-label" x="${p.l-8}" y="${yy+4}" text-anchor="end">${esc(compact(v))}</text>`;
+    }
+
     let bars='';
-    months.forEach((m,i)=>{
+    monthEntries.forEach((entry,i)=>{
+      const m=entry.month;
       const cx=p.l+groupW*i+groupW/2;
-      const clusterW=visible.length*bw+Math.max(visible.length-1,0)*gap;
-      visible.forEach((name,j)=>{
-        const v=data.get(m)?.get(name)||0; if(v<=0) return;
-        const xx=cx-clusterW/2+j*(bw+gap), yy=y(v), h=H-p.b-yy;
-        const color=series.colorFor(name);
-        bars+=`<rect x="${xx}" y="${yy}" width="${bw}" height="${h}" rx="4" fill="${color}" data-tooltip="${esc(`${name}\n${m.slice(5)}/${m.slice(0,4)} · ${money(v)}`)}"/>`;
-        if(visible.length<=3 && months.length<=8 && h>26) bars+=`<text class="chart-value-label" x="${xx+bw/2}" y="${Math.max(yy-6,14)}" text-anchor="middle">${esc(compact(v))}</text>`;
+      const clusterW=entry.active.length*bw+Math.max(entry.active.length-1,0)*gap;
+
+      entry.active.forEach((item,j)=>{
+        const xx=cx-clusterW/2+j*(bw+gap);
+        const yy=y(item.value);
+        const h=H-p.b-yy;
+        const color=series.colorFor(item.name);
+
+        bars+=`<rect x="${xx}" y="${yy}" width="${bw}" height="${h}" rx="4" fill="${color}" data-tooltip="${esc(`${item.name}\n${m.slice(5)}/${m.slice(0,4)} · ${money(item.value)}`)}"/>`;
+
+        if(entry.active.length<=3 && monthEntries.length<=8 && h>26) {
+          bars+=`<text class="chart-value-label" x="${xx+bw/2}" y="${Math.max(yy-6,14)}" text-anchor="middle">${esc(compact(item.value))}</text>`;
+        }
       });
-      const total=monthlyVisibleTotals[i];
-      if(total>0) bars+=`<text class="chart-value-label" x="${cx}" y="${Math.max(y(total)-12,15)}" text-anchor="middle">${esc(money(total))}</text>`;
+
+      bars+=`<text class="chart-value-label" x="${cx}" y="${Math.max(y(entry.total)-12,15)}" text-anchor="middle">${esc(money(entry.total))}</text>`;
       bars+=`<text x="${cx}" y="${H-15}" text-anchor="middle" fill="var(--muted)" font-size="11">${m.slice(5)}/${m.slice(2,4)}</text>`;
     });
+
     el.innerHTML=`<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Gastos mensais em reais agrupados por ${esc(label)}">${grid}<text class="chart-axis-label" x="14" y="${p.t-18}">R$</text><line x1="${p.l}" x2="${W-p.r}" y1="${H-p.b}" y2="${H-p.b}" stroke="var(--line)"/>${bars}</svg>${legendMarkup(elId,series.meta)}`;
     bindLegend(elId,()=>renderMonthlyDimensionBars(elId,rows,dimensionValue));
   }
@@ -2707,7 +3955,23 @@
   function rawTransactionDetailsHtml(r) {
     const preferred=['id','itemId','accountId','accountName','accountType','type','subtype','status','date','amount','currencyCode','description','category','merchantName','merchant__name','merchant__businessName','paymentMethod','operationType','transactionType','checkNumber','creditCardMetadata__installmentNumber','creditCardMetadata__totalInstallments'];
     const keys=[...preferred.filter(k=>r[k]!==undefined && r[k]!==null && r[k]!==''), ...Object.keys(r).filter(k=>!k.startsWith('_') && !preferred.includes(k) && r[k]!==undefined && r[k]!==null && r[k]!=='')];
-    return `<details class="tx-raw-details"><summary>Ver dados</summary><div class="tx-raw-grid">${keys.map(k=>`<div><b>${esc(k)}</b><br>${esc(r[k])}</div>`).join('')}</div></details>`;
+    return `<details class="tx-raw-details"><summary>Ver dados</summary><div class="tx-raw-grid">${keys.map(k=>{
+      const isCategoryField=/category/i.test(k) && !/category.*id|id.*category/i.test(k);
+      const displayValue=isCategoryField
+        ? categoryDisplay(
+            categoryStorageValue(
+              r[k],
+              null,
+              {
+                categoryId:/^category$/i.test(k)
+                  ? r.categoryId
+                  : null
+              }
+            )
+          )
+        : r[k];
+      return `<div><b>${esc(k)}</b><br>${esc(displayValue)}</div>`;
+    }).join('')}</div></details>`;
   }
 
   function renderSpendingTransactions(rows) {
@@ -2719,11 +3983,25 @@
     const categories=allSpendCategories();
     if($('spendCategorySuggestions')) $('spendCategorySuggestions').innerHTML=categories.map(c=>`<option value="${esc(c)}"></option>`).join('');
     body.innerHTML=pageRows.map(r=>{
-      const original=r.category||'Sem categoria';
-      return `<tr data-spend-txkey="${esc(r._key)}"><td>${shortDate(r.date)}</td><td><strong>${esc(r._institution)}</strong><br><span class="muted">${esc(r.accountName||r.name||r.accountId||'Conta')}</span><br><span class="mono">${esc(r.accountId||'')}</span></td><td><div class="description-main">${esc(r.description||'—')}</div><div class="description-meta">ID ${esc(r.id||'—')} · ${esc(r.status||'status n/d')}</div></td><td>${esc(r._merchant)}</td><td><input class="spend-category-input" list="spendCategorySuggestions" value="${esc(r._category)}"/><div class="description-meta">Pluggy: ${esc(original)}${r._categoryRule ? ` · Regra: ${esc(r._categoryRule.category)}` : ''}${r._override?.category ? ' · Ajuste manual' : ''}</div></td><td><select class="spend-expense-class-select">${expenseClassOptions(r._expenseClass)}</select><div class="description-meta">${r._expenseClassSource==='similarity-rule' ? 'Automático por similaridade' : r._expenseClassSource==='manual' ? 'Ajuste manual' : 'Padrão: Variável'}</div></td><td class="reimbursement-cell">${reimbursementControlsHtml(r,'spend')}</td><td><span class="pill">${esc(r._method)}</span></td><td class="num"><div class="value-breakdown"><strong class="${r._expense>0?'bad':'good'}">${money(r._expense)}</strong><small>Bruto: ${money(r._grossExpense)}</small>${r._reimbursementReceivable>0?`<small class="good">A receber: ${money(r._reimbursementReceivable)}</small>`:''}</div></td><td>${rawTransactionDetailsHtml(r)}</td><td><button data-spend-action="save-category">Salvar</button></td></tr>`;
+      const original=categoryDisplay(
+        categoryStorageValue(
+          r.category || categoryConceptStorage('uncategorized'),
+          null,
+          {categoryId:r.categoryId}
+        )
+      );
+      return `<tr data-spend-txkey="${esc(r._key)}"><td>${shortDate(r.date)}</td><td><strong>${esc(r._institution)}</strong><br><span class="muted">${esc(r.accountName||r.name||r.accountId||'Conta')}</span><br><span class="mono">${esc(r.accountId||'')}</span></td><td><div class="description-main">${esc(r.description||'—')}</div><div class="description-meta">ID ${esc(r.id||'—')} · ${esc(r.status||'status n/d')}</div></td><td>${esc(r._merchant)}</td><td><input class="spend-category-input" list="spendCategorySuggestions" value="${esc(r._category)}"/><div class="description-meta">Pluggy: ${esc(original)}${r._categoryRule ? ` · Regra: ${esc(categoryDisplay(r._categoryRule.category))}` : ''}${r._override?.category ? ' · Ajuste manual' : ''}</div></td><td><select class="spend-expense-class-select">${expenseClassOptions(r._expenseClass)}</select><div class="description-meta">${r._expenseClassSource==='similarity-rule' ? 'Automático por similaridade' : r._expenseClassSource==='manual' ? 'Ajuste manual' : 'Padrão: Variável'}</div></td><td class="reimbursement-cell">${reimbursementControlsHtml(r,'spend')}</td><td><span class="pill">${esc(r._method)}</span></td><td class="num"><div class="value-breakdown"><strong class="${r._expense>0?'bad':'good'}">${money(r._expense)}</strong><small>Bruto: ${money(r._grossExpense)}</small>${r._reimbursementReceivable>0?`<small class="good">A receber: ${money(r._reimbursementReceivable)}</small>`:''}</div></td><td>${rawTransactionDetailsHtml(r)}</td><td><button data-spend-action="save-category">Salvar</button></td></tr>`;
     }).join('') || '<tr><td colspan="11" class="empty">Nenhum gasto encontrado para os filtros atuais.</td></tr>';
     if($('spendingTransactionsCount')) $('spendingTransactionsCount').textContent=`${integer(sorted.length)} gastos`;
-    if($('spendingTransactionsFootnote')) $('spendingTransactionsFootnote').innerHTML=`Mostrando ${pageRows.length?state.spendTxPage*state.spendTxPageSize+1:0}–${Math.min((state.spendTxPage+1)*state.spendTxPageSize,sorted.length)} de ${integer(sorted.length)} · página ${state.spendTxPage+1} de ${totalPages}. <button id="spendTxPrevBtn" ${state.spendTxPage===0?'disabled':''}>Anterior</button> <button id="spendTxNextBtn" ${state.spendTxPage>=totalPages-1?'disabled':''}>Próxima</button> · “Same person transfer” e “Investment” são ignoradas por padrão nesta aba.`;
+    if($('spendingTransactionsFootnote')) {
+      const ignoredTransfer=categoryDisplay(
+        categoryConceptStorage('same_person_transfer')
+      );
+      const ignoredInvestment=categoryDisplay(
+        categoryConceptStorage('investments')
+      );
+      $('spendingTransactionsFootnote').innerHTML=`Mostrando ${pageRows.length?state.spendTxPage*state.spendTxPageSize+1:0}–${Math.min((state.spendTxPage+1)*state.spendTxPageSize,sorted.length)} de ${integer(sorted.length)} · página ${state.spendTxPage+1} de ${totalPages}. <button id="spendTxPrevBtn" ${state.spendTxPage===0?'disabled':''}>Anterior</button> <button id="spendTxNextBtn" ${state.spendTxPage>=totalPages-1?'disabled':''}>Próxima</button> · “${esc(ignoredTransfer)}” e “${esc(ignoredInvestment)}” são ignoradas por padrão nesta aba.`;
+    }
     $('spendTxPrevBtn')?.addEventListener('click',()=>{state.spendTxPage=Math.max(0,state.spendTxPage-1);renderSpending();});
     $('spendTxNextBtn')?.addEventListener('click',()=>{state.spendTxPage++;renderSpending();});
   }
@@ -2733,7 +4011,12 @@
     const base=windowTransactions().find(r=>r._key===key); if(!base) return;
 
     const input=tr.querySelector('.spend-category-input');
-    const category=String(input?.value||'').trim();
+    const categoryInput=String(input?.value||'').trim();
+    const category=categoryStorageValue(
+      categoryInput,
+      state.uiLanguage,
+      {registerCustom:Boolean(categoryInput)}
+    );
     const expenseClass=String(tr.querySelector('.spend-expense-class-select')?.value||'VARIABLE').trim();
     const reimbursementMode=sanitizeReimbursementMode(
       tr.querySelector('.spend-reimbursement-mode')?.value
@@ -2811,7 +4094,7 @@
   }
 
   function renderInteractiveBars(elId, entries, filterId, limit=16, rerender=null) {
-    const arr=entries.filter(x=>x[1]>0).slice(0,limit), max=Math.max(...arr.map(x=>x[1]),1), el=$(elId);
+    const arr=entries.map(([label,value])=>[label,renderableBarValue(value)]).filter(x=>x[1]!=null).slice(0,limit), max=Math.max(...arr.map(x=>x[1]),1), el=$(elId);
     if(!el) return;
     el.innerHTML=arr.map(([label,v])=>`<div class="bar-row clickable" data-filter-value="${esc(label)}" data-tooltip="${esc(`${label}\n${money(v)}`)}" title="Filtrar por ${esc(label)}"><div class="bar-label">${esc(label)}</div><div class="bar-bg"><div class="bar-fg" style="width:${v/max*100}%"></div></div><div class="bar-value">${esc(money(v))}</div></div>`).join('') || '<div class="empty">Sem dados para esta seleção.</div>';
     el.querySelectorAll('[data-filter-value]').forEach(row=>row.addEventListener('click',()=>{
@@ -2849,9 +4132,26 @@
     $('spendCountMini').textContent=integer(trendSpendRows.length);
     $('activeExpenseCount').textContent=integer(spendRows.length);
 
-    const excluded=windowTransactions().filter(r=>['TRANSFER','INVESTMENT_TRANSFER'].includes(r._kind) || isDefaultIgnoredSpendingCategory(r));
-    const excludedOut=excluded.filter(r=>val(r.normalizedOutflow)>0 || r._expense>0).reduce((a,r)=>a+(val(r.normalizedOutflow)||r._expense||r._abs),0);
-    if($('excludedMovementsChip')) $('excludedMovementsChip').textContent=`Movimentações patrimoniais / categorias ignoradas: ${integer(excluded.length)} transação(ões) · ${money(excludedOut)} em saídas`;
+    const excluded=windowTransactions().filter(
+      r=>
+        ['TRANSFER','INVESTMENT_TRANSFER'].includes(r._kind)
+        || r._isCardBankslip
+        || isDefaultIgnoredSpendingCategory(r)
+    );
+    const excludedOut=excluded
+      .filter(r=>val(r.normalizedOutflow)>0 || r._expense>0 || r._isCardBankslip)
+      .reduce(
+        (a,r)=>a+(
+          val(r.normalizedOutflow)
+          || r._expense
+          || r._abs
+        ),
+        0
+      );
+    if($('excludedMovementsChip')) {
+      $('excludedMovementsChip').textContent=
+        `Movimentações / faturas consolidadas excluídas: ${integer(excluded.length)} transação(ões) · ${money(excludedOut)} em saídas`;
+    }
 
     const reimbursementRows=trendRows.filter(r=>r._reimbursementReceivable>0);
     const reimbursementTotal=reimbursementRows.reduce((a,r)=>a+r._reimbursementReceivable,0);
@@ -2987,7 +4287,10 @@
     setSelectOptions('incomeMethodSelect',uniq(incomes.map(r=>r._method)).sort(),'Todos os meios');
     setSelectOptions(
       'incomeCategorySelect',
-      uniq([...incomes.map(r=>r._category),...state.customCategories]).sort((a,b)=>String(a).localeCompare(String(b),'pt-BR')),
+      uniq([
+        ...incomes.map(r=>r._category),
+        ...localizedCustomCategories().map(item=>item.label)
+      ]).sort((a,b)=>String(a).localeCompare(String(b),uiLocale())),
       'Todas as categorias'
     );
     setSelectOptions('incomeSourceSelect',uniq(incomes.map(r=>r._merchant)).sort(),'Todas as origens');
@@ -3077,12 +4380,38 @@
 
     const hidden=hiddenSeries(elId);
     const visible=series.names.filter(n=>!hidden.has(n));
-    const monthlyVisibleTotals=months.map(m=>visible.reduce((a,n)=>a+(data.get(m)?.get(n)||0),0));
-    const max=Math.max(...months.flatMap(m=>visible.map(n=>data.get(m)?.get(n)||0)),...monthlyVisibleTotals,1);
+
+    if(!visible.length) {
+      el.innerHTML=`<div class="empty">Sem dados para esta seleção.</div>${legendMarkup(elId,series.meta)}`;
+      bindLegend(elId,()=>renderMonthlyIncomeBars(elId,rows,dimensionValue));
+      return;
+    }
+
+    const monthEntries=months.map(month=>{
+      const active=visible
+        .map(name=>({name,value:renderableBarValue(data.get(month)?.get(name))}))
+        .filter(item=>item.value!=null);
+      const total=active.reduce((sum,item)=>sum+item.value,0);
+      return {month,active,total};
+    }).filter(entry=>entry.active.length>0);
+
+    if(!monthEntries.length) {
+      el.innerHTML=`<div class="empty">Sem entradas para esta seleção.</div>${legendMarkup(elId,series.meta)}`;
+      bindLegend(elId,()=>renderMonthlyIncomeBars(elId,rows,dimensionValue));
+      return;
+    }
+
+    const max=Math.max(
+      ...monthEntries.flatMap(entry=>entry.active.map(item=>item.value)),
+      ...monthEntries.map(entry=>entry.total),
+      1
+    );
+
     const W=900,H=365,p={l:68,r:18,t:52,b:48};
-    const groupW=(W-p.l-p.r)/Math.max(months.length,1);
+    const groupW=(W-p.l-p.r)/Math.max(monthEntries.length,1);
     const gap=3;
-    const bw=Math.max(5,Math.min(34,(groupW*.72-Math.max(visible.length-1,0)*gap)/Math.max(visible.length,1)));
+    const maxActive=Math.max(...monthEntries.map(entry=>entry.active.length),1);
+    const bw=Math.max(5,Math.min(34,(groupW*.72-Math.max(maxActive-1,0)*gap)/maxActive));
     const y=v=>p.t+(H-p.t-p.b)*(1-v/max);
 
     let grid='';
@@ -3092,21 +4421,25 @@
     }
 
     let bars='';
-    months.forEach((m,i)=>{
+    monthEntries.forEach((entry,i)=>{
+      const m=entry.month;
       const cx=p.l+groupW*i+groupW/2;
-      const clusterW=visible.length*bw+Math.max(visible.length-1,0)*gap;
+      const clusterW=entry.active.length*bw+Math.max(entry.active.length-1,0)*gap;
 
-      visible.forEach((name,j)=>{
-        const v=data.get(m)?.get(name)||0;
-        if(v<=0) return;
-        const xx=cx-clusterW/2+j*(bw+gap), yy=y(v), h=H-p.b-yy;
-        const color=series.colorFor(name);
-        bars+=`<rect x="${xx}" y="${yy}" width="${bw}" height="${h}" rx="4" fill="${color}" data-tooltip="${esc(`${name}\n${m.slice(5)}/${m.slice(0,4)} · ${money(v)}`)}"/>`;
-        if(visible.length<=3 && months.length<=8 && h>26) bars+=`<text class="chart-value-label" x="${xx+bw/2}" y="${Math.max(yy-6,14)}" text-anchor="middle">${esc(compact(v))}</text>`;
+      entry.active.forEach((item,j)=>{
+        const xx=cx-clusterW/2+j*(bw+gap);
+        const yy=y(item.value);
+        const h=H-p.b-yy;
+        const color=series.colorFor(item.name);
+
+        bars+=`<rect x="${xx}" y="${yy}" width="${bw}" height="${h}" rx="4" fill="${color}" data-tooltip="${esc(`${item.name}\n${m.slice(5)}/${m.slice(0,4)} · ${money(item.value)}`)}"/>`;
+
+        if(entry.active.length<=3 && monthEntries.length<=8 && h>26) {
+          bars+=`<text class="chart-value-label" x="${xx+bw/2}" y="${Math.max(yy-6,14)}" text-anchor="middle">${esc(compact(item.value))}</text>`;
+        }
       });
 
-      const total=monthlyVisibleTotals[i];
-      if(total>0) bars+=`<text class="chart-value-label" x="${cx}" y="${Math.max(y(total)-12,15)}" text-anchor="middle">${esc(money(total))}</text>`;
+      bars+=`<text class="chart-value-label" x="${cx}" y="${Math.max(y(entry.total)-12,15)}" text-anchor="middle">${esc(money(entry.total))}</text>`;
       bars+=`<text x="${cx}" y="${H-15}" text-anchor="middle" fill="var(--muted)" font-size="11">${m.slice(5)}/${m.slice(2,4)}</text>`;
     });
 
@@ -3173,14 +4506,20 @@
     );
 
     body.innerHTML=pageRows.map(r=>{
-      const original=r.category||'Sem categoria';
+      const original=categoryDisplay(
+        categoryStorageValue(
+          r.category || categoryConceptStorage('uncategorized'),
+          null,
+          {categoryId:r.categoryId}
+        )
+      );
       return `<tr data-income-txkey="${esc(r._key)}">
         <td>${shortDate(r.date)}</td>
         <td><strong>${esc(r._institution)}</strong><br><span class="muted">${esc(r.accountName||r.name||r.accountId||'Conta')}</span><br><span class="mono">${esc(r.accountId||'')}</span></td>
         <td><div class="description-main">${esc(r.description||'—')}</div><div class="description-meta">ID ${esc(r.id||'—')} · ${esc(r.status||'status n/d')}</div></td>
         <td>${esc(r._merchant)}</td>
         <td><div class="description-main">${esc(transactionPayerName(r) || '—')}</div>${transactionPayerName(r) ? '<div class="description-meta">payer_name</div>' : '<div class="description-meta">Pagador não informado pela transação</div>'}</td>
-        <td><input class="spend-category-input income-category-input" list="spendCategorySuggestions" value="${esc(r._category)}"/><div class="description-meta">Pluggy: ${esc(original)}${r._incomeSourceCategoryRule ? ` · Regra origem: ${esc(r._incomeSourceCategoryRule.category)}` : ''}${r._categoryRule ? ` · Regra geral: ${esc(r._categoryRule.category)}` : ''}${r._override?.category ? ' · Ajuste manual' : ''}</div></td>
+        <td><input class="spend-category-input income-category-input" list="spendCategorySuggestions" value="${esc(r._category)}"/><div class="description-meta">Pluggy: ${esc(original)}${r._incomeSourceCategoryRule ? ` · Regra origem: ${esc(categoryDisplay(r._incomeSourceCategoryRule.category))}` : ''}${r._categoryRule ? ` · Regra geral: ${esc(categoryDisplay(r._categoryRule.category))}` : ''}${r._override?.category ? ' · Ajuste manual' : ''}</div></td>
         <td><select class="income-class-select">${expenseClassOptions(r._incomeClass)}</select><div class="description-meta">${r._incomeClassSource==='similarity-rule'?'Automático por similaridade':r._incomeClassSource==='manual'?'Ajuste manual':'Padrão: Variável'}</div></td>
         <td class="income-purpose-cell"><div class="income-purpose-controls"><select class="income-purpose-select">${incomePurposeOptions(r._isIncomeReimbursement?'REIMBURSEMENT':'NORMAL')}</select><select class="income-link-select" data-current="${esc(r._linkedExpenseKey||'')}" ${r._isIncomeReimbursement?'':'disabled'}>${initialExpenseLinkOptions(r._linkedExpenseKey)}</select><div class="income-purpose-note">${r._isIncomeReimbursement?'<strong>Excluído dos gráficos de entradas.</strong>':'Considerado normalmente nos gráficos.'}</div></div></td>
         <td><span class="pill">${esc(r._method)}</span></td>
@@ -3211,7 +4550,14 @@
     const base=windowTransactions().find(r=>r._key===key);
     if(!base) return;
 
-    const category=String(tr.querySelector('.income-category-input')?.value||'').trim();
+    const categoryInput=String(
+      tr.querySelector('.income-category-input')?.value||''
+    ).trim();
+    const category=categoryStorageValue(
+      categoryInput,
+      state.uiLanguage,
+      {registerCustom:Boolean(categoryInput)}
+    );
     const incomeClass=String(tr.querySelector('.income-class-select')?.value||'VARIABLE').trim();
     const incomePurpose=String(tr.querySelector('.income-purpose-select')?.value||'NORMAL').trim();
     const linkedExpenseKey=String(tr.querySelector('.income-link-select')?.value||'').trim();
@@ -3272,7 +4618,7 @@
         ? `Entrada marcada como resarcimento e vinculada a ${expenseAssociationLabel(linked)}.`
         : 'Entrada marcada como resarcimento e excluída dos gráficos.');
     } else if(salaryRule) {
-      toast(`Regra de ${salaryRule.category} criada para esta origem. ${incomeSourceCategoryRuleMatchCount(salaryRule)} entrada(s) reconhecida(s).`);
+      toast(`Regra de ${categoryDisplay(salaryRule.category)} criada para esta origem. ${incomeSourceCategoryRuleMatchCount(salaryRule)} entrada(s) reconhecida(s).`);
     } else if(incomeClass==='FIXED' && fixedRuleCreated && fixedRule) {
       toast(`Entrada marcada como Fixa. ${fixedIncomeRuleMatchCount(fixedRule)} entrada(s) semelhante(s) reconhecida(s).`);
     } else {
@@ -3348,6 +4694,237 @@
     }
   }
 
+  function rawTransactionSearchText(r) {
+    return Object.values(r || {})
+      .filter(value=>
+        value!=null
+        && typeof value!=='object'
+      )
+      .map(value=>String(value))
+      .join(' ')
+      .toLowerCase();
+  }
+
+  function spendingAuditDiagnosis(r) {
+    const status=String(r.status || 'UNKNOWN');
+    const usable=isUsableTransaction(r);
+    const pending=isPendingStatus(status);
+    const pendingDuplicate=
+      state.pendingCardDuplicateKeys.has(
+        txKey(r)
+      );
+    const currencyOk=
+      transactionCurrency(r)===state.currency;
+    const month=transactionMonth(r);
+    const selectedMonths=new Set(
+      transactionMonths()
+    );
+    const periodOk=
+      selectedMonths.has(month);
+
+    const effective=effectiveTransaction(r);
+    const ignoredCategory=
+      isDefaultIgnoredSpendingCategory(
+        effective
+      );
+
+    const reasons=[];
+
+    if(isTerminalInvalidStatus(status)) {
+      reasons.push(
+        `status ${status} é terminal/inválido`
+      );
+    } else if(pendingDuplicate) {
+      reasons.push(
+        'PENDING suprimida porque já existe lançamento equivalente'
+      );
+    } else if(pending && usable) {
+      reasons.push(
+        'PENDING de cartão incluída provisoriamente'
+      );
+    } else if(pending && !usable) {
+      reasons.push(
+        'PENDING fora das compras de cartão'
+      );
+    }
+
+    if(!currencyOk) {
+      reasons.push(
+        `moeda ${transactionCurrency(r)} diferente de ${state.currency}`
+      );
+    }
+
+    if(!periodOk) {
+      reasons.push(
+        `mês ${month || '—'} fora da janela selecionada`
+      );
+    }
+
+    if(effective._isCardBankslip) {
+      reasons.push(
+        'CardBankslip tratado como fatura consolidada'
+      );
+    }
+
+    if(effective._kind!=='EXPENSE') {
+      reasons.push(
+        `natureza efetiva: ${kindLabel(effective._kind)}`
+      );
+    }
+
+    if(val(effective._grossExpense)<=0) {
+      reasons.push(
+        'normalizedExpense/gasto bruto não é positivo'
+      );
+    }
+
+    if(ignoredCategory) {
+      reasons.push(
+        `categoria ignorada: ${effective._category}`
+      );
+    }
+
+    if(
+      effective._kind==='EXPENSE'
+      && effective._grossExpense>0
+      && effective._expense<=0
+    ) {
+      reasons.push(
+        'gasto líquido é zero por resarcimento'
+      );
+    }
+
+    const included=(
+      usable
+      && currencyOk
+      && periodOk
+      && !isIgnoredYieldIncome(r)
+      && effective._kind==='EXPENSE'
+      && effective._grossExpense>0
+      && !effective._isCardBankslip
+      && !ignoredCategory
+    );
+
+    if(included && !reasons.length) {
+      reasons.push(
+        'incluída normalmente em Gastos'
+      );
+    }
+
+    return {
+      raw:r,
+      effective,
+      included,
+      reasons,
+      pending,
+      pendingDuplicate
+    };
+  }
+
+  function runSpendingAudit() {
+    const input=$('spendingAuditSearch');
+    const term=String(
+      input?.value || ''
+    ).trim().toLowerCase();
+
+    const tableEl=$('spendingAuditTable');
+    const countEl=$('spendingAuditCount');
+
+    if(!tableEl) return;
+
+    if(!term) {
+      if(countEl) countEl.textContent='—';
+      tableEl.innerHTML=
+        '<tr><td colspan="9" class="empty">Digite um termo e clique em Auditar.</td></tr>';
+      return;
+    }
+
+    const matches=table('transactions')
+      .filter(r=>
+        rawTransactionSearchText(r)
+          .includes(term)
+      )
+      .map(spendingAuditDiagnosis)
+      .sort((a,b)=>
+        String(b.raw.date || '')
+          .localeCompare(
+            String(a.raw.date || '')
+          )
+      );
+
+    if(countEl) {
+      countEl.textContent=
+        `${integer(matches.length)} encontrada(s)`;
+    }
+
+    if(!matches.length) {
+      tableEl.innerHTML=
+        '<tr><td colspan="9" class="empty">Nenhuma transação bruta encontrada. Nesse caso, o registro não chegou ao dataset transactions da Pluggy/exportador.</td></tr>';
+      return;
+    }
+
+    tableEl.innerHTML=matches.map(item=>{
+      const r=item.raw;
+      const e=item.effective;
+      const merchant=originalMerchant(r);
+      const status=String(
+        r.status || 'UNKNOWN'
+      );
+      const diagnosis=item.reasons.length
+        ? item.reasons.join(' · ')
+        : '—';
+
+      return `<tr>
+        <td>${esc(shortDate(r.date))}</td>
+        <td>
+          <strong>${esc(status)}</strong>
+          ${item.pending ? '<br><span class="muted">pendente</span>' : ''}
+        </td>
+        <td>
+          <strong>${esc(normalizeInstitution(r))}</strong>
+          <br><span class="muted">${esc(r.accountName || r.accountId || '—')}</span>
+        </td>
+        <td>
+          ${esc(r.description || '—')}
+          <br><span class="muted">${esc(merchant || '—')}</span>
+          <br><span class="mono">${esc(r.id || '')}</span>
+        </td>
+        <td class="num">${money(transactionAbsAmount(r),transactionCurrency(r))}</td>
+        <td>
+          ${esc(String(r.type || '—'))}
+          <br><span class="muted">${esc(String(r.accountType || '—'))}</span>
+        </td>
+        <td>${esc(kindLabel(e._kind))}</td>
+        <td>
+          <span class="pill ${item.included?'good':'bad'}">
+            ${item.included?'SIM':'NÃO'}
+          </span>
+        </td>
+        <td>${esc(diagnosis)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  window.ControleFinAudit={
+    searchSpending(term){
+      if($('spendingAuditSearch')) {
+        $('spendingAuditSearch').value=
+          String(term || '');
+      }
+      runSpendingAudit();
+      return table('transactions')
+        .filter(r=>
+          rawTransactionSearchText(r)
+            .includes(
+              String(term || '')
+                .trim()
+                .toLowerCase()
+            )
+        )
+        .map(spendingAuditDiagnosis);
+    }
+  };
+
   function kindLabel(kind) { return ({EXPENSE:'Gasto',INCOME:'Entrada',TRANSFER:'Transferência própria',INVESTMENT_TRANSFER:'Aporte / transferência de investimento',CARD_BILL:'Pagamento de fatura',REFUND:'Estorno/crédito cartão',IGNORE:'Ignorar'})[kind]||kind; }
   function kindOptions(selected) {
     const opts=[['','Automático'],['EXPENSE','Gasto'],['INCOME','Entrada'],['TRANSFER','Transferência própria'],['INVESTMENT_TRANSFER','Aporte / transferência de investimento'],['CARD_BILL','Pagamento de fatura'],['REFUND','Estorno/crédito cartão'],['IGNORE','Ignorar']]; return opts.map(([v,l])=>`<option value="${v}" ${selected===v?'selected':''}>${l}</option>`).join('');
@@ -3384,8 +4961,8 @@
 
   function renderTransactionsEditor() {
     const rows=editorFilteredRows(); const totalPages=Math.max(1,Math.ceil(rows.length/state.txPageSize)); state.txPage=Math.min(state.txPage,totalPages-1); const slice=rows.slice(state.txPage*state.txPageSize,(state.txPage+1)*state.txPageSize);
-    $('transactionsEditorTable').innerHTML=slice.map(r=>{const ov=r._override||{};return `<tr data-txkey="${esc(r._key)}"><td>${shortDate(r.date)}</td><td><strong>${esc(r._institution)}</strong><br><span class="muted">${esc(r.accountName||r.accountId||'—')}</span></td><td>${esc(r.description||'—')}<br><span class="mono">${esc(r.id||'')}</span></td><td class="num ${r._kind==='INCOME'?'good':r._kind==='EXPENSE'?'bad':''}">${r._kind==='EXPENSE'?`<strong>${money(r._expense)}</strong><br><small class="muted">Bruto ${money(r._grossExpense)}</small>`:money(r._abs)}</td><td><select class="tx-edit tx-kind" data-field="kind">${kindOptions(ov.kind||'')}</select><br><small class="muted">Atual: ${esc(kindLabel(r._kind))}</small></td><td><input class="tx-edit" data-field="category" value="${esc(r._category)}" /></td><td><select class="tx-edit tx-fixed-variable" data-field="fixedVariable" ${['EXPENSE','INCOME'].includes(r._kind)?'':'disabled'}>${expenseClassOptions(r._kind==='INCOME'?r._incomeClass:r._expenseClass)}</select><br><small class="muted">${r._kind==='EXPENSE' ? `${esc(r._expenseClassLabel)} · ${r._expenseClassSource==='similarity-rule'?'automático por similaridade':r._expenseClassSource==='manual'?'ajuste manual':'padrão'}` : r._kind==='INCOME' ? `${esc(r._incomeClassLabel)} · ${r._incomeClassSource==='similarity-rule'?'automático por similaridade':r._incomeClassSource==='manual'?'ajuste manual':'padrão'}` : 'Somente para gastos e entradas'}</small></td><td class="reimbursement-cell">${reimbursementControlsHtml(r,'tx',r._kind!=='EXPENSE')}</td><td><input class="tx-edit" data-field="merchant" value="${esc(r._merchant)}" /></td><td><select class="tx-edit tx-method" data-field="method">${methodOptions(ov.method||'')}</select><br><small class="muted">Atual: ${esc(r._method)}</small></td><td><div class="row-actions"><button data-action="save">Salvar</button><button data-action="reset">Resetar</button></div></td></tr>`}).join('') || '<tr><td colspan="11" class="empty">Nenhuma transação encontrada.</td></tr>';
-    $('txEditorFootnote').innerHTML=`${integer(rows.length)} transação(ões) encontradas · página ${state.txPage+1} de ${totalPages}. <button id="txPrevBtn" ${state.txPage===0?'disabled':''}>Anterior</button> <button id="txNextBtn" ${state.txPage>=totalPages-1?'disabled':''}>Próxima</button> · Transferências próprias, aportes/resgates de investimentos e pagamentos de fatura não entram no gasto consolidado.`;
+    $('transactionsEditorTable').innerHTML=slice.map(r=>{const ov=r._override||{};return `<tr data-txkey="${esc(r._key)}"><td>${shortDate(r.date)}</td><td><strong>${esc(r._institution)}</strong><br><span class="muted">${esc(r.accountName||r.accountId||'—')}</span></td><td>${esc(r.description||'—')}<br><span class="mono">${esc(r.id||'')}</span></td><td class="num ${r._kind==='INCOME'?'good':r._kind==='EXPENSE'?'bad':''}">${r._kind==='EXPENSE'?`<strong>${money(r._expense)}</strong><br><small class="muted">Bruto ${money(r._grossExpense)}</small>`:money(r._abs)}</td><td><select class="tx-edit tx-kind" data-field="kind" ${r._isCardBankslip?'disabled':''}>${kindOptions(r._isCardBankslip?'':(ov.kind||''))}</select><br><small class="muted">${r._isCardBankslip?'CardBankslip · ':''}Atual: ${esc(kindLabel(r._kind))}</small></td><td><input class="tx-edit" data-field="category" value="${esc(r._category)}" /></td><td><select class="tx-edit tx-fixed-variable" data-field="fixedVariable" ${['EXPENSE','INCOME'].includes(r._kind)?'':'disabled'}>${expenseClassOptions(r._kind==='INCOME'?r._incomeClass:r._expenseClass)}</select><br><small class="muted">${r._kind==='EXPENSE' ? `${esc(r._expenseClassLabel)} · ${r._expenseClassSource==='similarity-rule'?'automático por similaridade':r._expenseClassSource==='manual'?'ajuste manual':'padrão'}` : r._kind==='INCOME' ? `${esc(r._incomeClassLabel)} · ${r._incomeClassSource==='similarity-rule'?'automático por similaridade':r._incomeClassSource==='manual'?'ajuste manual':'padrão'}` : 'Somente para gastos e entradas'}</small></td><td class="reimbursement-cell">${reimbursementControlsHtml(r,'tx',r._kind!=='EXPENSE')}</td><td><input class="tx-edit" data-field="merchant" value="${esc(r._merchant)}" /></td><td><select class="tx-edit tx-method" data-field="method">${methodOptions(ov.method||'')}</select><br><small class="muted">Atual: ${esc(r._method)}</small></td><td><div class="row-actions"><button data-action="save">Salvar</button><button data-action="reset">Resetar</button></div></td></tr>`}).join('') || '<tr><td colspan="11" class="empty">Nenhuma transação encontrada.</td></tr>';
+    $('txEditorFootnote').innerHTML=`${integer(rows.length)} transação(ões) encontradas · página ${state.txPage+1} de ${totalPages}. <button id="txPrevBtn" ${state.txPage===0?'disabled':''}>Anterior</button> <button id="txNextBtn" ${state.txPage>=totalPages-1?'disabled':''}>Próxima</button> · Transferências próprias, aportes/resgates de investimentos, pagamentos de fatura e transações CardBankslip não entram no gasto consolidado.`;
     $('txPrevBtn')?.addEventListener('click',()=>{state.txPage=Math.max(0,state.txPage-1);renderTransactionsEditor()}); $('txNextBtn')?.addEventListener('click',()=>{state.txPage++;renderTransactionsEditor()});
   }
 
@@ -3406,6 +4983,14 @@
       const v=String(el.value||'').trim();
       if(v) next[el.dataset.field]=v;
     });
+
+    if(next.category) {
+      next.category=categoryStorageValue(
+        next.category,
+        state.uiLanguage,
+        {registerCustom:true}
+      );
+    }
 
     const automaticCat=categoryWithoutManualOverride(base), originalMerch=originalMerchant(base);
     if(next.category===automaticCat) delete next.category;
@@ -3478,10 +5063,82 @@
   }
 
   function renderCardActivity() {
-    const rows=windowTransactions().filter(r=>String(r.accountType).toUpperCase()==='CREDIT'); const by=new Map(); rows.forEach(r=>{const x=by.get(r._month)||{month:r._month,charges:0,credits:0}; if(r._kind==='EXPENSE')x.charges+=r._expense; if(r._kind==='REFUND')x.credits+=val(r.normalizedCardCredit)||r._abs; by.set(r._month,x)}); const arr=[...by.values()].sort((a,b)=>a.month.localeCompare(b.month));
-    if(!arr.length) return $('cardActivityChart').innerHTML='<div class="empty">Sem atividade de cartões para a seleção.</div>';
-    const chartId='cardActivityChart',hidden=hiddenSeries(chartId),defs=[{key:'charges',label:'Compras',color:'var(--bad)'},{key:'credits',label:'Estornos/créditos',color:'var(--good)'}],visible=defs.filter(d=>!hidden.has(d.key));
-    const W=900,H=290,p={l:60,r:18,t:34,b:44}; const max=Math.max(...arr.flatMap(x=>visible.map(d=>x[d.key])),1),group=(W-p.l-p.r)/arr.length,bw=Math.min(30,group*.28),y=v=>p.t+(H-p.t-p.b)*(1-v/max);let grid='';for(let i=0;i<=4;i++){const v=max*i/4,yy=y(v);grid+=`<line x1="${p.l}" x2="${W-p.r}" y1="${yy}" y2="${yy}" stroke="var(--line)"/><text class="chart-axis-label" x="${p.l-8}" y="${yy+4}" text-anchor="end">${esc(compact(v))}</text>`;}let bars='';arr.forEach((r,i)=>{const cx=p.l+group*i+group/2;let offset=-(visible.length-1)*(bw+4)/2;visible.forEach(d=>{const v=r[d.key],xx=cx+offset,yy=y(v),h=H-p.b-yy;bars+=`<rect x="${xx-bw/2}" y="${yy}" width="${bw}" height="${h}" rx="4" fill="${d.color}" data-tooltip="${esc(`${d.label}\n${r.month.slice(5)}/${r.month.slice(0,4)} · ${money(v)}`)}"/><text class="chart-value-label" x="${xx}" y="${Math.max(yy-7,12)}" text-anchor="middle">${v>0?esc(compact(v)):''}</text>`;offset+=bw+4;});bars+=`<text x="${cx}" y="${H-14}" text-anchor="middle" fill="var(--muted)" font-size="11">${r.month.slice(5)}/${r.month.slice(2,4)}</text>`});$(chartId).innerHTML=`<svg viewBox="0 0 ${W} ${H}">${grid}<line x1="${p.l}" x2="${W-p.r}" y1="${H-p.b}" y2="${H-p.b}" stroke="var(--line)"/>${bars}</svg>${legendMarkup(chartId,defs)}`; bindLegend(chartId,renderCardActivity);
+    const rows=windowTransactions().filter(r=>String(r.accountType).toUpperCase()==='CREDIT');
+    const by=new Map();
+
+    rows.forEach(r=>{
+      const x=by.get(r._month)||{month:r._month,charges:0,credits:0};
+      if(r._kind==='EXPENSE') x.charges+=r._expense;
+      if(r._kind==='REFUND') x.credits+=val(r.normalizedCardCredit)||r._abs;
+      by.set(r._month,x);
+    });
+
+    const arr=[...by.values()].sort((a,b)=>a.month.localeCompare(b.month));
+    if(!arr.length) {
+      return $('cardActivityChart').innerHTML='<div class="empty">Sem atividade de cartões para a seleção.</div>';
+    }
+
+    const chartId='cardActivityChart';
+    const hidden=hiddenSeries(chartId);
+    const defs=[
+      {key:'charges',label:'Compras',color:'var(--bad)'},
+      {key:'credits',label:'Estornos/créditos',color:'var(--good)'}
+    ];
+    const visible=defs.filter(d=>!hidden.has(d.key));
+
+    if(!visible.length) {
+      $(chartId).innerHTML=`<div class="empty">Sem dados para esta seleção.</div>${legendMarkup(chartId,defs)}`;
+      bindLegend(chartId,renderCardActivity);
+      return;
+    }
+
+    const plotRows=arr.map(row=>{
+      const active=visible
+        .map(def=>({def,value:renderableBarValue(row[def.key])}))
+        .filter(item=>item.value!=null);
+      return {row,active};
+    }).filter(item=>item.active.length>0);
+
+    if(!plotRows.length) {
+      $(chartId).innerHTML=`<div class="empty">Sem atividade de cartões para a seleção.</div>${legendMarkup(chartId,defs)}`;
+      bindLegend(chartId,renderCardActivity);
+      return;
+    }
+
+    const W=900,H=290,p={l:60,r:18,t:34,b:44};
+    const max=Math.max(...plotRows.flatMap(item=>item.active.map(active=>active.value)),1);
+    const group=(W-p.l-p.r)/plotRows.length;
+    const maxActive=Math.max(...plotRows.map(item=>item.active.length),1);
+    const gap=4;
+    const bw=Math.min(30,Math.max(7,(group*.62-Math.max(maxActive-1,0)*gap)/maxActive));
+    const y=v=>p.t+(H-p.t-p.b)*(1-v/max);
+
+    let grid='';
+    for(let i=0;i<=4;i++){
+      const v=max*i/4,yy=y(v);
+      grid+=`<line x1="${p.l}" x2="${W-p.r}" y1="${yy}" y2="${yy}" stroke="var(--line)"/><text class="chart-axis-label" x="${p.l-8}" y="${yy+4}" text-anchor="end">${esc(compact(v))}</text>`;
+    }
+
+    let bars='';
+    plotRows.forEach((item,i)=>{
+      const r=item.row;
+      const cx=p.l+group*i+group/2;
+      const clusterW=item.active.length*bw+Math.max(item.active.length-1,0)*gap;
+
+      item.active.forEach((active,j)=>{
+        const xx=cx-clusterW/2+j*(bw+gap);
+        const yy=y(active.value);
+        const h=H-p.b-yy;
+
+        bars+=`<rect x="${xx}" y="${yy}" width="${bw}" height="${h}" rx="4" fill="${active.def.color}" data-tooltip="${esc(`${active.def.label}\n${r.month.slice(5)}/${r.month.slice(0,4)} · ${money(active.value)}`)}"/>`;
+        bars+=`<text class="chart-value-label" x="${xx+bw/2}" y="${Math.max(yy-7,12)}" text-anchor="middle">${esc(compact(active.value))}</text>`;
+      });
+
+      bars+=`<text x="${cx}" y="${H-14}" text-anchor="middle" fill="var(--muted)" font-size="11">${r.month.slice(5)}/${r.month.slice(2,4)}</text>`;
+    });
+
+    $(chartId).innerHTML=`<svg viewBox="0 0 ${W} ${H}">${grid}<line x1="${p.l}" x2="${W-p.r}" y1="${H-p.b}" y2="${H-p.b}" stroke="var(--line)"/>${bars}</svg>${legendMarkup(chartId,defs)}`;
+    bindLegend(chartId,renderCardActivity);
   }
 
   function renderInsights(m) {
@@ -3518,6 +5175,7 @@
   }
 
   function renderAll() {
+    renderCustomCategoryManager();
     renderCategoryRules();
     renderFixedExpenseRules();
     renderFixedIncomeRules();
@@ -3537,10 +5195,18 @@
     state.manifest=Object.fromEntries(manifestRows.map(r=>[r.key,r.value]));
     state.catalog=table('dataset_catalog');
 
+    // `categories` comes from Pluggy and includes the official PT translation.
+    // Compile it once so all category lookups during rendering are O(1).
+    buildPluggyCategoryRuntimeIndex();
+
     await loadPersistentSettings();
 
     // Migra marcações FIXED da versão anterior para padrões aprendidos.
     migrateLegacyFixedExpenseOverrides();
+
+    // Cartões podem retornar compras PENDING que já aparecem no app do banco.
+    // Mantemos a pendência se ela ainda não tiver um lançamento equivalente.
+    buildPendingCardDuplicateIndex();
 
     detectInternalTransfers();
     setupCurrencies();
@@ -3551,7 +5217,12 @@
     $('loadStatus').textContent='Dados carregados.';
 
     const gen=state.manifest.generatedAtUtc;
-    $('runMeta').textContent=`${state.tables.size} datasets locais${gen?' · gerados em '+shortDate(gen):''}`;
+    const sourceLabel=state.dataSource==='sqlite'
+      ? 'SQLite'
+      : state.dataSource==='csv'
+        ? 'CSV'
+        : 'local';
+    $('runMeta').textContent=`${state.tables.size} datasets locais · ${sourceLabel}${gen?' · gerados em '+shortDate(gen):''}`;
 
     renderCustomCategoryManager();
     renderAll();
@@ -3560,26 +5231,192 @@
 
   async function loadFolderFiles(fileList) {
     const files=[...fileList].filter(f=>f.name.toLowerCase().endsWith('.csv')); if(!files.length) return toast('Nenhum CSV encontrado na pasta selecionada.');
-    $('loadStatus').textContent=`Lendo ${files.length} arquivo(s)…`; state.tables.clear(); state.files.clear();
+    $('loadStatus').textContent=`Lendo ${files.length} arquivo(s)…`;
+    state.tables.clear();
+    state.files.clear();
+    state.dataSource='csv';
     for (const f of files) setTableFromFilename(f.name, await f.text());
+    await postLoad();
+  }
+
+  async function loadFromSQLite() {
+    const statusResp=await fetch(
+      './api/db/status',
+      {cache:'no-store'}
+    );
+    if(!statusResp.ok) {
+      throw new Error('SQLite status indisponível');
+    }
+
+    const status=await statusResp.json();
+    if(!status?.available) {
+      throw new Error('controlefin.db ainda não existe');
+    }
+
+    $('loadStatus').textContent='Carregando dados do SQLite…';
+    state.tables.clear();
+    state.files.clear();
+    state.dataSource='sqlite';
+
+    const catalogResp=await fetch(
+      './api/db/catalog',
+      {cache:'no-store'}
+    );
+    if(!catalogResp.ok) {
+      throw new Error('Catálogo SQLite indisponível');
+    }
+
+    const catalog=await catalogResp.json();
+    if(!Array.isArray(catalog)) {
+      throw new Error('Catálogo SQLite inválido');
+    }
+
+    state.tables.set(
+      'dataset_catalog',
+      catalog
+    );
+
+    const tableNames=uniq([
+      'manifest',
+      ...catalog
+        .map(row=>row.tableName)
+        .filter(Boolean)
+    ]).filter(
+      name=>name!=='dataset_catalog'
+    );
+
+    let loaded=0;
+
+    await Promise.all(
+      tableNames.map(async tableName=>{
+        try {
+          const response=await fetch(
+            `./api/db/table/${encodeURIComponent(tableName)}`,
+            {cache:'no-store'}
+          );
+          if(!response.ok) return;
+
+          const payload=await response.json();
+          if(Array.isArray(payload?.rows)) {
+            state.tables.set(
+              tableName,
+              payload.rows
+            );
+            loaded++;
+          }
+        } catch {}
+      })
+    );
+
+    if(!loaded) {
+      throw new Error(
+        'Nenhuma tabela SQLite foi lida'
+      );
+    }
+
+    await postLoad();
+  }
+
+  async function loadFromCsvHttp() {
+    $('loadStatus').textContent='Tentando carregar ./data/dataset_catalog.csv…';
+    state.tables.clear();
+    state.files.clear();
+    state.dataSource='csv';
+
+    const catResp=await fetch(
+      './data/dataset_catalog.csv',
+      {cache:'no-store'}
+    );
+    if(!catResp.ok) {
+      throw new Error(
+        'dataset_catalog.csv não encontrado'
+      );
+    }
+
+    const catText=await catResp.text();
+    setTableFromFilename(
+      'dataset_catalog.csv',
+      catText
+    );
+
+    const catalog=table('dataset_catalog');
+    const names=uniq([
+      'manifest.csv',
+      ...catalog
+        .map(r=>r.fileName)
+        .filter(Boolean)
+    ]);
+
+    let ok=0;
+
+    await Promise.all(
+      names.map(async name=>{
+        try {
+          const res=await fetch(
+            './data/'+name,
+            {cache:'no-store'}
+          );
+          if(res.ok) {
+            setTableFromFilename(
+              name,
+              await res.text()
+            );
+            ok++;
+          }
+        } catch {}
+      })
+    );
+
+    if(!ok) {
+      throw new Error('Nenhum CSV foi lido');
+    }
+
     await postLoad();
   }
 
   async function autoLoad() {
     try {
-      $('loadStatus').textContent='Tentando carregar ./data/dataset_catalog.csv…'; state.tables.clear(); state.files.clear();
-      const catResp=await fetch('./data/dataset_catalog.csv',{cache:'no-store'}); if(!catResp.ok) throw new Error('dataset_catalog.csv não encontrado'); const catText=await catResp.text(); setTableFromFilename('dataset_catalog.csv',catText); const catalog=table('dataset_catalog');
-      const names=uniq(['manifest.csv',...catalog.map(r=>r.fileName).filter(Boolean)]); let ok=0;
-      await Promise.all(names.map(async name=>{try{const res=await fetch('./data/'+name,{cache:'no-store'});if(res.ok){setTableFromFilename(name,await res.text());ok++;}}catch{}}));
-      if(!ok) throw new Error('Nenhum CSV foi lido'); await postLoad();
-    } catch (e) {
-      $('loadStatus').textContent='Carregamento automático indisponível. Se abriu o HTML como arquivo, selecione a pasta data/.'; toast('Use “Selecionar pasta data/” ou sirva o projeto via localhost.');
+      await loadFromSQLite();
+      return;
+    } catch (dbError) {
+      console.warn(
+        'SQLite indisponível; tentando fallback CSV.',
+        dbError
+      );
+    }
+
+    try {
+      await loadFromCsvHttp();
+    } catch (csvError) {
+      console.warn(
+        'Fallback CSV indisponível.',
+        csvError
+      );
+      state.dataSource='none';
+      $('loadStatus').textContent='Carregamento automático indisponível. Se abriu o HTML como arquivo, selecione a pasta data/.';
+      toast('Use “Selecionar pasta data/” ou sirva o projeto via localhost.');
     }
   }
 
 
   document.querySelectorAll('.nav-tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.nav-tab').forEach(x=>x.classList.toggle('active',x===btn));document.querySelectorAll('.view-panel').forEach(x=>x.classList.toggle('active',x.id===btn.dataset.view));window.scrollTo({top:0,behavior:'smooth'});}));
   document.querySelectorAll('[data-ui-language]').forEach(button=>button.addEventListener('click',()=>setUiLanguage(button.dataset.uiLanguage)));
+
+  $('spendingAuditBtn')?.addEventListener(
+    'click',
+    runSpendingAudit
+  );
+
+  $('spendingAuditSearch')?.addEventListener(
+    'keydown',
+    e=>{
+      if(e.key==='Enter') {
+        e.preventDefault();
+        runSpendingAudit();
+      }
+    }
+  );
+
   $('folderPicker').addEventListener('change',e=>loadFolderFiles(e.target.files));
   $('autoLoadBtn').addEventListener('click',autoLoad);
   $('currencySelect').addEventListener('change',e=>{state.currency=e.target.value;state.txPage=0;state.spendTxPage=0;state.incomeTxPage=0;renderAll()});

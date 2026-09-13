@@ -2,6 +2,9 @@ import sys
 import time
 import threading
 import webbrowser
+import re
+import sqlite3
+from contextlib import closing
 from pathlib import Path
 
 import uvicorn
@@ -10,7 +13,11 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 import json
 
-from pluggy_finance_export import run_export
+from pluggy_finance_export import (
+    run_export,
+    migrate_csv_bundle_to_sqlite,
+    SQLITE_DATABASE_NAME,
+)
 
 
 def get_app_dir():
@@ -50,6 +57,7 @@ USER_DATA_DIR = BASE_DIR / "user_data"
 SETTINGS_FILE = USER_DATA_DIR / "ajustes.json"
 HTML_FILE = BASE_DIR / "controlefin_dashboard.html"
 ENV_FILE = BASE_DIR / ".env"
+DB_FILE = DATA_DIR / SQLITE_DATABASE_NAME
 
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 USER_DATA_DIR.mkdir(parents=True, exist_ok=True)
@@ -72,8 +80,9 @@ def dashboard():
 
 def default_settings():
     return {
-        "version": 7,
+        "version": 8,
         "customCategories": [],
+        "customCategoryTranslations": [],
         "transactionOverrides": {},
         "categoryRules": [],
         "fixedExpenseRules": [],
@@ -95,6 +104,13 @@ def normalize_settings(payload):
     custom_categories = payload.get("customCategories", [])
     if not isinstance(custom_categories, list):
         custom_categories = []
+
+    raw_custom_category_translations = payload.get(
+        "customCategoryTranslations",
+        [],
+    )
+    if not isinstance(raw_custom_category_translations, list):
+        raw_custom_category_translations = []
 
     transaction_overrides = payload.get("transactionOverrides", {})
     if not isinstance(transaction_overrides, dict):
@@ -284,17 +300,76 @@ def normalize_settings(payload):
             }
         )
 
+    custom_category_translations = []
+    seen_custom_category_translation_ids = set()
+
+    for index, raw_translation in enumerate(
+        raw_custom_category_translations,
+        start=1,
+    ):
+        if not isinstance(raw_translation, dict):
+            continue
+
+        canonical = str(
+            raw_translation.get("canonical") or ""
+        ).strip()
+        pt_br = str(
+            raw_translation.get("ptBR") or ""
+        ).strip()
+        en_us = str(
+            raw_translation.get("enUS") or ""
+        ).strip()
+        source_language = str(
+            raw_translation.get("sourceLanguage") or "pt-BR"
+        ).strip()
+
+        if not canonical:
+            continue
+        if not pt_br and not en_us:
+            continue
+        if source_language not in {"pt-BR", "en-US"}:
+            source_language = "pt-BR"
+
+        translation_id = str(
+            raw_translation.get("id")
+            or f"custom_category_translation_{index}"
+        ).strip()
+
+        if (
+            not translation_id
+            or translation_id
+            in seen_custom_category_translation_ids
+        ):
+            translation_id = (
+                f"custom_category_translation_{index}"
+            )
+
+        seen_custom_category_translation_ids.add(
+            translation_id
+        )
+
+        custom_category_translations.append(
+            {
+                "id": translation_id,
+                "canonical": canonical,
+                "sourceLanguage": source_language,
+                "ptBR": pt_br or canonical,
+                "enUS": en_us or canonical,
+            }
+        )
+
     ui_language = str(payload.get("uiLanguage") or "pt-BR").strip()
     if ui_language not in {"pt-BR", "en-US"}:
         ui_language = "pt-BR"
 
     return {
-        "version": 7,
+        "version": 8,
         "customCategories": [
             str(category).strip()
             for category in custom_categories
             if str(category).strip()
         ],
+        "customCategoryTranslations": custom_category_translations,
         "transactionOverrides": transaction_overrides,
         "categoryRules": category_rules,
         "fixedExpenseRules": fixed_expense_rules,
@@ -366,6 +441,10 @@ async def update_settings(request: Request):
         )
 
     custom_categories = payload.get("customCategories", [])
+    custom_category_translations = payload.get(
+        "customCategoryTranslations",
+        [],
+    )
     transaction_overrides = payload.get("transactionOverrides", {})
     category_rules = payload.get("categoryRules", [])
     fixed_expense_rules = payload.get("fixedExpenseRules", [])
@@ -376,6 +455,15 @@ async def update_settings(request: Request):
         raise HTTPException(
             status_code=400,
             detail="customCategories deve ser uma lista.",
+        )
+
+    if not isinstance(custom_category_translations, list):
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "customCategoryTranslations deve ser "
+                "uma lista."
+            ),
         )
 
     if not isinstance(transaction_overrides, dict):
@@ -418,6 +506,199 @@ async def update_settings(request: Request):
     }
 
 
+
+DB_TABLE_RE = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+
+
+def open_database():
+    if not DB_FILE.exists():
+        raise HTTPException(
+            status_code=503,
+            detail="Banco SQLite ainda não foi criado.",
+        )
+
+    connection = sqlite3.connect(
+        DB_FILE,
+        timeout=5,
+    )
+    connection.row_factory = sqlite3.Row
+    connection.execute("PRAGMA query_only = ON")
+    connection.execute("PRAGMA busy_timeout = 5000")
+    return connection
+
+
+def database_public_tables(connection):
+    rows = connection.execute(
+        """
+        SELECT name
+        FROM sqlite_master
+        WHERE type = 'table'
+          AND name NOT LIKE 'sqlite_%'
+          AND name NOT LIKE '_cf_%'
+        ORDER BY name
+        """
+    ).fetchall()
+    return {
+        str(row["name"])
+        for row in rows
+    }
+
+
+def database_public_columns(
+    connection,
+    table_name,
+):
+    rows = connection.execute(
+        f'PRAGMA table_info("{table_name}")'
+    ).fetchall()
+    return [
+        str(row["name"])
+        for row in rows
+        if not str(row["name"]).startswith("_cf_")
+    ]
+
+
+def read_database_table(
+    connection,
+    table_name,
+):
+    if not DB_TABLE_RE.fullmatch(table_name):
+        raise HTTPException(
+            status_code=400,
+            detail="Nome de tabela inválido.",
+        )
+
+    public_tables = database_public_tables(connection)
+    if table_name not in public_tables:
+        raise HTTPException(
+            status_code=404,
+            detail="Tabela não encontrada.",
+        )
+
+    columns = database_public_columns(
+        connection,
+        table_name,
+    )
+    if not columns:
+        return []
+
+    quoted_columns = ", ".join(
+        '"' + column.replace('"', '""') + '"'
+        for column in columns
+    )
+
+    rows = connection.execute(
+        f'SELECT {quoted_columns} '
+        f'FROM "{table_name}" '
+        'ORDER BY "_cf_sort_order", rowid'
+    ).fetchall()
+
+    return [
+        dict(row)
+        for row in rows
+    ]
+
+
+@app.get("/api/db/status")
+def database_status():
+    if not DB_FILE.exists():
+        return {
+            "available": False,
+            "database": SQLITE_DATABASE_NAME,
+        }
+
+    with closing(open_database()) as connection:
+        public_tables = database_public_tables(connection)
+        latest_sync = None
+
+        try:
+            row = connection.execute(
+                """
+                SELECT
+                    syncId,
+                    startedAtUtc,
+                    finishedAtUtc,
+                    fullSnapshot,
+                    status,
+                    datasetCount,
+                    rowCount,
+                    errorCount,
+                    schemaVersion
+                FROM "_cf_sync_runs"
+                ORDER BY startedAtUtc DESC
+                LIMIT 1
+                """
+            ).fetchone()
+            if row:
+                latest_sync = dict(row)
+        except sqlite3.DatabaseError:
+            latest_sync = None
+
+        transaction_count = 0
+        if "transactions" in public_tables:
+            transaction_count = int(
+                connection.execute(
+                    'SELECT COUNT(*) '
+                    'FROM "transactions"'
+                ).fetchone()[0]
+            )
+
+        return {
+            "available": True,
+            "database": SQLITE_DATABASE_NAME,
+            "sizeBytes": DB_FILE.stat().st_size,
+            "datasetCount": len(public_tables),
+            "transactionCount": transaction_count,
+            "latestSync": latest_sync,
+        }
+
+
+@app.get("/api/db/catalog")
+def database_catalog():
+    with closing(open_database()) as connection:
+        public_tables = database_public_tables(connection)
+
+        if "dataset_catalog" in public_tables:
+            return read_database_table(
+                connection,
+                "dataset_catalog",
+            )
+
+        rows = []
+        for table_name in sorted(public_tables):
+            count = int(
+                connection.execute(
+                    f'SELECT COUNT(*) '
+                    f'FROM "{table_name}"'
+                ).fetchone()[0]
+            )
+            rows.append(
+                {
+                    "tableName": table_name,
+                    "fileName": f"{table_name}.csv",
+                    "rowCount": count,
+                    "grain": "",
+                    "description": "",
+                    "storage": "sqlite",
+                }
+            )
+        return rows
+
+
+@app.get("/api/db/table/{table_name}")
+def database_table(table_name: str):
+    with closing(open_database()) as connection:
+        rows = read_database_table(
+            connection,
+            table_name,
+        )
+        return {
+            "tableName": table_name,
+            "rowCount": len(rows),
+            "rows": rows,
+        }
+
+
 app.mount(
     "/data",
     StaticFiles(directory=DATA_DIR),
@@ -436,18 +717,63 @@ def open_browser():
 if __name__ == "__main__":
 
     print(f"Pasta permanente da aplicação: {BASE_DIR}", flush=True)
-    print(f"Atualizando/sobrescrevendo CSVs em: {DATA_DIR}", flush=True)
+    print(f"Dados locais: {DATA_DIR}", flush=True)
+    print(f"Banco SQLite: {DB_FILE}", flush=True)
+
+    # Primeira ponte de migração: aproveita os CSVs já existentes.
+    if (
+        not DB_FILE.exists()
+        and (DATA_DIR / "dataset_catalog.csv").exists()
+    ):
+        try:
+            migrated = migrate_csv_bundle_to_sqlite(
+                DATA_DIR
+            )
+            if migrated:
+                print(
+                    f"CSVs existentes migrados para: {migrated}",
+                    flush=True,
+                )
+        except Exception as exc:
+            print(
+                "Aviso: não foi possível migrar os CSVs "
+                f"existentes para SQLite: {exc}",
+                file=sys.stderr,
+                flush=True,
+            )
 
     try:
         run_export(
             output_dir=DATA_DIR,
             env_file=ENV_FILE,
         )
+        print(
+            "Dados atualizados com sucesso em CSV + SQLite.",
+            flush=True,
+        )
     except Exception as exc:
-        print(f"Falha ao atualizar os dados: {exc}", file=sys.stderr, flush=True)
-        raise SystemExit(1)
+        print(
+            f"Falha ao atualizar os dados: {exc}",
+            file=sys.stderr,
+            flush=True,
+        )
 
-    print("Dados atualizados com sucesso.", flush=True)
+        # Preserva o uso offline dos últimos dados válidos.
+        if DB_FILE.exists():
+            print(
+                "Usando o último banco SQLite local disponível.",
+                file=sys.stderr,
+                flush=True,
+            )
+        elif (DATA_DIR / "dataset_catalog.csv").exists():
+            print(
+                "SQLite indisponível; mantendo fallback "
+                "pelos CSVs existentes.",
+                file=sys.stderr,
+                flush=True,
+            )
+        else:
+            raise SystemExit(1)
 
     threading.Thread(
         target=open_browser,
