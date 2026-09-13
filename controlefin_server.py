@@ -72,10 +72,11 @@ def dashboard():
 
 def default_settings():
     return {
-        "version": 2,
+        "version": 3,
         "customCategories": [],
         "transactionOverrides": {},
         "categoryRules": [],
+        "fixedExpenseRules": [],
     }
 
 
@@ -99,6 +100,10 @@ def normalize_settings(payload):
     raw_rules = payload.get("categoryRules", [])
     if not isinstance(raw_rules, list):
         raw_rules = []
+
+    raw_fixed_expense_rules = payload.get("fixedExpenseRules", [])
+    if not isinstance(raw_fixed_expense_rules, list):
+        raw_fixed_expense_rules = []
 
     allowed_fields = {"merchant", "description", "bank", "account", "method"}
     allowed_operators = {"contains", "equals", "startsWith"}
@@ -139,8 +144,49 @@ def normalize_settings(payload):
             }
         )
 
+    fixed_expense_rules = []
+    seen_fixed_rule_ids = set()
+
+    for index, raw_rule in enumerate(raw_fixed_expense_rules, start=1):
+        if not isinstance(raw_rule, dict):
+            continue
+
+        rule_id = str(raw_rule.get("id") or f"fixed_rule_{index}").strip()
+        if not rule_id or rule_id in seen_fixed_rule_ids:
+            rule_id = f"fixed_rule_{index}"
+        seen_fixed_rule_ids.add(rule_id)
+
+        merchant_signature = str(raw_rule.get("merchantSignature") or "").strip()
+        description_signature = str(raw_rule.get("descriptionSignature") or "").strip()
+
+        # Sem nenhum sinal textual, a regra seria ampla demais.
+        if not merchant_signature and not description_signature:
+            continue
+
+        try:
+            amount = float(raw_rule.get("amount") or 0)
+        except (TypeError, ValueError):
+            amount = 0.0
+
+        fixed_expense_rules.append(
+            {
+                "id": rule_id,
+                "enabled": raw_rule.get("enabled", True) is not False,
+                "merchantSignature": merchant_signature,
+                "descriptionSignature": description_signature,
+                "institution": str(raw_rule.get("institution") or "").strip(),
+                "accountId": str(raw_rule.get("accountId") or "").strip(),
+                "method": str(raw_rule.get("method") or "").strip(),
+                "category": str(raw_rule.get("category") or "").strip(),
+                "amount": amount,
+                "sourceLabel": str(raw_rule.get("sourceLabel") or "").strip(),
+                "sourceTransactionKey": str(raw_rule.get("sourceTransactionKey") or "").strip(),
+                "createdAt": str(raw_rule.get("createdAt") or "").strip(),
+            }
+        )
+
     return {
-        "version": 2,
+        "version": 3,
         "customCategories": [
             str(category).strip()
             for category in custom_categories
@@ -148,6 +194,7 @@ def normalize_settings(payload):
         ],
         "transactionOverrides": transaction_overrides,
         "categoryRules": category_rules,
+        "fixedExpenseRules": fixed_expense_rules,
     }
 
 
@@ -215,6 +262,7 @@ async def update_settings(request: Request):
     custom_categories = payload.get("customCategories", [])
     transaction_overrides = payload.get("transactionOverrides", {})
     category_rules = payload.get("categoryRules", [])
+    fixed_expense_rules = payload.get("fixedExpenseRules", [])
 
     if not isinstance(custom_categories, list):
         raise HTTPException(
@@ -232,6 +280,12 @@ async def update_settings(request: Request):
         raise HTTPException(
             status_code=400,
             detail="categoryRules deve ser uma lista.",
+        )
+
+    if not isinstance(fixed_expense_rules, list):
+        raise HTTPException(
+            status_code=400,
+            detail="fixedExpenseRules deve ser uma lista.",
         )
 
     settings = normalize_settings(payload)
