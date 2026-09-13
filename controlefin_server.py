@@ -72,13 +72,14 @@ def dashboard():
 
 def default_settings():
     return {
-        "version": 6,
+        "version": 7,
         "customCategories": [],
         "transactionOverrides": {},
         "categoryRules": [],
         "fixedExpenseRules": [],
         "fixedIncomeRules": [],
         "incomeSourceCategoryRules": [],
+        "uiLanguage": "pt-BR",
     }
 
 
@@ -283,8 +284,12 @@ def normalize_settings(payload):
             }
         )
 
+    ui_language = str(payload.get("uiLanguage") or "pt-BR").strip()
+    if ui_language not in {"pt-BR", "en-US"}:
+        ui_language = "pt-BR"
+
     return {
-        "version": 6,
+        "version": 7,
         "customCategories": [
             str(category).strip()
             for category in custom_categories
@@ -295,6 +300,7 @@ def normalize_settings(payload):
         "fixedExpenseRules": fixed_expense_rules,
         "fixedIncomeRules": fixed_income_rules,
         "incomeSourceCategoryRules": income_source_category_rules,
+        "uiLanguage": ui_language,
     }
 
 

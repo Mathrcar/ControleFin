@@ -14,7 +14,7 @@
   --shadow:0 24px 64px rgba(0,0,0,.35);--r:18px;--r2:12px;
 }
 *{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}button,select,input{font:inherit}button,.button{border:0;background:var(--surface3);color:var(--text);border-radius:999px;padding:.68rem 1rem;cursor:pointer;font-weight:700;transition:.18s ease}button:hover,.button:hover{background:#313131;transform:translateY(-1px)}button.primary,.button.primary{background:var(--green);color:#000}button.primary:hover,.button.primary:hover{background:var(--green2);transform:scale(1.01)}button.ghost{background:transparent;border:1px solid var(--line)}input[type=file]{display:none}select,input[type=text],input[type=search],input[type=number]{border:1px solid var(--line);background:var(--surface2);color:var(--text);border-radius:10px;padding:.58rem .72rem;outline:none}select:focus,input:focus{border-color:var(--green)}
-.shell{width:min(1540px,calc(100% - 32px));margin:0 auto;padding:18px 0 60px}.topbar{position:sticky;top:0;z-index:50;margin:0 -16px 16px;padding:10px 16px;background:rgba(0,0,0,.86);backdrop-filter:blur(20px);border-bottom:1px solid #151515}.topbar-inner{display:flex;gap:14px;align-items:center;justify-content:space-between;max-width:1540px;margin:auto}.brand{display:flex;align-items:center;gap:11px;min-width:0}.mark{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--green);color:#000;font-weight:950;letter-spacing:-.04em}.brand h1{margin:0;font-size:1rem}.brand small{display:block;color:var(--muted);font-size:.72rem;max-width:48vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.toolbar{display:flex;gap:8px;align-items:center}.desktop-only{}
+.shell{width:min(1540px,calc(100% - 32px));margin:0 auto;padding:18px 0 60px}.topbar{position:sticky;top:0;z-index:50;margin:0 -16px 16px;padding:10px 16px;background:rgba(0,0,0,.86);backdrop-filter:blur(20px);border-bottom:1px solid #151515}.topbar-inner{display:flex;gap:14px;align-items:center;justify-content:space-between;max-width:1540px;margin:auto}.brand{display:flex;align-items:center;gap:11px;min-width:0}.mark{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--green);color:#000;font-weight:950;letter-spacing:-.04em}.brand h1{margin:0;font-size:1rem}.brand small{display:block;color:var(--muted);font-size:.72rem;max-width:48vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.toolbar{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}.desktop-only{}.language-toggle{display:inline-flex;align-items:center;gap:2px;padding:3px;border:1px solid var(--line);border-radius:999px;background:var(--surface2);flex:0 0 auto}.language-option{display:inline-flex;align-items:center;gap:6px;padding:.42rem .62rem;border-radius:999px;background:transparent;color:var(--muted);font-size:.69rem;line-height:1;white-space:nowrap}.language-option:hover{transform:none;background:var(--surface3)}.language-option.active{background:var(--green);color:#000}.language-option span[aria-hidden="true"]{font-size:1rem}.language-label{font-weight:850;letter-spacing:.02em}
 .panel{background:linear-gradient(180deg,var(--surface2),var(--surface));border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}.panel-pad{padding:20px}.hero{display:grid;grid-template-columns:1.4fr .7fr;gap:14px;margin-bottom:16px}.hero-main{padding:30px;display:flex;flex-direction:column;justify-content:space-between;min-height:250px;background:radial-gradient(circle at 85% 20%,rgba(30,215,96,.18),transparent 28rem),linear-gradient(145deg,#1b1b1b,#101010)}.eyebrow{text-transform:uppercase;letter-spacing:.14em;color:var(--green);font-size:.7rem;font-weight:900}.hero h2{font-size:clamp(2rem,4vw,4rem);line-height:.98;letter-spacing:-.055em;margin:10px 0 12px;max-width:850px}.hero p{margin:0;color:var(--muted);max-width:760px;line-height:1.55}.privacy{display:flex;gap:10px;align-items:center;color:var(--muted);font-size:.82rem;margin-top:24px}.dot{width:8px;height:8px;background:var(--green);border-radius:50%;box-shadow:0 0 0 5px rgba(30,215,96,.12)}.load-card{padding:24px;display:flex;flex-direction:column;justify-content:center;gap:10px}.load-card h3{margin:0}.load-card p{color:var(--muted);line-height:1.5;margin:0}.load-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.statusline{min-height:1.2em;color:var(--muted);font-size:.78rem}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 .nav-tabs{display:flex;gap:7px;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;width:max-content;max-width:100%;overflow:auto;margin:12px 0 14px}.nav-tab{background:transparent;color:var(--muted);padding:.62rem 1rem;white-space:nowrap}.nav-tab.active{background:var(--text);color:#000}.view-panel{display:none}.view-panel.active{display:block}.filters{position:relative;top:auto;z-index:10;background:rgba(18,18,18,.96);backdrop-filter:blur(18px);padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}.filters label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:.73rem}.filters .spacer{flex:1}.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface2);border-radius:999px;padding:.42rem .7rem;font-size:.73rem;color:var(--muted)}
 .section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:22px 2px 12px}.section-head h2{font-size:1.35rem;letter-spacing:-.025em;margin:0}.section-head p{color:var(--muted);font-size:.8rem;margin:4px 0 0}.section-kicker{font-size:.72rem;color:var(--green);font-weight:800;text-transform:uppercase;letter-spacing:.12em}.grid{display:grid;gap:14px}.two{grid-template-columns:1fr 1fr}.three{grid-template-columns:repeat(3,1fr)}.four{grid-template-columns:repeat(4,1fr)}.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.kpi{padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:14px;min-height:110px}.kpi .label{color:var(--muted);font-size:.72rem;margin-bottom:10px}.kpi .value{font-size:clamp(1.3rem,2.2vw,2rem);font-weight:900;letter-spacing:-.04em}.kpi .sub{color:var(--muted);font-size:.7rem;margin-top:6px}.good{color:var(--good)!important}.bad{color:var(--bad)!important}.warn{color:var(--warn)!important}.info{color:var(--blue)!important}.muted{color:var(--muted)}
@@ -32,7 +32,7 @@
 .category-rules-manager{margin-top:10px}.rule-builder{display:grid;grid-template-columns:1.1fr 1fr 1.5fr 1.4fr auto;gap:9px;align-items:end}.rule-builder label{display:grid;gap:5px;color:var(--muted);font-size:.69rem;min-width:0}.rule-builder input,.rule-builder select{width:100%;min-width:0}.rule-help{margin:10px 0 0;color:var(--muted);font-size:.7rem;line-height:1.5}.rule-list{display:grid;gap:8px;margin-top:12px}.rule-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:center;padding:11px 12px;border:1px solid var(--line);border-radius:12px;background:var(--surface2)}.rule-row.is-disabled{opacity:.5}.rule-toggle{display:flex;align-items:center;justify-content:center}.rule-toggle input{width:16px;height:16px;accent-color:var(--green)}.rule-main{min-width:0}.rule-expression{font-size:.76rem;line-height:1.45;overflow-wrap:anywhere}.rule-expression strong{color:var(--text)}.rule-expression .rule-arrow{color:var(--green);font-weight:900;padding:0 .25rem}.rule-meta{color:var(--muted);font-size:.66rem;margin-top:4px}.rule-actions{display:flex;gap:5px;align-items:center;flex-wrap:wrap;justify-content:flex-end}.rule-actions button{padding:.38rem .58rem;font-size:.67rem}.rule-count{color:var(--green);font-weight:800}
 .table-wrap{overflow:auto;border:1px solid var(--line);border-radius:13px;background:var(--surface)}table{border-collapse:collapse;width:100%;min-width:760px}th,td{padding:10px 11px;border-bottom:1px solid var(--line);text-align:left;font-size:.73rem;vertical-align:top}th{position:sticky;top:0;z-index:2;background:#191919;color:var(--muted)}tr:last-child td{border-bottom:0}td.num,th.num{text-align:right;font-variant-numeric:tabular-nums}.pill{display:inline-flex;border:1px solid var(--line);border-radius:999px;padding:.2rem .44rem;font-size:.64rem}.tx-edit{width:140px}.row-actions{display:flex;gap:5px}.row-actions button{font-size:.68rem;padding:.42rem .58rem}.editor-toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:end;margin-bottom:12px}.editor-toolbar label{display:grid;gap:4px;color:var(--muted);font-size:.68rem}.footnote{font-size:.68rem;color:var(--muted);line-height:1.5;margin-top:12px}.empty{padding:28px;color:var(--muted);text-align:center;border:1px dashed var(--line);border-radius:13px}.details-panel{margin-top:14px;border:1px solid var(--line);border-radius:14px;background:var(--surface)}.details-panel summary{cursor:pointer;padding:14px;font-weight:800}.details-inner{padding:0 14px 14px}.hidden{display:none!important}.toast{position:fixed;right:20px;bottom:20px;z-index:80;max-width:420px;padding:13px 15px;border-radius:12px;background:#282828;border:1px solid #3b3b3b;box-shadow:var(--shadow);transform:translateY(20px);opacity:0;pointer-events:none;transition:.2s}.toast.show{opacity:1;transform:translateY(0)}
 @media(max-width:1180px){.rule-builder{grid-template-columns:1fr 1fr}.rule-builder button{width:max-content}.kpis{grid-template-columns:repeat(3,1fr)}.control-dock{grid-template-columns:repeat(3,1fr)}.two,.income-hero{grid-template-columns:1fr}.story-grid{grid-template-columns:repeat(2,1fr)}}
-@media(max-width:760px){.rule-builder{grid-template-columns:1fr}.rule-row{grid-template-columns:auto minmax(0,1fr)}.rule-actions{grid-column:1/-1;justify-content:flex-start}.shell{width:min(100% - 18px,1540px)}.hero{grid-template-columns:1fr}.hero-main{min-height:220px}.topbar-inner{align-items:flex-start}.toolbar .desktop-only{display:none}.kpis{grid-template-columns:repeat(2,1fr)}.spend-mode-cards,.income-mode-cards,.mini-stats{grid-template-columns:1fr}.control-dock{grid-template-columns:1fr 1fr}.control-dock .wide{grid-column:span 2}.story-grid{grid-template-columns:1fr}.filters{top:auto}.tx-raw-grid{grid-template-columns:1fr}.desktop-hide{display:none}}
+@media(max-width:760px){.language-toggle .language-label{display:none}.language-option{padding:.45rem .55rem}.rule-builder{grid-template-columns:1fr}.rule-row{grid-template-columns:auto minmax(0,1fr)}.rule-actions{grid-column:1/-1;justify-content:flex-start}.shell{width:min(100% - 18px,1540px)}.hero{grid-template-columns:1fr}.hero-main{min-height:220px}.topbar-inner{align-items:flex-start}.toolbar .desktop-only{display:none}.kpis{grid-template-columns:repeat(2,1fr)}.spend-mode-cards,.income-mode-cards,.mini-stats{grid-template-columns:1fr}.control-dock{grid-template-columns:1fr 1fr}.control-dock .wide{grid-column:span 2}.story-grid{grid-template-columns:1fr}.filters{top:auto}.tx-raw-grid{grid-template-columns:1fr}.desktop-hide{display:none}}
 @media(max-width:480px){.kpis{grid-template-columns:1fr}.control-dock{grid-template-columns:1fr}.control-dock .wide{grid-column:span 1}.hero h2{font-size:2.2rem}.hero-number strong{font-size:3rem}.nav-tabs{width:100%}}
 </style>
 </head>
@@ -40,7 +40,13 @@
 <div class="shell">
   <header class="topbar" id="dashboard-topbar"><div class="topbar-inner" id="dashboard-topbar-content">
     <div class="brand" id="dashboard-brand"><div class="mark">CF</div><div><h1>ControleFin</h1><small id="runMeta">Dashboard local — nenhum dado carregado</small></div></div>
-    <div class="toolbar" id="dashboard-toolbar"><label class="button primary" for="folderPicker">Abrir dados</label><input id="folderPicker" type="file" webkitdirectory directory multiple accept=".csv,text/csv"><button id="autoLoadBtn" class="desktop-only">Carregar ./data</button><button id="toggleBlockIdsBtn" class="ghost" type="button" title="Exibir identificadores dos blocos">Mostrar IDs</button></div>
+    <div class="toolbar" id="dashboard-toolbar">
+      <div class="language-toggle" id="languageToggle" role="group" aria-label="Idioma / Language">
+        <button type="button" class="language-option" data-ui-language="pt-BR" aria-pressed="true" title="Português (Brasil)"><span aria-hidden="true">🇧🇷</span><span class="language-label">PT-BR</span></button>
+        <button type="button" class="language-option" data-ui-language="en-US" aria-pressed="false" title="English (United States)"><span aria-hidden="true">🇺🇸</span><span class="language-label">EN-US</span></button>
+      </div>
+      <label class="button primary" for="folderPicker">Abrir dados</label><input id="folderPicker" type="file" webkitdirectory directory multiple accept=".csv,text/csv"><button id="autoLoadBtn" class="desktop-only">Carregar ./data</button><button id="toggleBlockIdsBtn" class="ghost" type="button" title="Exibir identificadores dos blocos">Mostrar IDs</button>
+    </div>
   </div></header>
 
   <section class="hero" id="welcome">
@@ -315,6 +321,16 @@
     persistenceMode: 'backend',
     settingsSaveTimer: null,
     settingsSaveInFlight: false,
+    settingsLoaded: false,
+    uiLanguageStorageKey: 'controlefin.uiLanguage.v1',
+    uiLanguage: (() => {
+      try {
+        const stored = localStorage.getItem('controlefin.uiLanguage.v1');
+        return ['pt-BR','en-US'].includes(stored) ? stored : 'pt-BR';
+      } catch {
+        return 'pt-BR';
+      }
+    })(),
   };
 
   const $ = (id) => document.getElementById(id);
@@ -329,6 +345,168 @@
   const uniq = (arr) => [...new Set(arr.filter(Boolean))];
   const safeText = (v) => v == null || v === '' ? '—' : String(v);
   const esc = (v) => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+
+  const UI_EN_EXACT = {"ControleFin — Saúde Financeira":"ControleFin — Financial Health","Dashboard local — nenhum dado carregado":"Local dashboard — no data loaded","Abrir dados":"Open data","Carregar ./data":"Load ./data","Mostrar IDs":"Show IDs","Ocultar IDs":"Hide IDs","Exibir identificadores dos blocos":"Show block identifiers","Controle financeiro pessoal":"Personal finance control","Veja onde seu dinheiro está indo.":"See where your money is going.","Um painel local, focado em gastos de cartão, PIX e boletos. Filtre, investigue e reclassifique cada transação sem enviar seus dados para fora do computador.":"A local dashboard focused on card, PIX, and boleto spending. Filter, investigate, and reclassify each transaction without sending your data outside your computer.","100% local no navegador. Sem APIs ou bibliotecas externas.":"100% local in your browser. No external APIs or libraries.","Carregue seus dados":"Load your data","Selecione a pasta":"Select the","gerada pelo Python ou, em localhost, carregue automaticamente.":"folder generated by Python or, on localhost, load it automatically.","Selecionar pasta":"Select folder","Como executar":"How to run","Aguardando dados.":"Waiting for data.","Gastos":"Expenses","Entradas":"Income","Visão geral":"Overview","Transações":"Transactions","Navegação do dashboard":"Dashboard navigation","Moeda":"Currency","Janela":"Window","3 meses":"3 months","6 meses":"6 months","12 meses":"12 months","Tudo":"All","Contas: aguardando":"Accounts: waiting","Gastos consolidados":"Consolidated expenses","Gasto médio mensal da janela":"Average monthly expense in the window","Total na janela:":"Total in window:","transações consideradas":"transactions considered","Média mensal · Cartão":"Monthly average · Card","Média mensal · PIX":"Monthly average · PIX","Média mensal · Boleto":"Monthly average · Boleto","Movimentações patrimoniais excluídas: —":"Excluded asset movements: —","Resarcimentos previstos: —":"Expected reimbursements: —","Mês":"Month","Todos":"All","Conta / cartão":"Account / card","Todas":"All","Meio":"Method","Fixo / variável":"Fixed / variable","Fixos":"Fixed","Variáveis":"Variable","Categoria":"Category","Merchant":"Merchant","Buscar":"Search","Valor mín.":"Min. amount","Valor máx.":"Max. amount","Limpar filtros":"Clear filters","Gerenciar categorias personalizadas e salvamento":"Manage custom categories and saving","Nova categoria":"New category","Criar categoria":"Create category","Salvamento automático ativo.":"Automatic saving is active.","Categorias, reclassificações, regras automáticas e padrões de gastos fixos são gravados pelo backend em":"Categories, reclassifications, automatic rules, and fixed-expense patterns are saved by the backend in",". O navegador apenas envia e lê os ajustes; o arquivo permanente fica na pasta local do ControleFin.":". The browser only sends and reads the settings; the permanent file stays in the local ControleFin folder.","Baixar backup dos ajustes":"Download settings backup","Restaurar backup":"Restore backup","Nenhuma alteração nesta sessão":"No changes in this session","Regras automáticas de categorização":"Automatic categorization rules","Campo":"Field","Descrição":"Description","Banco":"Bank","Tipo de gasto":"Expense type","Condição":"Condition","contém":"contains","é igual a":"equals","começa com":"starts with","Valor a procurar":"Value to match","Classificar como":"Classify as","Criar regra":"Create rule","A primeira regra ativa que combinar com a transação é aplicada. Ajustes manuais de uma transação sempre têm prioridade sobre as regras. Use ↑ e ↓ para alterar a prioridade.":"The first active rule that matches the transaction is applied. Manual transaction adjustments always take priority over rules. Use ↑ and ↓ to change priority.","Padrões automáticos de gastos fixos":"Automatic fixed-expense patterns","Ao marcar uma transação como":"When you mark a transaction as","Fixo":"Fixed",", o ControleFin aprende um padrão pela descrição/merchant e usa valor, conta e meio de pagamento como sinais de proximidade. Transações semelhantes passam a ser classificadas como fixas automaticamente. Excluir um padrão faz com que essas transações voltem ao padrão":", ControleFin learns a pattern from the description/merchant and uses amount, account, and payment method as similarity signals. Similar transactions are then automatically classified as fixed. Deleting a pattern makes those transactions return to the default","Variável":"Variable",", salvo quando houver um ajuste manual específico.":", unless there is a specific manual adjustment.","Mês a mês":"Month by month","Quanto gasto e onde gasto?":"How much do I spend and where?","Os gráficos usam a janela selecionada e os filtros ativos; valores exibidos já descontam resarcimentos previstos e mostram somente a parcela efetivamente atribuída a você. O filtro de mês não corta a tendência.":"Charts use the selected window and active filters; displayed amounts already deduct expected reimbursements and show only the share actually attributed to you. The month filter does not truncate the trend.","gastos visíveis":"visible expenses","Gastos mensais em reais":"Monthly expenses in reais","Barras lado a lado por mês. O total do mês aparece acima do grupo.":"Side-by-side bars by month. The monthly total appears above the group.","Agrupar por":"Group by","Fixo x variável":"Fixed vs variable","Clique nas legendas para ocultar ou exibir séries sem perder o contexto mensal.":"Click legend items to hide or show series without losing monthly context.","Composição percentual do mês":"Monthly percentage composition","Cada coluna representa 100% do gasto do mês; os segmentos mostram onde o dinheiro foi gasto.":"Each column represents 100% of the month's spending; segments show where the money was spent.","Compor por":"Break down by","Passe o mouse para ver valor e percentual. As legendas continuam clicáveis.":"Hover to see amount and percentage. Legend items remain clickable.","Onde":"Where","Principais destinos do gasto":"Top spending destinations","Clique em uma categoria ou merchant para aplicar o filtro imediatamente.":"Click a category or merchant to apply the filter immediately.","Categorias":"Categories","Ranking da seleção atual.":"Ranking for the current selection.","Merchants":"Merchants","Estabelecimentos e beneficiários com maior gasto.":"Merchants and recipients with the highest spending.","Transações de gastos":"Expense transactions","Detalhe completo dos gastos considerados nesta aba. Edite a categoria e marque cada gasto como fixo ou variável. Variável é o padrão; ao marcar Fixo, transações semelhantes também serão reconhecidas automaticamente.":"Full detail of the expenses considered on this tab. Edit the category and mark each expense as fixed or variable. Variable is the default; when you mark Fixed, similar transactions will also be recognized automatically.","Data":"Date","Banco / conta":"Bank / account","Resarcimento":"Reimbursement","Seu gasto":"Your expense","Detalhes":"Details","Ação":"Action","Entradas consolidadas":"Consolidated income","Entradas identificadas como RENDIMENTO ou RESGATE RDB são ignoradas nesta aba.":"Entries identified as RENDIMENTO or RESGATE RDB are ignored on this tab.","Entrada média mensal da janela":"Average monthly income in the window","Média mensal · Transferências":"Monthly average · Transfers","Média mensal · Outros":"Monthly average · Other","Resarcimentos excluídos: —":"Excluded reimbursements: —","Conta":"Account","Fixas":"Fixed","Origem":"Source","Padrões automáticos de entradas fixas":"Automatic fixed-income patterns","Toda entrada é":"Every income transaction is","por padrão. Ao marcar uma entrada como":"by default. When you mark an income transaction as","Fixa":"Fixed",", o ControleFin aprende um padrão por descrição/origem e usa valor, conta e meio de pagamento como sinais de proximidade para reconhecer entradas semelhantes antigas e futuras. Categorias personalizadas e regras automáticas de categoria são compartilhadas com a aba Gastos.":", ControleFin learns a pattern from description/source and uses amount, account, and payment method as similarity signals to recognize similar past and future income transactions. Custom categories and automatic category rules are shared with the Expenses tab.","Regras automáticas de salário por origem":"Automatic salary rules by source","Ao salvar uma entrada como":"When you save an income transaction as","Salário":"Salary","ou":"or",", o ControleFin cria uma regra persistente para a mesma origem. O":", ControleFin creates a persistent rule for the same source. The","tem prioridade; quando ele não existe, merchant/descrição são usados de forma mais conservadora.":"takes priority; when it is unavailable, merchant/description are used more conservatively.","Quanto entra e de onde vem?":"How much comes in and where does it come from?","Os gráficos usam a janela selecionada e os filtros de conta, meio, fixo/variável, categoria, origem, busca e valor. O filtro de mês não corta a tendência.":"Charts use the selected window and account, method, fixed/variable, category, source, search, and amount filters. The month filter does not truncate the trend.","entradas visíveis":"visible income transactions","Entradas mensais em reais":"Monthly income in reais","Tipo de entrada":"Income type","Clique nas legendas para ocultar ou exibir séries.":"Click legend items to hide or show series.","Cada coluna representa 100% das entradas do mês e mostra sua origem.":"Each column represents 100% of the month's income and shows its source.","Passe o mouse para ver valor e percentual. As legendas são clicáveis.":"Hover to see amount and percentage. Legend items are clickable.","Principais fontes das entradas":"Top income sources","Clique em uma categoria ou origem para aplicar o filtro imediatamente.":"Click a category or source to apply the filter immediately.","Origens":"Sources","Pagadores/origens com maior entrada.":"Payers/sources with the highest income.","Transações de entradas":"Income transactions","Edite a categoria e marque cada entrada como fixa ou variável. Alterações recalculam os visuais imediatamente e são persistidas.":"Edit the category and mark each income transaction as fixed or variable. Changes immediately recalculate the visuals and are persisted.","Pagador":"Payer","Resarcimento / vínculo":"Reimbursement / link","Valor":"Amount","Posição financeira":"Financial position","Resumo patrimonial sem competir com a leitura de gastos.":"Net-worth summary without competing with the spending view.","Patrimônio líquido":"Net worth","Estimado":"Estimated","Saldo bancário":"Bank balance","Investimentos":"Investments","Cartões em aberto":"Open card balances","Caixa médio mensal":"Average monthly cash flow","Fluxo de caixa":"Cash flow","Entradas e saídas bancárias mensais.":"Monthly bank inflows and outflows.","Saúde financeira":"Financial health","Heurística explicável sobre os dados disponíveis.":"Explainable heuristic based on the available data.","Leitura automática":"Automatic insights","Sinais relevantes do fluxo, gastos, patrimônio e qualidade dos dados.":"Relevant signals from cash flow, expenses, net worth, and data quality.","Contas":"Accounts","BTG Banking, BTG Investimentos e Nubank tratados separadamente.":"BTG Banking, BTG Investments, and Nubank are handled separately.","Investimentos e detalhes técnicos":"Investments and technical details","Alocação de investimentos":"Investment allocation","Posições por instituição":"Positions by institution","Ajustes":"Settings","Transações e reclassificação":"Transactions and reclassification","Corrija categoria, merchant, meio ou natureza. Todos os gráficos são atualizados imediatamente.":"Correct category, merchant, method, or nature. All charts update immediately.","Exportar ajustes":"Export settings","Limpar ajustes":"Clear adjustments","Natureza":"Nature","Transferências próprias":"Own-account transfers","Aportes / transferências para investimentos":"Contributions / transfers to investments","Pagamento de fatura":"Card bill payment","Estornos":"Refunds","Ignoradas":"Ignored","Os dados financeiros permanecem locais. Categorias, reclassificações, regras automáticas, padrões de gastos/entradas fixos, resarcimentos, vínculos e regras de salário por origem são salvos em user_data/ajustes.json pelo backend; pagamentos de fatura, transferências próprias e aportes/resgates ficam fora de Gastos e Entradas para evitar dupla contagem patrimonial.":"Financial data remains local. Categories, reclassifications, automatic rules, fixed expense/income patterns, reimbursements, links, and salary-by-source rules are saved by the backend in user_data/ajustes.json; card bill payments, own-account transfers, and investment contributions/redemptions are excluded from Expenses and Income to avoid double-counting.","Sem saída média suficiente":"Not enough average outflow data","Geração de caixa":"Cash generation","Sem entrada média suficiente":"Not enough average inflow data","Dívida sem ativos líquidos identificados":"Debt without identified liquid assets","Uso de crédito":"Credit utilization","Sem limite comparável":"No comparable limit","Sem carteira comparável":"No comparable portfolio","Diversificação":"Diversification","Sem dados de conexão":"No connection data","Atualização dos dados":"Data freshness","Dados insuficientes":"Insufficient data","Não foi possível calcular uma leitura consolidada.":"A consolidated assessment could not be calculated.","Saúde forte":"Strong health","Liquidez, caixa e obrigações estão relativamente equilibrados dentro das métricas disponíveis.":"Liquidity, cash flow, and obligations are relatively balanced within the available metrics.","Saúde razoável":"Fair health","A estrutura geral é funcional, mas há pontos que merecem acompanhamento.":"The overall structure is functional, but some areas deserve monitoring.","Atenção":"Attention","Existem pressões relevantes de caixa, dívida, crédito ou qualidade dos dados.":"There are meaningful pressures in cash flow, debt, credit, or data quality.","Pressão elevada":"High pressure","Os dados disponíveis indicam fragilidade em mais de uma dimensão financeira.":"Available data indicates weakness in more than one financial dimension.","Score indisponível":"Score unavailable","Sem dados":"No data","Saídas de caixa":"Cash outflows","Líquido":"Net","Obrigações financeiras":"Financial obligations","Não há saldo de cartão ou empréstimo identificado nessa moeda nos KPIs atuais.":"No card balance or loan is identified in this currency in the current KPIs.","Sem categoria":"Uncategorized","Maior categoria de consumo":"Largest consumption category","Qualidade dos dados":"Data quality","As conexões carregadas não exibem erro e não há atraso superior a 7 dias nas datas disponíveis.":"Loaded connections show no errors and no available timestamp is more than 7 days stale.","Faturas próximas":"Upcoming bills","Cartões":"Cards","Empréstimos":"Loans","Não identificado":"Not identified","Cartão":"Card","Conta bancária":"Bank account","Empréstimo":"Loan","Outra conta":"Other account","Não identificada":"Not identified","Conta não identificada":"Unidentified account","Não":"No","Sim":"Yes","Cartão de crédito":"Credit card","Transferência":"Transfer","Débito / compra em conta":"Debit / account purchase","Backend indisponível — usando armazenamento local temporariamente":"Backend unavailable — temporarily using browser storage","Erro ao salvar ajustes":"Error saving settings","Alteração pendente de salvamento…":"Change pending save…","Ativar regra":"Enable rule","Desativar regra":"Disable rule","Informe o valor que a regra deve procurar.":"Enter the value the rule should match.","Informe a categoria que será aplicada.":"Enter the category to apply.","Use um valor de regra com até 120 caracteres.":"Use a rule value of up to 120 characters.","Use uma categoria com até 80 caracteres.":"Use a category of up to 80 characters.","Essa regra já existe.":"This rule already exists.","Regra automática criada e salva.":"Automatic rule created and saved.","Regra ativada.":"Rule enabled.","Regra desativada.":"Rule disabled.","Regra excluída.":"Rule deleted.","Sem resarcimento":"No reimbursement","100% resarcido — não fiz parte":"100% reimbursed — I was not part of the expense","Compartilhado — fiz parte":"Shared — I was part of the expense","Aplicado pelo padrão do gasto fixo":"Applied by fixed-expense pattern","Ajuste desta transação":"Adjustment for this transaction","Somente para gastos":"Expenses only","Pessoas":"People","Gasto fixo":"Fixed expense","valor não disponível":"amount unavailable","sem resarcimento":"no reimbursement","Padrão":"Pattern","padrão por similaridade":"similarity pattern","gasto fixo":"fixed expense","Entrada fixa":"Fixed income","entrada fixa":"fixed income","Digite um nome para a nova categoria.":"Enter a name for the new category.","Formato de reclassificações inválido":"Invalid reclassification format","Backup de categorias, reclassificações, resarcimentos, vínculos e regras automáticas restaurado.":"Backup of categories, reclassifications, reimbursements, links, and automatic rules restored.","Não foi possível restaurar esse backup JSON.":"Could not restore this JSON backup.","Todos da janela":"All in window","Todas as contas":"All accounts","Todos os meios":"All methods","Todas as categorias":"All categories","Todos os merchants":"All merchants","Automático por similaridade":"Automatic by similarity","Padrão: Variável":"Default: Variable","Entrada normal":"Normal income","Gasto não encontrado":"Expense not found","Gasto":"Expense","Selecionar gasto…":"Select expense…","Sem vínculo específico":"No specific link","Remover vínculo":"Remove link","Todas as origens":"All sources","Pagador não informado pela transação":"Payer not provided by the transaction","Excluído dos gráficos de entradas.":"Excluded from income charts.","Considerado normalmente nos gráficos.":"Included normally in charts.","Entrada marcada como resarcimento e excluída dos gráficos.":"Income marked as reimbursement and excluded from charts.","Entrada marcada como Fixa.":"Income marked as Fixed.","Entrada atualizada e salva.":"Income updated and saved.","Sem entradas na janela":"No income in the window","Sem entradas identificadas na janela.":"No income identified in the window.","Entrada":"Income","Transferência própria":"Own-account transfer","Aporte / transferência de investimento":"Investment contribution / transfer","Estorno/crédito cartão":"Refund/card credit","Automático":"Automatic","automático por similaridade":"automatic by similarity","padrão":"default","Somente para gastos e entradas":"Expenses and income only","Classificação atualizada e salva.":"Classification updated and saved.","Não há ajustes salvos.":"There are no saved adjustments.","Remover todas as reclassificações locais? As categorias personalizadas serão mantidas.":"Remove all local reclassifications? Custom categories will be kept.","Reclassificações removidas; categorias personalizadas mantidas.":"Reclassifications removed; custom categories kept.","Estornos/créditos":"Refunds/credits","Maior categoria de gasto":"Largest expense category","Principal meio de gasto":"Main spending method","Movimentações patrimoniais separadas":"Separated asset movements","Cobertura: sem fluxo":"Coverage: no cash flow","Sincronização: —":"Sync: —","Dados carregados.":"Data loaded.","Dados financeiros e ajustes carregados localmente.":"Financial data and settings loaded locally.","Nenhum CSV encontrado na pasta selecionada.":"No CSV files found in the selected folder.","Tentando carregar ./data/dataset_catalog.csv…":"Trying to load ./data/dataset_catalog.csv…","dataset_catalog.csv não encontrado":"dataset_catalog.csv not found","Nenhum CSV foi lido":"No CSV file was read","Carregamento automático indisponível. Se abriu o HTML como arquivo, selecione a pasta data/.":"Automatic loading unavailable. If you opened the HTML as a file, select the data/ folder.","Use “Selecionar pasta data/” ou sirva o projeto via localhost.":"Use “Select data/ folder” or serve the project via localhost.","Classificação restaurada para automático.":"Classification restored to automatic.","Excluir regra":"Delete rule","Excluir padrão automático":"Delete automatic pattern","Remover categoria personalizada":"Remove custom category","Ver dados":"View data","Salvar":"Save","Resetar":"Reset","Anterior":"Previous","Próxima":"Next","Sem limite":"No limit","Descrição, merchant…":"Description, merchant…","Descrição, origem, pagador, categoria…":"Description, source, payer, category…","Ex.: IFOOD, UBER, SPOTIFY…":"e.g. IFOOD, UBER, SPOTIFY…","Ex.: Alimentação":"e.g. Food","Nenhuma regra automática criada. Crie uma regra acima para categorizar novas transações automaticamente.":"No automatic rule created. Create a rule above to categorize new transactions automatically.","Nenhum padrão aprendido ainda. Marque um gasto recorrente como Fixo para criar o primeiro padrão.":"No learned pattern yet. Mark a recurring expense as Fixed to create the first pattern.","Nenhum padrão aprendido ainda. Marque uma entrada recorrente como Fixa para criar o primeiro padrão.":"No learned pattern yet. Mark recurring income as Fixed to create the first pattern.","Nenhuma regra de salário por origem criada ainda.":"No salary-by-source rule created yet.","Sem dados para esta seleção.":"No data for this selection.","Sem gastos mensais para esta seleção.":"No monthly expenses for this selection.","Sem gastos para esta seleção.":"No expenses for this selection.","Nenhum gasto encontrado para os filtros atuais.":"No expenses found for the current filters.","Sem gastos mensais para os filtros atuais.":"No monthly expenses for the current filters.","Sem gastos na janela":"No expenses in the window","Nenhuma conta ou posição encontrada nesta moeda.":"No account or position found in this currency.","Sem entradas para esta seleção.":"No income for this selection.","Nenhuma entrada encontrada para os filtros atuais.":"No income found for the current filters.","Nenhuma transação encontrada.":"No transaction found.","Nenhum cartão encontrado nesta moeda.":"No card found in this currency.","Sem contas para esta moeda.":"No accounts for this currency.","Nenhum cartão nessa moeda.":"No card in this currency.","Sem posições financeiras nessa moeda.":"No financial positions in this currency.","Sem connection_health.csv.":"No connection_health.csv.","Nenhum erro ou aviso registrado.":"No errors or warnings recorded.","Sem fluxo bancário para a moeda/janela selecionada.":"No bank cash flow for the selected currency/window.","Sem atividade de cartões para a seleção.":"No card activity for this selection.","Sem posições nessa moeda.":"No positions in this currency.","Sem sinais suficientes.":"Not enough signals."};
+  const i18nOriginalText = new WeakMap();
+  const i18nOriginalAttrs = new WeakMap();
+  let i18nApplying = false;
+
+  function uiLocale() {
+    return state.uiLanguage === 'en-US' ? 'en-US' : 'pt-BR';
+  }
+
+  function translatePtToEn(value) {
+    const raw = String(value ?? '');
+    const leading = raw.match(/^\s*/)?.[0] || '';
+    const trailing = raw.match(/\s*$/)?.[0] || '';
+    const text = raw.trim();
+    if (!text) return raw;
+
+    if (Object.prototype.hasOwnProperty.call(UI_EN_EXACT, text)) {
+      return leading + UI_EN_EXACT[text] + trailing;
+    }
+
+    let m;
+
+    if ((m=text.match(/^(\d+) meses$/))) return `${leading}${m[1]} months${trailing}`;
+    if ((m=text.match(/^(\d+) transações consideradas$/))) return `${leading}${m[1]} transactions considered${trailing}`;
+    if ((m=text.match(/^(\d+) gastos visíveis$/))) return `${leading}${m[1]} visible expenses${trailing}`;
+    if ((m=text.match(/^(\d+) entradas visíveis$/))) return `${leading}${m[1]} visible income transactions${trailing}`;
+    if ((m=text.match(/^(\d+) gastos$/))) return `${leading}${m[1]} expenses${trailing}`;
+    if ((m=text.match(/^(\d+) entradas$/))) return `${leading}${m[1]} income transactions${trailing}`;
+    if ((m=text.match(/^Mostrando (.+) de (.+) · página (\d+) de (\d+)\.$/))) return `${leading}Showing ${m[1]} of ${m[2]} · page ${m[3]} of ${m[4]}.${trailing}`;
+    if ((m=text.match(/^(\d+) transação\(ões\) encontradas · página (\d+) de (\d+)\.$/))) return `${leading}${m[1]} transaction(s) found · page ${m[2]} of ${m[3]}.${trailing}`;
+    if ((m=text.match(/^Cobertura: (.+)$/))) return `${leading}Coverage: ${m[1]}${trailing}`;
+    if ((m=text.match(/^Última sincronização: (.+)$/))) return `${leading}Last sync: ${m[1]}${trailing}`;
+    if ((m=text.match(/^Atual: (.+)$/))) return `${leading}Current: ${translatePtToEn(m[1]).trim()}${trailing}`;
+    if ((m=text.match(/^Resarcimentos previstos: (.+)$/))) return `${leading}Expected reimbursements: ${m[1].replace(' transação(ões) · ',' transaction(s) · ').replace(' a receber',' receivable')}${trailing}`;
+    if ((m=text.match(/^Resarcimentos excluídos: (.+)$/))) return `${leading}Excluded reimbursements: ${m[1]}${trailing}`;
+    if ((m=text.match(/^Movimentações patrimoniais \/ categorias ignoradas: (.+)$/))) return `${leading}Asset movements / ignored categories: ${m[1].replace(' transação(ões) · ',' transaction(s) · ').replace(' em saídas',' in outflows')}${trailing}`;
+    if ((m=text.match(/^(\d+) transação\(ões\) semelhante\(s\) · (.+)$/))) return `${leading}${m[1]} similar transaction(s) · ${m[2]}${trailing}`;
+    if ((m=text.match(/^(\d+) entrada\(s\) semelhante\(s\) · (.+)$/))) return `${leading}${m[1]} similar income transaction(s) · ${m[2]}${trailing}`;
+    if ((m=text.match(/^(\d+) entrada\(s\) da mesma origem reconhecida\(s\)$/))) return `${leading}${m[1]} income transaction(s) from the same source recognized${trailing}`;
+    if ((m=text.match(/^Prioridade (\d+) · (\d+) transação\(ões\) compatíveis na moeda atual( · regra desativada)?$/))) return `${leading}Priority ${m[1]} · ${m[2]} matching transaction(s) in the current currency${m[3]?' · rule disabled':''}${trailing}`;
+    if ((m=text.match(/^Lendo (\d+) arquivo\(s\)…$/))) return `${leading}Reading ${m[1]} file(s)…${trailing}`;
+    if ((m=text.match(/^(\d+) datasets locais(?: · gerados em (.+))?$/))) return `${leading}${m[1]} local datasets${m[2] ? ' · generated on '+m[2] : ''}${trailing}`;
+    if ((m=text.match(/^Salvo em user_data\/ajustes\.json às (.+)$/))) return `${leading}Saved to user_data/ajustes.json at ${m[1]}${trailing}`;
+    if ((m=text.match(/^Salvo no navegador às (.+)$/))) return `${leading}Saved in the browser at ${m[1]}${trailing}`;
+    if ((m=text.match(/^Categoria “(.+)” criada\.$/))) return `${leading}Category “${m[1]}” created.${trailing}`;
+    if ((m=text.match(/^Categoria “(.+)” removida da lista personalizada\.$/))) return `${leading}Category “${m[1]}” removed from the custom list.${trailing}`;
+    if ((m=text.match(/^Clique para (exibir|ocultar) (.+)$/))) return `${leading}Click to ${m[1]==='exibir'?'show':'hide'} ${translatePtToEn(m[2]).trim()}${trailing}`;
+    if ((m=text.match(/^Gastos mensais em reais agrupados por (.+)$/))) return `${leading}Monthly expenses in reais grouped by ${translatePtToEn(m[1]).trim()}${trailing}`;
+    if ((m=text.match(/^Composição percentual mensal por (.+)$/))) return `${leading}Monthly percentage composition by ${translatePtToEn(m[1]).trim()}${trailing}`;
+    if ((m=text.match(/^Entradas mensais em reais agrupadas por (.+)$/))) return `${leading}Monthly income in reais grouped by ${translatePtToEn(m[1]).trim()}${trailing}`;
+    if ((m=text.match(/^Composição percentual mensal das entradas por (.+)$/))) return `${leading}Monthly income percentage composition by ${translatePtToEn(m[1]).trim()}${trailing}`;
+    if ((m=text.match(/^Posição (.+) · gastos (.+) · entradas (.+)$/))) return `${leading}Position ${m[1]} · expenses ${m[2]} · income ${m[3]}${trailing}`;
+    if ((m=text.match(/^patrimônio (.+) · gastos (.+) · entradas (.+)$/))) return `${leading}net worth ${m[1]} · expenses ${m[2]} · income ${m[3]}${trailing}`;
+    if ((m=text.match(/^Gasto\/em aberto (.+) · limite (.+)$/))) return `${leading}Spent/open ${m[1]} · limit ${m[2]}${trailing}`;
+    if ((m=text.match(/^Bruto: (.+)$/))) return `${leading}Gross: ${m[1]}${trailing}`;
+    if ((m=text.match(/^A receber: (.+)$/))) return `${leading}Receivable: ${m[1]}${trailing}`;
+    if ((m=text.match(/^Original: (.+)$/))) return `${leading}Original: ${m[1]}${trailing}`;
+
+    // Tooltips and compact dynamic phrases.
+    let dynamic = text;
+    dynamic = dynamic.replace(/% do mês/g, '% of month');
+    dynamic = dynamic.replace(/Gasto total:/g, 'Total expense:');
+    dynamic = dynamic.replace(/Maior categoria:/g, 'Top category:');
+    dynamic = dynamic.replace(/Maior merchant:/g, 'Top merchant:');
+    if (dynamic !== text) return leading + dynamic + trailing;
+
+    return raw;
+  }
+
+  function shouldSkipI18nNode(node) {
+    const parent = node?.parentElement;
+    return !parent || Boolean(parent.closest('script,style,[data-i18n-skip]'));
+  }
+
+  function translateTextNode(node) {
+    if (!node || shouldSkipI18nNode(node)) return;
+    if (state.uiLanguage === 'en-US') {
+      if (!i18nOriginalText.has(node)) i18nOriginalText.set(node, node.nodeValue);
+      const original = i18nOriginalText.get(node);
+      const translated = translatePtToEn(original);
+      if (node.nodeValue !== translated) node.nodeValue = translated;
+    } else if (i18nOriginalText.has(node)) {
+      const original = i18nOriginalText.get(node);
+      if (node.nodeValue !== original) node.nodeValue = original;
+    }
+  }
+
+  function translateElementAttributes(el) {
+    if (!(el instanceof Element) || el.closest('[data-i18n-skip]')) return;
+    const attrs = ['title','placeholder','aria-label','data-tooltip'];
+    let originals = i18nOriginalAttrs.get(el);
+    if (!originals) {
+      originals = new Map();
+      i18nOriginalAttrs.set(el, originals);
+    }
+
+    attrs.forEach(attr => {
+      if (!el.hasAttribute(attr)) return;
+      if (state.uiLanguage === 'en-US') {
+        if (!originals.has(attr)) originals.set(attr, el.getAttribute(attr));
+        const original = originals.get(attr);
+        const translated = translatePtToEn(original);
+        if (el.getAttribute(attr) !== translated) el.setAttribute(attr, translated);
+      } else if (originals.has(attr)) {
+        const original = originals.get(attr);
+        if (el.getAttribute(attr) !== original) el.setAttribute(attr, original);
+      }
+    });
+  }
+
+  function applyUiLanguage(root=document) {
+    if (i18nApplying) return;
+    i18nApplying = true;
+    try {
+      document.documentElement.lang = state.uiLanguage;
+
+      const rootNode = root instanceof Node ? root : document;
+      if (rootNode.nodeType === Node.TEXT_NODE) {
+        translateTextNode(rootNode);
+      } else {
+        if (rootNode instanceof Element) translateElementAttributes(rootNode);
+        const walker = document.createTreeWalker(rootNode, NodeFilter.SHOW_TEXT);
+        let node;
+        while ((node = walker.nextNode())) translateTextNode(node);
+
+        const elements = rootNode.querySelectorAll ? rootNode.querySelectorAll('*') : [];
+        elements.forEach(translateElementAttributes);
+      }
+
+      updateLanguageToggle();
+    } finally {
+      i18nApplying = false;
+    }
+  }
+
+  function updateLanguageToggle() {
+    document.querySelectorAll('[data-ui-language]').forEach(button => {
+      const active = button.dataset.uiLanguage === state.uiLanguage;
+      button.classList.toggle('active', active);
+      button.setAttribute('aria-pressed', String(active));
+    });
+  }
+
+  function setUiLanguage(language, {persist=true}={}) {
+    if (!['pt-BR','en-US'].includes(language)) return;
+    state.uiLanguage = language;
+    try { localStorage.setItem(state.uiLanguageStorageKey, language); } catch {}
+
+    if (!$('dashboard')?.classList.contains('hidden') && state.tables.size) {
+      renderAll();
+    }
+    applyUiLanguage(document);
+
+    if (persist && state.settingsLoaded) {
+      queuePersistentSettingsSave();
+    }
+  }
+
+  function uiText(value) {
+    return state.uiLanguage === 'en-US' ? translatePtToEn(value) : String(value ?? '');
+  }
 
   function blockSlug(value) {
     return String(value || '')
@@ -359,8 +537,12 @@
   }
 
   function toast(msg) {
-    const el = $('toast'); el.textContent = msg; el.classList.add('show');
+    const el = $('toast'); el.textContent = uiText(msg); el.classList.add('show');
     clearTimeout(toast._t); toast._t = setTimeout(() => el.classList.remove('show'), 3200);
+  }
+
+  function confirmUi(message) {
+    return window.confirm(uiText(message));
   }
 
   function parseCSV(text) {
@@ -419,12 +601,12 @@
   function money(value, currency=state.currency) {
     const n = num(value);
     if (n == null) return '—';
-    try { return new Intl.NumberFormat('pt-BR', {style:'currency', currency: currency === 'UNKNOWN' ? 'BRL' : currency, maximumFractionDigits: 2}).format(n); }
-    catch { return `${currency || ''} ${n.toLocaleString('pt-BR', {maximumFractionDigits:2})}`; }
+    try { return new Intl.NumberFormat(uiLocale(), {style:'currency', currency: currency === 'UNKNOWN' ? 'BRL' : currency, maximumFractionDigits: 2}).format(n); }
+    catch { return `${currency || ''} ${n.toLocaleString(uiLocale(), {maximumFractionDigits:2})}`; }
   }
-  function pct(value, digits=1) { const n=num(value); return n==null ? '—' : `${n.toLocaleString('pt-BR',{maximumFractionDigits:digits,minimumFractionDigits:digits})}%`; }
-  function integer(value) { const n=num(value); return n==null ? '—' : Math.round(n).toLocaleString('pt-BR'); }
-  function shortDate(v) { if (!v) return '—'; const d = new Date(v); return Number.isNaN(d.getTime()) ? String(v).slice(0,10) : d.toLocaleDateString('pt-BR'); }
+  function pct(value, digits=1) { const n=num(value); return n==null ? '—' : `${n.toLocaleString(uiLocale(),{maximumFractionDigits:digits,minimumFractionDigits:digits})}%`; }
+  function integer(value) { const n=num(value); return n==null ? '—' : Math.round(n).toLocaleString(uiLocale()); }
+  function shortDate(v) { if (!v) return '—'; const d = new Date(v); return Number.isNaN(d.getTime()) ? String(v).slice(0,10) : d.toLocaleDateString(uiLocale()); }
   function daysSince(v) { if(!v) return null; const d = new Date(v); if(Number.isNaN(d.getTime())) return null; return (Date.now()-d.getTime())/86400000; }
 
   function aggregateCashflow() {
@@ -549,7 +731,7 @@
     bindLegend(chartId,()=>renderCashflow(m));
   }
 
-  function compact(v) { try{return new Intl.NumberFormat('pt-BR',{notation:'compact',maximumFractionDigits:1}).format(v)}catch{return Math.round(v).toString()} }
+  function compact(v) { try{return new Intl.NumberFormat(uiLocale(),{notation:'compact',maximumFractionDigits:1}).format(v)}catch{return Math.round(v).toString()} }
 
   function hiddenSeries(chartId) {
     if(!state.chartLegendHidden.has(chartId)) state.chartLegendHidden.set(chartId,new Set());
@@ -964,7 +1146,7 @@
   function deleteIncomeSourceCategoryRule(ruleId) {
     const rule = state.incomeSourceCategoryRules.find(item => item.id === ruleId);
     if (!rule) return;
-    if (!confirm(`Excluir a regra de salário para “${rule.sourceLabel || rule.sourceSignature}”?`)) return;
+    if (!confirmUi(`Excluir a regra de salário para “${rule.sourceLabel || rule.sourceSignature}”?`)) return;
 
     state.incomeSourceCategoryRules = state.incomeSourceCategoryRules.filter(item => item.id !== ruleId);
     queuePersistentSettingsSave();
@@ -1080,20 +1262,28 @@
     state.fixedExpenseRules = sanitizeFixedExpenseRules(settings?.fixedExpenseRules);
     state.fixedIncomeRules = sanitizeFixedIncomeRules(settings?.fixedIncomeRules);
     state.incomeSourceCategoryRules = sanitizeIncomeSourceCategoryRules(settings?.incomeSourceCategoryRules);
+
+    let localLanguage = null;
+    try { localLanguage = localStorage.getItem(state.uiLanguageStorageKey); } catch {}
+    const serverLanguage = ['pt-BR','en-US'].includes(settings?.uiLanguage) ? settings.uiLanguage : 'pt-BR';
+    state.uiLanguage = ['pt-BR','en-US'].includes(localLanguage) ? localLanguage : serverLanguage;
+    try { localStorage.setItem(state.uiLanguageStorageKey, state.uiLanguage); } catch {}
+    applyUiLanguage(document);
   }
 
   function currentSettingsPayload() {
     return {
-      version: 6,
+      version: 7,
       customCategories: [...state.customCategories]
         .map(v => String(v || '').trim())
         .filter(Boolean)
-        .sort((a, b) => a.localeCompare(b, 'pt-BR')),
+        .sort((a, b) => a.localeCompare(b, uiLocale())),
       transactionOverrides: Object.fromEntries(state.transactionOverrides),
       categoryRules: sanitizeCategoryRules(state.categoryRules),
       fixedExpenseRules: sanitizeFixedExpenseRules(state.fixedExpenseRules),
       fixedIncomeRules: sanitizeFixedIncomeRules(state.fixedIncomeRules),
       incomeSourceCategoryRules: sanitizeIncomeSourceCategoryRules(state.incomeSourceCategoryRules),
+      uiLanguage: state.uiLanguage,
     };
   }
 
@@ -1164,6 +1354,9 @@
       updatePersistenceStatus(
         'Backend indisponível — usando armazenamento local temporariamente'
       );
+    } finally {
+      state.settingsLoaded = true;
+      applyUiLanguage(document);
     }
   }
 
@@ -1179,10 +1372,10 @@
 
     if (state.persistenceMode === 'backend') {
       el.textContent =
-        `Salvo em user_data/ajustes.json às ${state.persistedAt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}`;
+        `Salvo em user_data/ajustes.json às ${state.persistedAt.toLocaleTimeString(uiLocale(), {hour:'2-digit', minute:'2-digit'})}`;
     } else {
       el.textContent =
-        `Salvo no navegador às ${state.persistedAt.toLocaleTimeString('pt-BR', {hour:'2-digit', minute:'2-digit'})}`;
+        `Salvo no navegador às ${state.persistedAt.toLocaleTimeString(uiLocale(), {hour:'2-digit', minute:'2-digit'})}`;
     }
   }
 
@@ -1213,6 +1406,10 @@
       localStorage.setItem(
         state.incomeSourceCategoryRulesStorageKey,
         JSON.stringify(payload.incomeSourceCategoryRules)
+      );
+      localStorage.setItem(
+        state.uiLanguageStorageKey,
+        payload.uiLanguage
       );
       if (!silent) updatePersistenceStatus();
       return;
@@ -1489,7 +1686,7 @@
   function deleteCategoryRule(ruleId) {
     const rule = state.categoryRules.find(item => item.id === ruleId);
     if (!rule) return;
-    if (!confirm(`Excluir a regra “${rule.value} → ${rule.category}”?`)) return;
+    if (!confirmUi(`Excluir a regra “${rule.value} → ${rule.category}”?`)) return;
 
     state.categoryRules = state.categoryRules.filter(item => item.id !== ruleId);
     persistCategoryRules();
@@ -1897,7 +2094,7 @@
     const rule = state.fixedExpenseRules.find(item => item.id === ruleId);
     if (!rule) return;
 
-    if (!confirm(`Excluir o padrão automático de “${rule.sourceLabel || 'gasto fixo'}”?`)) {
+    if (!confirmUi(`Excluir o padrão automático de “${rule.sourceLabel || 'gasto fixo'}”?`)) {
       return;
     }
 
@@ -2111,7 +2308,7 @@
     const rule = state.fixedIncomeRules.find(item => item.id === ruleId);
     if (!rule) return;
 
-    if (!confirm(`Excluir o padrão automático de “${rule.sourceLabel || 'entrada fixa'}”?`)) return;
+    if (!confirmUi(`Excluir o padrão automático de “${rule.sourceLabel || 'entrada fixa'}”?`)) return;
 
     state.fixedIncomeRules = state.fixedIncomeRules.filter(item => item.id !== ruleId);
     persistFixedIncomeRules();
@@ -2143,7 +2340,7 @@
   }
 
   function exportFinanceConfig() {
-    const payload={version:6,exportedAt:new Date().toISOString(),app:'ControleFin',transactionOverrides:Object.fromEntries(state.transactionOverrides),customCategories:[...state.customCategories].sort((a,b)=>a.localeCompare(b,'pt-BR')),categoryRules:sanitizeCategoryRules(state.categoryRules),fixedExpenseRules:sanitizeFixedExpenseRules(state.fixedExpenseRules),fixedIncomeRules:sanitizeFixedIncomeRules(state.fixedIncomeRules),incomeSourceCategoryRules:sanitizeIncomeSourceCategoryRules(state.incomeSourceCategoryRules)};
+    const payload={version:7,exportedAt:new Date().toISOString(),app:'ControleFin',transactionOverrides:Object.fromEntries(state.transactionOverrides),customCategories:[...state.customCategories].sort((a,b)=>a.localeCompare(b,'pt-BR')),categoryRules:sanitizeCategoryRules(state.categoryRules),fixedExpenseRules:sanitizeFixedExpenseRules(state.fixedExpenseRules),fixedIncomeRules:sanitizeFixedIncomeRules(state.fixedIncomeRules),incomeSourceCategoryRules:sanitizeIncomeSourceCategoryRules(state.incomeSourceCategoryRules),uiLanguage:state.uiLanguage};
     const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}); const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='controlefin_ajustes_backup.json'; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href),1000);
   }
 
@@ -2164,6 +2361,10 @@
       state.fixedExpenseRules=fixedRules;
       state.fixedIncomeRules=fixedIncomeRules;
       state.incomeSourceCategoryRules=incomeSourceCategoryRules;
+      if(['pt-BR','en-US'].includes(payload.uiLanguage)) {
+        state.uiLanguage=payload.uiLanguage;
+        try { localStorage.setItem(state.uiLanguageStorageKey,state.uiLanguage); } catch {}
+      }
       queuePersistentSettingsSave(); renderCustomCategoryManager(); state.spendTxPage=0; state.txPage=0; renderAll(); toast('Backup de categorias, reclassificações, resarcimentos, vínculos e regras automáticas restaurado.');
     } catch(e) { console.error(e); toast('Não foi possível restaurar esse backup JSON.'); }
     finally { if($('importFinanceConfigFile')) $('importFinanceConfigFile').value=''; }
@@ -2493,7 +2694,7 @@
       visible.forEach(name=>{
         const v=data.get(m)?.get(name)||0; if(v<=0 || fullTotal<=0) return;
         const share=v/fullTotal*100, yy=yPct(accPct+share), h=(H-p.t-p.b)*(share/100), color=series.colorFor(name);
-        bars+=`<rect x="${cx-bw/2}" y="${yy}" width="${bw}" height="${h}" rx="3" fill="${color}" data-tooltip="${esc(`${name}\n${m.slice(5)}/${m.slice(0,4)} · ${money(v)} · ${share.toFixed(1).replace('.',',')}% do mês`)}"/>`;
+        bars+=`<rect x="${cx-bw/2}" y="${yy}" width="${bw}" height="${h}" rx="3" fill="${color}" data-tooltip="${esc(`${name}\n${m.slice(5)}/${m.slice(0,4)} · ${money(v)} · ${share.toLocaleString(uiLocale(),{minimumFractionDigits:1,maximumFractionDigits:1})}% do mês`)}"/>`;
         if(h>=28 && share>=9) bars+=`<text class="chart-value-label" x="${cx}" y="${yy+h/2+4}" text-anchor="middle">${share.toFixed(0)}%</text>`;
         accPct+=share;
       });
@@ -2946,7 +3147,7 @@
         const v=data.get(m)?.get(name)||0;
         if(v<=0 || fullTotal<=0) return;
         const share=v/fullTotal*100, yy=yPct(accPct+share), h=(H-p.t-p.b)*(share/100), color=series.colorFor(name);
-        bars+=`<rect x="${cx-bw/2}" y="${yy}" width="${bw}" height="${h}" rx="3" fill="${color}" data-tooltip="${esc(`${name}\n${m.slice(5)}/${m.slice(0,4)} · ${money(v)} · ${share.toFixed(1).replace('.',',')}% do mês`)}"/>`;
+        bars+=`<rect x="${cx-bw/2}" y="${yy}" width="${bw}" height="${h}" rx="3" fill="${color}" data-tooltip="${esc(`${name}\n${m.slice(5)}/${m.slice(0,4)} · ${money(v)} · ${share.toLocaleString(uiLocale(),{minimumFractionDigits:1,maximumFractionDigits:1})}% do mês`)}"/>`;
         if(h>=28 && share>=9) bars+=`<text class="chart-value-label" x="${cx}" y="${yy+h/2+4}" text-anchor="middle">${share.toFixed(0)}%</text>`;
         accPct+=share;
       });
@@ -3267,7 +3468,7 @@
 
   function exportOverrides() { exportFinanceConfig(); }
 
-  function clearOverrides() { if(!state.transactionOverrides.size) return toast('Não há ajustes salvos.'); if(confirm('Remover todas as reclassificações locais? As categorias personalizadas serão mantidas.')) { state.transactionOverrides.clear(); persistOverrides(); renderAll(); toast('Reclassificações removidas; categorias personalizadas mantidas.'); } }
+  function clearOverrides() { if(!state.transactionOverrides.size) return toast('Não há ajustes salvos.'); if(confirmUi('Remover todas as reclassificações locais? As categorias personalizadas serão mantidas.')) { state.transactionOverrides.clear(); persistOverrides(); renderAll(); toast('Reclassificações removidas; categorias personalizadas mantidas.'); } }
 
   // Redefinições das visões que precisam respeitar reclassificação e contas próprias.
   function aggregateCashflow() {
@@ -3323,6 +3524,7 @@
     renderIncomeSourceCategoryRules();
     refreshAnalysisFilters();
     const m=financialMetrics(); renderKPIs(m); renderScore(m); renderCashflow(m); renderInsights(m); renderAccountsSummary(); renderSpending(); renderCreditTable(); renderIncome(); renderTransactionsEditor(); renderInvestments(m); renderAccountVisualCards(); renderMeta();
+    queueMicrotask(()=>applyUiLanguage(document));
   }
 
   function setupCurrencies() {
@@ -3377,6 +3579,7 @@
 
 
   document.querySelectorAll('.nav-tab').forEach(btn=>btn.addEventListener('click',()=>{document.querySelectorAll('.nav-tab').forEach(x=>x.classList.toggle('active',x===btn));document.querySelectorAll('.view-panel').forEach(x=>x.classList.toggle('active',x.id===btn.dataset.view));window.scrollTo({top:0,behavior:'smooth'});}));
+  document.querySelectorAll('[data-ui-language]').forEach(button=>button.addEventListener('click',()=>setUiLanguage(button.dataset.uiLanguage)));
   $('folderPicker').addEventListener('change',e=>loadFolderFiles(e.target.files));
   $('autoLoadBtn').addEventListener('click',autoLoad);
   $('currencySelect').addEventListener('change',e=>{state.currency=e.target.value;state.txPage=0;state.spendTxPage=0;state.incomeTxPage=0;renderAll()});
@@ -3459,6 +3662,31 @@
   const blockIdObserver=new MutationObserver(()=>ensureBlockIds());
   blockIdObserver.observe(document.body,{childList:true,subtree:true});
   installVizTooltip();
+
+  const languageObserver=new MutationObserver(mutations=>{
+    if(i18nApplying || state.uiLanguage!=='en-US') return;
+    mutations.forEach(mutation=>{
+      if(mutation.type==='characterData') {
+        translateTextNode(mutation.target);
+      } else if(mutation.type==='attributes') {
+        translateElementAttributes(mutation.target);
+      } else {
+        mutation.addedNodes.forEach(node=>{
+          if(node.nodeType===Node.TEXT_NODE) translateTextNode(node);
+          else if(node.nodeType===Node.ELEMENT_NODE) applyUiLanguage(node);
+        });
+      }
+    });
+  });
+  languageObserver.observe(document.documentElement,{
+    childList:true,
+    subtree:true,
+    characterData:true,
+    attributes:true,
+    attributeFilter:['title','placeholder','aria-label','data-tooltip']
+  });
+
+  applyUiLanguage(document);
   if (location.protocol === 'http:' || location.protocol === 'https:') autoLoad();
 })();
 </script>
