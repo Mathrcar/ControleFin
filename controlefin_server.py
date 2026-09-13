@@ -72,7 +72,7 @@ def dashboard():
 
 def default_settings():
     return {
-        "version": 3,
+        "version": 4,
         "customCategories": [],
         "transactionOverrides": {},
         "categoryRules": [],
@@ -179,6 +179,18 @@ def normalize_settings(payload):
                 "method": str(raw_rule.get("method") or "").strip(),
                 "category": str(raw_rule.get("category") or "").strip(),
                 "amount": amount,
+                "reimbursementMode": (
+                    str(raw_rule.get("reimbursementMode") or "NONE").strip()
+                    if str(raw_rule.get("reimbursementMode") or "NONE").strip()
+                    in {"NONE", "FULL", "SHARED"}
+                    else "NONE"
+                ),
+                "splitPeople": max(
+                    2,
+                    int(raw_rule.get("splitPeople") or 2)
+                    if str(raw_rule.get("splitPeople") or "2").lstrip("-").isdigit()
+                    else 2,
+                ),
                 "sourceLabel": str(raw_rule.get("sourceLabel") or "").strip(),
                 "sourceTransactionKey": str(raw_rule.get("sourceTransactionKey") or "").strip(),
                 "createdAt": str(raw_rule.get("createdAt") or "").strip(),
@@ -186,7 +198,7 @@ def normalize_settings(payload):
         )
 
     return {
-        "version": 3,
+        "version": 4,
         "customCategories": [
             str(category).strip()
             for category in custom_categories
@@ -210,7 +222,7 @@ def load_settings():
         )
         settings = normalize_settings(raw_settings)
 
-        # Migra silenciosamente arquivos antigos (version 1) para version 2.
+        # Migra silenciosamente arquivos antigos para o schema atual.
         if settings != raw_settings:
             save_settings(settings)
 
