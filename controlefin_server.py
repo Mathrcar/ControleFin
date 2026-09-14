@@ -992,7 +992,7 @@ if __name__ == "__main__":
             env_file=ENV_FILE,
         )
         print(
-            "Dados atualizados com sucesso em CSV + SQLite.",
+            "Sincronização concluída: SQLite validado e publicado atomicamente.",
             flush=True,
         )
     except Exception as exc:
@@ -1005,7 +1005,7 @@ if __name__ == "__main__":
         # Preserva o uso offline dos últimos dados válidos.
         if DB_FILE.exists():
             print(
-                "Usando o último banco SQLite local disponível.",
+                "Usando o último banco SQLite local válido; a sincronização com falha não o substituiu.",
                 file=sys.stderr,
                 flush=True,
             )

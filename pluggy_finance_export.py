@@ -34,11 +34,13 @@ import re
 import sys
 import time
 from collections import defaultdict
+from contextlib import closing
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterable, Optional
 from urllib.parse import urljoin, urlparse
+from uuid import uuid4
 from dotenv import load_dotenv
 
 import requests
@@ -1804,6 +1806,550 @@ SQLITE_METADATA_COLUMNS = {
     "_cf_raw_json",
 }
 
+SQLITE_ATOMIC_REQUIRED_TABLES = {
+    "accounts",
+    "transactions",
+    "dataset_catalog",
+    "manifest",
+}
+SQLITE_ATOMIC_BLOCKING_SEVERITIES = {
+    "ERROR",
+    "FATAL",
+}
+
+
+def sqlite_sidecar_paths(database_path: Path) -> list[Path]:
+    database_path = Path(database_path)
+    return [
+        Path(str(database_path) + "-wal"),
+        Path(str(database_path) + "-shm"),
+    ]
+
+
+def remove_sqlite_sidecars(database_path: Path) -> None:
+    for sidecar in sqlite_sidecar_paths(database_path):
+        try:
+            sidecar.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def remove_sqlite_database_files(database_path: Path) -> None:
+    database_path = Path(database_path)
+    try:
+        database_path.unlink()
+    except FileNotFoundError:
+        pass
+    remove_sqlite_sidecars(database_path)
+
+
+def checkpoint_sqlite_database(database_path: Path) -> None:
+    """
+    Garante que um banco WAL existente esteja autocontido no arquivo principal.
+
+    Isso não altera os dados lógicos; apenas move páginas já commitadas do WAL
+    para o arquivo .db antes de cloná-lo ou substituí-lo.
+    """
+    database_path = Path(database_path)
+    if not database_path.exists():
+        return
+
+    with closing(
+        sqlite3.connect(database_path, timeout=5)
+    ) as connection:
+        connection.execute("PRAGMA busy_timeout = 5000")
+        connection.execute("PRAGMA wal_checkpoint(FULL)")
+
+
+def clone_sqlite_database(
+    source_path: Path,
+    destination_path: Path,
+) -> None:
+    """
+    Cria um snapshot consistente do banco atual usando a API backup do SQLite.
+
+    A cópia é usada apenas como base do staging. O banco publicado nunca é
+    alterado durante a construção da nova sincronização.
+    """
+    source_path = Path(source_path)
+    destination_path = Path(destination_path)
+
+    remove_sqlite_database_files(
+        destination_path
+    )
+
+    if not source_path.exists():
+        return
+
+    checkpoint_sqlite_database(
+        source_path
+    )
+
+    with closing(
+        sqlite3.connect(
+            source_path,
+            timeout=5,
+        )
+    ) as source_connection:
+        source_connection.execute(
+            "PRAGMA busy_timeout = 5000"
+        )
+
+        with closing(
+            sqlite3.connect(
+                destination_path,
+                timeout=5,
+            )
+        ) as destination_connection:
+            source_connection.backup(
+                destination_connection
+            )
+            destination_connection.commit()
+
+
+def blocking_extraction_errors(
+    data: ExtractedData,
+) -> list[dict[str, Any]]:
+    return [
+        error
+        for error in data.errors
+        if str(
+            error.get("severity") or "ERROR"
+        ).upper()
+        in SQLITE_ATOMIC_BLOCKING_SEVERITIES
+    ]
+
+
+def validate_extraction_for_atomic_publish(
+    data: ExtractedData,
+) -> None:
+    """
+    Erros essenciais da coleta impedem substituir o último banco válido.
+
+    Warnings continuam registrados e podem ser publicados. ERROR/FATAL indica
+    que uma parte essencial da coleta (Item, Accounts, Transactions etc.) não
+    ficou completa.
+    """
+    blocking = blocking_extraction_errors(
+        data
+    )
+
+    if not blocking:
+        return
+
+    preview = "; ".join(
+        (
+            f"{error.get('scope') or 'unknown'}"
+            f"[{error.get('resourceId') or '-'}]: "
+            f"{error.get('message') or 'erro sem mensagem'}"
+        )
+        for error in blocking[:5]
+    )
+
+    more = (
+        f" (+{len(blocking) - 5} erro(s))"
+        if len(blocking) > 5
+        else ""
+    )
+
+    raise RuntimeError(
+        "Sincronização SQLite não publicada: "
+        f"{len(blocking)} erro(s) essencial(is) "
+        "foram registrados durante a coleta. "
+        f"{preview}{more}"
+    )
+
+
+def validate_sqlite_bundle(
+    database_path: Path,
+    *,
+    expected_sync_id: Optional[str] = None,
+) -> dict[str, Any]:
+    """
+    Valida estruturalmente um banco de staging antes da publicação atômica.
+
+    A validação confirma:
+    - PRAGMA quick_check;
+    - tabelas essenciais;
+    - sync mais recente SUCCESS;
+    - syncId do manifest;
+    - rowCount do dataset_catalog versus tabelas reais.
+    """
+    database_path = Path(database_path)
+
+    if not database_path.exists():
+        raise RuntimeError(
+            f"Banco SQLite de staging não existe: {database_path}"
+        )
+
+    uri = (
+        "file:"
+        + database_path.resolve().as_posix()
+        + "?mode=ro"
+    )
+
+    with closing(
+        sqlite3.connect(
+            uri,
+            uri=True,
+            timeout=5,
+        )
+    ) as connection:
+        connection.row_factory = sqlite3.Row
+        connection.execute(
+            "PRAGMA busy_timeout = 5000"
+        )
+
+        quick_check_rows = connection.execute(
+            "PRAGMA quick_check"
+        ).fetchall()
+
+        quick_check = [
+            str(row[0])
+            for row in quick_check_rows
+        ]
+
+        if quick_check != ["ok"]:
+            raise RuntimeError(
+                "PRAGMA quick_check falhou no staging: "
+                + ", ".join(quick_check)
+            )
+
+        tables = {
+            str(row["name"])
+            for row in connection.execute(
+                """
+                SELECT name
+                FROM sqlite_master
+                WHERE type = 'table'
+                """
+            ).fetchall()
+        }
+
+        missing = sorted(
+            SQLITE_ATOMIC_REQUIRED_TABLES
+            - tables
+        )
+
+        if missing:
+            raise RuntimeError(
+                "Staging SQLite sem tabela(s) "
+                "obrigatória(s): "
+                + ", ".join(missing)
+            )
+
+        sync_row = connection.execute(
+            """
+            SELECT
+                syncId,
+                startedAtUtc,
+                finishedAtUtc,
+                fullSnapshot,
+                status,
+                datasetCount,
+                rowCount,
+                errorCount,
+                schemaVersion
+            FROM "_cf_sync_runs"
+            ORDER BY startedAtUtc DESC
+            LIMIT 1
+            """
+        ).fetchone()
+
+        if not sync_row:
+            raise RuntimeError(
+                "Staging SQLite sem registro de sincronização."
+            )
+
+        sync = dict(sync_row)
+
+        if str(sync.get("status") or "") != "SUCCESS":
+            raise RuntimeError(
+                "A sincronização mais recente do staging "
+                f"não está SUCCESS: {sync.get('status')}"
+            )
+
+        actual_sync_id = str(
+            sync.get("syncId") or ""
+        )
+
+        if (
+            expected_sync_id
+            and actual_sync_id
+            != str(expected_sync_id)
+        ):
+            raise RuntimeError(
+                "syncId inesperado no staging: "
+                f"{actual_sync_id} != {expected_sync_id}"
+            )
+
+        manifest_rows = connection.execute(
+            """
+            SELECT "key", "value"
+            FROM "manifest"
+            """
+        ).fetchall()
+
+        manifest = {
+            str(row["key"]): row["value"]
+            for row in manifest_rows
+        }
+
+        manifest_sync_id = str(
+            manifest.get("syncId") or ""
+        )
+
+        if (
+            expected_sync_id
+            and manifest_sync_id
+            != str(expected_sync_id)
+        ):
+            raise RuntimeError(
+                "Manifest do staging aponta para "
+                f"syncId inesperado: {manifest_sync_id}"
+            )
+
+        catalog_rows = connection.execute(
+            """
+            SELECT "tableName", "rowCount"
+            FROM "dataset_catalog"
+            """
+        ).fetchall()
+
+        checked_tables = 0
+
+        for catalog_row in catalog_rows:
+            table_name = str(
+                catalog_row["tableName"]
+                or ""
+            ).strip()
+
+            if not table_name:
+                raise RuntimeError(
+                    "dataset_catalog contém tableName vazio."
+                )
+
+            table_name = sqlite_table_name(
+                table_name
+            )
+
+            if table_name not in tables:
+                raise RuntimeError(
+                    "dataset_catalog referencia tabela "
+                    f"inexistente: {table_name}"
+                )
+
+            expected_count = int(
+                catalog_row["rowCount"]
+                or 0
+            )
+
+            actual_count = int(
+                connection.execute(
+                    f"SELECT COUNT(*) FROM "
+                    f"{quote_sqlite_identifier(table_name)}"
+                ).fetchone()[0]
+            )
+
+            if actual_count != expected_count:
+                raise RuntimeError(
+                    f"rowCount divergente em {table_name}: "
+                    f"catálogo={expected_count}, "
+                    f"SQLite={actual_count}"
+                )
+
+            checked_tables += 1
+
+        return {
+            "ok": True,
+            "syncId": actual_sync_id,
+            "tableCount": len(tables),
+            "catalogTablesChecked": checked_tables,
+            "quickCheck": "ok",
+        }
+
+
+def fsync_file(path: Path) -> None:
+    """
+    Força os bytes já gravados do arquivo para o armazenamento.
+
+    No Windows, FlushFileBuffers pode falhar para handles abertos somente
+    para leitura. Por isso usamos um descritor gravável (r+b) sem alterar o
+    conteúdo do arquivo.
+    """
+    path = Path(path)
+
+    with path.open("r+b") as handle:
+        handle.flush()
+        os.fsync(handle.fileno())
+
+
+def fsync_directory(path: Path) -> None:
+    """
+    Em POSIX, força persistência da entrada de diretório após os.replace.
+    No Windows a abertura de diretório para fsync não é suportada da mesma
+    forma; os.replace continua sendo a operação atômica no mesmo volume.
+    """
+    if os.name == "nt":
+        return
+
+    descriptor = os.open(
+        str(path),
+        os.O_RDONLY,
+    )
+    try:
+        os.fsync(descriptor)
+    finally:
+        os.close(descriptor)
+
+
+def publish_sqlite_database_atomic(
+    staging_path: Path,
+    database_path: Path,
+) -> None:
+    """
+    Publica staging -> controlefin.db com troca atômica no mesmo diretório.
+    """
+    staging_path = Path(staging_path)
+    database_path = Path(database_path)
+
+    if staging_path.parent.resolve() != database_path.parent.resolve():
+        raise ValueError(
+            "Staging e banco final precisam estar no mesmo "
+            "diretório/volume para troca atômica."
+        )
+
+    if not staging_path.exists():
+        raise FileNotFoundError(
+            staging_path
+        )
+
+    fsync_file(
+        staging_path
+    )
+
+    # O banco anterior já foi checkpointado antes da clonagem.
+    # Sidecars antigos não devem acompanhar o novo arquivo principal.
+    remove_sqlite_sidecars(
+        database_path
+    )
+
+    os.replace(
+        staging_path,
+        database_path,
+    )
+
+    remove_sqlite_sidecars(
+        database_path
+    )
+    fsync_directory(
+        database_path.parent
+    )
+
+
+def export_sqlite_bundle_atomic(
+    data: ExtractedData,
+    output_dir: Path,
+    *,
+    generated_at: Optional[str] = None,
+    full_snapshot: bool = True,
+    sync_id: Optional[str] = None,
+    database_path: Optional[Path] = None,
+) -> Path:
+    """
+    Constrói, valida e publica o SQLite sem tocar no banco válido durante
+    a fase de escrita.
+
+    Fluxo:
+        banco atual -> snapshot staging
+        staging -> UPSERT/full snapshot
+        staging -> validações
+        staging -> os.replace(controlefin.db)
+
+    Qualquer exceção antes do os.replace preserva integralmente o banco atual.
+    """
+    output_dir = Path(output_dir)
+    output_dir.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    generated_at = (
+        generated_at
+        or utc_now_iso()
+    )
+
+    sync_id = (
+        sync_id
+        or (
+            f"sync_{generated_at}_"
+            f"{os.getpid()}_"
+            f"{uuid4().hex[:8]}"
+        )
+    )
+
+    database_path = Path(
+        database_path
+        or (
+            output_dir
+            / SQLITE_DATABASE_NAME
+        )
+    )
+
+    if database_path.parent.resolve() != output_dir.resolve():
+        raise ValueError(
+            "O banco SQLite publicado deve ficar "
+            "dentro do output_dir."
+        )
+
+    validate_extraction_for_atomic_publish(
+        data
+    )
+
+    staging_path = (
+        output_dir
+        / (
+            f".{database_path.name}."
+            f"{uuid4().hex}.staging"
+        )
+    )
+
+    remove_sqlite_database_files(
+        staging_path
+    )
+
+    try:
+        clone_sqlite_database(
+            database_path,
+            staging_path,
+        )
+
+        export_sqlite_bundle(
+            data,
+            output_dir,
+            generated_at=generated_at,
+            full_snapshot=full_snapshot,
+            sync_id=sync_id,
+            database_path=staging_path,
+        )
+
+        validate_sqlite_bundle(
+            staging_path,
+            expected_sync_id=sync_id,
+        )
+
+        publish_sqlite_database_atomic(
+            staging_path,
+            database_path,
+        )
+
+        return database_path
+    finally:
+        remove_sqlite_database_files(
+            staging_path
+        )
+
+
 SQLITE_COMPOSITE_KEYS: dict[str, tuple[str, ...]] = {
     "dashboard_kpis": ("currencyCode",),
     "positions_by_institution": ("institutionName", "positionType", "currencyCode"),
@@ -2107,6 +2653,7 @@ def export_sqlite_bundle(
     generated_at: Optional[str] = None,
     full_snapshot: bool = True,
     sync_id: Optional[str] = None,
+    database_path: Optional[Path] = None,
 ) -> Path:
     """
     Grava os mesmos datasets dos CSVs em SQLite.
@@ -2120,7 +2667,13 @@ def export_sqlite_bundle(
 
     generated_at = generated_at or utc_now_iso()
     sync_id = sync_id or f"sync_{generated_at}_{os.getpid()}"
-    database_path = output_dir / SQLITE_DATABASE_NAME
+    database_path = Path(
+        database_path
+        or (
+            output_dir
+            / SQLITE_DATABASE_NAME
+        )
+    )
 
     known_tables = list(DATASET_DESCRIPTIONS.keys())
     extra_tables = [
@@ -2133,7 +2686,9 @@ def export_sqlite_bundle(
     catalog_rows: list[dict[str, Any]] = []
     total_rows = 0
 
-    with sqlite_connect(database_path) as connection:
+    with closing(
+        sqlite_connect(database_path)
+    ) as connection:
         connection.execute(
             """
             CREATE TABLE IF NOT EXISTS "_cf_sync_runs" (
@@ -2260,6 +2815,11 @@ def export_sqlite_bundle(
             ),
         )
 
+        connection.commit()
+        connection.execute(
+            "PRAGMA wal_checkpoint(TRUNCATE)"
+        )
+
     return database_path
 
 
@@ -2345,12 +2905,13 @@ def migrate_csv_bundle_to_sqlite(
         except Exception:
             pass
 
-    return export_sqlite_bundle(
+    return export_sqlite_bundle_atomic(
         data,
         output_dir,
         generated_at=generated_at,
         full_snapshot=True,
         sync_id=f"csv_migration_{utc_now_iso()}",
+        database_path=migrated_path,
     )
 
 
@@ -2433,9 +2994,9 @@ def run_export(
 
     O backend informa explicitamente a pasta permanente `data` do ControleFin.
     Ela fica fora de `dist`, para que recompilar o executável não apague os dados.
-    Os CSVs continuam sendo sobrescritos para compatibilidade e backup.
-    Em paralelo, `controlefin.db` é atualizado por UPSERT e passa a ser a
-    fonte primária do dashboard quando executado pelo backend local.
+    O `controlefin.db` é construído em staging, validado e publicado
+    atomicamente, preservando o último banco válido em qualquer falha.
+    Os CSVs continuam sendo sobrescritos como compatibilidade/fallback.
     """
     output_dir = Path(output_dir)
     env_file = Path(env_file)
@@ -2496,24 +3057,38 @@ def run_export(
     generated_at = utc_now_iso()
     full_snapshot = not date_from and not date_to
 
-    # CSV continua disponível para fallback, inspeção e exportação manual.
-    export_csv_bundle(
-        data,
-        output_dir,
-        generated_at=generated_at,
-    )
-
-    # SQLite é a fonte primária do dashboard no modo servidor.
-    database_path = export_sqlite_bundle(
+    # SQLite é a fonte primária do dashboard. A nova sincronização é
+    # construída em staging e só substitui o banco válido após validação.
+    database_path = export_sqlite_bundle_atomic(
         data,
         output_dir,
         generated_at=generated_at,
         full_snapshot=full_snapshot,
     )
 
+    # CSV é compatibilidade/fallback secundário. Uma falha de CSV não desfaz
+    # um SQLite já validado e publicado com sucesso.
+    try:
+        export_csv_bundle(
+            data,
+            output_dir,
+            generated_at=generated_at,
+        )
+    except Exception as exc:
+        print(
+            "Aviso: SQLite foi publicado com sucesso, "
+            "mas a atualização dos CSVs falhou: "
+            f"{exc}",
+            file=sys.stderr,
+            flush=True,
+        )
+
     print("\nExportação concluída.")
     print(f"Diretório: {output_dir.resolve()}")
-    print(f"SQLite: {database_path.resolve()}")
+    print(
+        "SQLite atômico publicado: "
+        f"{database_path.resolve()}"
+    )
     print(f"Tabelas: {len(DATASET_DESCRIPTIONS)} + catálogo/manifest")
     print(f"Erros/avisos registrados: {len(data.errors)}")
     print("Use dataset_catalog.csv para saber o propósito e a granularidade de cada arquivo.")
