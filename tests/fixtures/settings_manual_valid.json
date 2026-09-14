@@ -1,0 +1,45 @@
+{
+  "version": 9,
+  "manualTransactions": [
+    {
+      "id": "manual_spotify",
+      "manualKind": "EXPENSE",
+      "date": "2026-08-10",
+      "amount": 34.9,
+      "currencyCode": "BRL",
+      "description": "Spotify",
+      "institutionName": "Banco Teste",
+      "accountName": "Cartão Teste",
+      "accountId": "card_test",
+      "accountType": "CREDIT",
+      "category": "@cf:streaming",
+      "manualMethod": "Cartão de crédito",
+      "manualClass": "FIXED",
+      "counterparty": "Spotify"
+    },
+    {
+      "id": "manual_salary",
+      "manualKind": "INCOME",
+      "date": "2026-08-05",
+      "amount": 5000,
+      "currencyCode": "BRL",
+      "description": "Salário",
+      "institutionName": "Banco Teste",
+      "accountName": "Conta Principal",
+      "accountId": "bank_test",
+      "accountType": "BANK",
+      "category": "@cf:salary",
+      "manualMethod": "Transferência",
+      "manualClass": "FIXED",
+      "counterparty": "Empresa Teste"
+    }
+  ],
+  "customCategories": [],
+  "customCategoryTranslations": [],
+  "transactionOverrides": {},
+  "categoryRules": [],
+  "fixedExpenseRules": [],
+  "fixedIncomeRules": [],
+  "incomeSourceCategoryRules": [],
+  "uiLanguage": "pt-BR"
+}
