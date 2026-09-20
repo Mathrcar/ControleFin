@@ -429,8 +429,12 @@ class DashboardStructuralRegressionTests(unittest.TestCase):
         )
 
     def test_encrypted_google_drive_cloud_sync_contract_is_present(self):
-        self.assertIn(
+        self.assertNotIn(
             'id="cloudPassphraseInput"',
+            self.html,
+        )
+        self.assertIn(
+            'id="legacyCloudPasswordWrap"',
             self.html,
         )
         self.assertIn(
@@ -446,6 +450,10 @@ class DashboardStructuralRegressionTests(unittest.TestCase):
             self.html,
         )
         self.assertIn(
+            "Automática pela conta Google",
+            self.html,
+        )
+        self.assertIn(
             "function syncGoogleCloudNow()",
             self.html,
         )
@@ -454,23 +462,20 @@ class DashboardStructuralRegressionTests(unittest.TestCase):
             self.html,
         )
         self.assertIn(
-            "Sincronizar Google Drive",
+            "./api/google/cloud/migrate-legacy",
             self.html,
         )
         self.assertIn(
-            "function autoCloudSyncBeforeDashboard()",
+            "./api/google/cloud/restore",
             self.html,
         )
-        self.assertIn(
-            "./api/google/cloud/sync",
-            self.html,
-        )
+
         self.assertIn(
             '@app.get("/api/google/cloud/status")',
             self.server,
         )
         self.assertIn(
-            '@app.put("/api/google/cloud/passphrase")',
+            '@app.post("/api/google/cloud/migrate-legacy")',
             self.server,
         )
         self.assertIn(
@@ -478,16 +483,51 @@ class DashboardStructuralRegressionTests(unittest.TestCase):
             self.server,
         )
         self.assertIn(
-            '@app.post("/api/google/cloud/upload")',
+            'schedule_cloud_sync(',
             self.server,
         )
         self.assertIn(
-            '@app.post("/api/google/cloud/download")',
+            '"settings"',
             self.server,
         )
+
+        cloud_sync = (
+            PROJECT_ROOT
+            / "controlefin_cloud_sync.py"
+        ).read_text(
+            encoding="utf-8"
+        )
+
+        google_drive = (
+            PROJECT_ROOT
+            / "controlefin_google_drive.py"
+        ).read_text(
+            encoding="utf-8"
+        )
+
         self.assertIn(
-            'schedule_cloud_sync(\n        "settings"',
-            self.server,
+            'CLOUD_FORMAT_VERSION = 2',
+            cloud_sync,
+        )
+        self.assertIn(
+            'CLOUD_AUTO_KEY_MODE = "GOOGLE_DRIVE_ACCOUNT"',
+            cloud_sync,
+        )
+        self.assertIn(
+            "def ensure_automatic_key(",
+            cloud_sync,
+        )
+        self.assertIn(
+            "def migrate_legacy_snapshot(",
+            cloud_sync,
+        )
+        self.assertIn(
+            "def read_cloud_key(",
+            google_drive,
+        )
+        self.assertIn(
+            "def write_cloud_key(",
+            google_drive,
         )
 
     def test_multiuser_first_access_and_google_binding_contract(self):

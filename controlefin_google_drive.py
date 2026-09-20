@@ -35,6 +35,7 @@ GOOGLE_DRIVE_FOLDER_MIME = (
 CONTROLEFIN_DRIVE_FOLDER_NAME = "ControleFin"
 CONTROLEFIN_SNAPSHOTS_FOLDER_NAME = "Snapshots"
 CONTROLEFIN_INDEX_FILE_NAME = "controlefin-state.json"
+CONTROLEFIN_KEY_FILE_NAME = "controlefin-key.json"
 CONTROLEFIN_ROOT_ROLE = "controlefin_root"
 CONTROLEFIN_SNAPSHOTS_ROLE = "controlefin_snapshots"
 
@@ -1417,6 +1418,180 @@ class GoogleDriveManager:
             )
             .execute()
         )
+
+    def read_cloud_key(
+        self,
+    ) -> Optional[dict[str, Any]]:
+        storage = (
+            self.ensure_cloud_storage()
+        )
+
+        existing = self._find_child(
+            parent_id=(
+                storage[
+                    "rootFolderId"
+                ]
+            ),
+            name=(
+                CONTROLEFIN_KEY_FILE_NAME
+            ),
+            mime_type=(
+                "application/json"
+            ),
+        )
+
+        if not existing:
+            return None
+
+        raw = self.download_bytes(
+            file_id=str(
+                existing[
+                    "id"
+                ]
+            )
+        )
+
+        try:
+            payload = json.loads(
+                raw.decode(
+                    "utf-8"
+                )
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                "O arquivo de chave do ControleFin no Google Drive está inválido."
+            ) from exc
+
+        if not isinstance(
+            payload,
+            dict,
+        ):
+            raise RuntimeError(
+                "O arquivo de chave do ControleFin no Google Drive está inválido."
+            )
+
+        return {
+            "file": dict(
+                existing
+            ),
+            "payload": payload,
+        }
+
+    def write_cloud_key(
+        self,
+        payload: dict[str, Any],
+    ) -> dict[str, Any]:
+        if not isinstance(
+            payload,
+            dict,
+        ):
+            raise ValueError(
+                "Chave automática inválida."
+            )
+
+        imports = (
+            self._google_imports()
+        )
+
+        service = self.service()
+        storage = (
+            self.ensure_cloud_storage()
+        )
+
+        existing = self._find_child(
+            parent_id=(
+                storage[
+                    "rootFolderId"
+                ]
+            ),
+            name=(
+                CONTROLEFIN_KEY_FILE_NAME
+            ),
+            mime_type=(
+                "application/json"
+            ),
+        )
+
+        data = (
+            json.dumps(
+                payload,
+                ensure_ascii=False,
+                indent=2,
+                sort_keys=True,
+            )
+            + "\n"
+        ).encode(
+            "utf-8"
+        )
+
+        media = imports[
+            "MediaIoBaseUpload"
+        ](
+            io.BytesIO(
+                data
+            ),
+            mimetype=(
+                "application/json"
+            ),
+            resumable=False,
+        )
+
+        body = {
+            "appProperties": {
+                "kind": (
+                    "controlefin_key"
+                ),
+                "formatVersion": (
+                    str(
+                        payload.get(
+                            "formatVersion"
+                        )
+                        or 1
+                    )
+                ),
+            }
+        }
+
+        if existing:
+            return (
+                service.files()
+                .update(
+                    fileId=(
+                        existing[
+                            "id"
+                        ]
+                    ),
+                    body=body,
+                    media_body=media,
+                    fields=(
+                        self._drive_file_fields()
+                    ),
+                )
+                .execute()
+            )
+
+        return (
+            service.files()
+            .create(
+                body={
+                    "name": (
+                        CONTROLEFIN_KEY_FILE_NAME
+                    ),
+                    "parents": [
+                        storage[
+                            "rootFolderId"
+                        ]
+                    ],
+                    **body,
+                },
+                media_body=media,
+                fields=(
+                    self._drive_file_fields()
+                ),
+            )
+            .execute()
+        )
+
 
     def list_legacy_appdata_files(
         self,

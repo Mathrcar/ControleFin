@@ -23,16 +23,21 @@ from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
 
 
 CLOUD_FORMAT = "ControleFinEncryptedCloudState"
-CLOUD_FORMAT_VERSION = 1
+LEGACY_CLOUD_FORMAT_VERSION = 1
+CLOUD_FORMAT_VERSION = 2
 CLOUD_PAYLOAD_FORMAT = "ControleFinCloudPayload"
 CLOUD_PAYLOAD_VERSION = 1
 CLOUD_KIND = "controlefin_state"
 CLOUD_MIME_TYPE = "application/octet-stream"
-CLOUD_SNAPSHOT_PREFIX = "controlefin-state-v1-r"
+CLOUD_SNAPSHOT_PREFIX = "controlefin-state-v2-r"
 CLOUD_KDF_ITERATIONS = 600_000
 CLOUD_MIN_PASSPHRASE = 12
 CLOUD_MAX_PASSPHRASE = 256
 CLOUD_HISTORY_LIMIT = 10
+
+CLOUD_AUTO_KEY_FORMAT = "ControleFinGoogleDriveKey"
+CLOUD_AUTO_KEY_VERSION = 1
+CLOUD_AUTO_KEY_MODE = "GOOGLE_DRIVE_ACCOUNT"
 
 REQUIRED_DATABASE_TABLES = {
     "accounts",
@@ -121,7 +126,7 @@ def derive_cloud_key(
     return kdf.derive(passphrase.encode("utf-8"))
 
 
-def encrypt_cloud_payload(
+def encrypt_legacy_cloud_payload(
     *,
     payload: bytes,
     passphrase: str,
@@ -136,7 +141,7 @@ def encrypt_cloud_payload(
 
     metadata = {
         "format": CLOUD_FORMAT,
-        "formatVersion": CLOUD_FORMAT_VERSION,
+        "formatVersion": LEGACY_CLOUD_FORMAT_VERSION,
         "revision": int(revision),
         "deviceId": str(device_id),
         "createdAtUtc": created_at,
@@ -166,7 +171,7 @@ def encrypt_cloud_payload(
     return canonical_json_bytes(envelope)
 
 
-def decrypt_cloud_payload(
+def decrypt_legacy_cloud_payload(
     *,
     encrypted: bytes,
     passphrase: str,
@@ -182,7 +187,8 @@ def decrypt_cloud_payload(
 
     if (
         envelope.get("format") != CLOUD_FORMAT
-        or int(envelope.get("formatVersion") or 0) != CLOUD_FORMAT_VERSION
+        or int(envelope.get("formatVersion") or 0)
+        != LEGACY_CLOUD_FORMAT_VERSION
     ):
         raise ValueError("Formato de snapshot da nuvem não suportado.")
 
@@ -215,6 +221,222 @@ def decrypt_cloud_payload(
         ) from exc
 
     return metadata, plaintext
+
+
+def validate_auto_key(value: bytes) -> bytes:
+    key = bytes(value)
+
+    if len(key) != 32:
+        raise ValueError(
+            "Chave automática do Google Drive inválida."
+        )
+
+    return key
+
+
+def encrypt_cloud_payload(
+    *,
+    payload: bytes,
+    key: bytes,
+    key_id: str,
+    revision: int,
+    device_id: str,
+    created_at: Optional[str] = None,
+) -> bytes:
+    key = validate_auto_key(
+        key
+    )
+    key_id = str(
+        key_id
+        or ""
+    ).strip()
+
+    if not key_id:
+        raise ValueError(
+            "Identificador da chave automática ausente."
+        )
+
+    created_at = (
+        created_at
+        or utc_now_iso()
+    )
+
+    nonce = secrets.token_bytes(
+        12
+    )
+
+    metadata = {
+        "format": CLOUD_FORMAT,
+        "formatVersion": CLOUD_FORMAT_VERSION,
+        "revision": int(
+            revision
+        ),
+        "deviceId": str(
+            device_id
+        ),
+        "createdAtUtc": (
+            created_at
+        ),
+        "keyMode": (
+            CLOUD_AUTO_KEY_MODE
+        ),
+        "keyId": key_id,
+        "cipher": {
+            "name": "AES-256-GCM",
+            "nonce": encode_b64(
+                nonce
+            ),
+        },
+    }
+
+    aad = canonical_json_bytes(
+        metadata
+    )
+
+    ciphertext = AESGCM(
+        key
+    ).encrypt(
+        nonce,
+        bytes(
+            payload
+        ),
+        aad,
+    )
+
+    return canonical_json_bytes(
+        {
+            **metadata,
+            "ciphertext": (
+                encode_b64(
+                    ciphertext
+                )
+            ),
+        }
+    )
+
+
+def decrypt_cloud_payload(
+    *,
+    encrypted: bytes,
+    key: bytes,
+    expected_key_id: Optional[str] = None,
+) -> tuple[dict[str, Any], bytes]:
+    key = validate_auto_key(
+        key
+    )
+
+    try:
+        envelope = json.loads(
+            bytes(
+                encrypted
+            ).decode(
+                "utf-8"
+            )
+        )
+    except Exception as exc:
+        raise ValueError(
+            "Snapshot da nuvem inválido."
+        ) from exc
+
+    if not isinstance(
+        envelope,
+        dict,
+    ):
+        raise ValueError(
+            "Snapshot da nuvem inválido."
+        )
+
+    if (
+        envelope.get(
+            "format"
+        )
+        != CLOUD_FORMAT
+        or int(
+            envelope.get(
+                "formatVersion"
+            )
+            or 0
+        )
+        != CLOUD_FORMAT_VERSION
+    ):
+        raise ValueError(
+            "Formato de snapshot automático não suportado."
+        )
+
+    key_id = str(
+        envelope.get(
+            "keyId"
+        )
+        or ""
+    ).strip()
+
+    if (
+        expected_key_id
+        and key_id
+        != str(
+            expected_key_id
+        )
+    ):
+        raise ValueError(
+            "O snapshot usa outra chave automática."
+        )
+
+    cipher_data = envelope.get(
+        "cipher"
+    )
+
+    if not isinstance(
+        cipher_data,
+        dict,
+    ):
+        raise ValueError(
+            "Metadados criptográficos inválidos."
+        )
+
+    try:
+        nonce = decode_b64(
+            cipher_data[
+                "nonce"
+            ]
+        )
+        ciphertext = decode_b64(
+            envelope[
+                "ciphertext"
+            ]
+        )
+    except Exception as exc:
+        raise ValueError(
+            "Snapshot criptografado inválido."
+        ) from exc
+
+    metadata = {
+        name: value
+        for name, value
+        in envelope.items()
+        if name
+        != "ciphertext"
+    }
+
+    try:
+        plaintext = AESGCM(
+            key
+        ).decrypt(
+            nonce,
+            ciphertext,
+            canonical_json_bytes(
+                metadata
+            ),
+        )
+    except Exception as exc:
+        raise ValueError(
+            "Não foi possível descriptografar o snapshot "
+            "com a chave automática desta conta Google."
+        ) from exc
+
+    return (
+        metadata,
+        plaintext,
+    )
 
 
 def safe_zip_member_name(value: str) -> str:
@@ -430,14 +652,421 @@ class CloudSyncManager:
 
         return max(snapshots, key=key)
 
-    def key_configured(self) -> bool:
+    def _load_key_file_payload(
+        self,
+    ) -> Optional[dict[str, Any]]:
         if not self.key_file.exists():
-            return False
+            return None
+
         try:
-            self.load_passphrase()
-            return True
+            payload = json.loads(
+                self.key_file.read_text(
+                    encoding="utf-8"
+                )
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                "Configuração local da chave da nuvem está corrompida."
+            ) from exc
+
+        if not isinstance(
+            payload,
+            dict,
+        ):
+            raise RuntimeError(
+                "Configuração local da chave da nuvem está inválida."
+            )
+
+        return payload
+
+    def legacy_passphrase_configured(
+        self,
+    ) -> bool:
+        try:
+            payload = (
+                self._load_key_file_payload()
+            )
         except Exception:
             return False
+
+        return bool(
+            isinstance(
+                payload,
+                dict,
+            )
+            and isinstance(
+                payload.get(
+                    "protected"
+                ),
+                dict,
+            )
+            and str(
+                payload.get(
+                    "mode"
+                )
+                or "legacy_passphrase"
+            )
+            == "legacy_passphrase"
+        )
+
+    def _load_local_auto_key(
+        self,
+    ) -> Optional[
+        tuple[
+            str,
+            bytes,
+        ]
+    ]:
+        payload = (
+            self._load_key_file_payload()
+        )
+
+        if not isinstance(
+            payload,
+            dict,
+        ):
+            return None
+
+        if (
+            int(
+                payload.get(
+                    "version"
+                )
+                or 0
+            )
+            != 2
+            or payload.get(
+                "mode"
+            )
+            != "google_drive_auto"
+        ):
+            return None
+
+        protected = payload.get(
+            "protectedKey"
+        )
+
+        if not isinstance(
+            protected,
+            dict,
+        ):
+            raise RuntimeError(
+                "Chave automática local inválida."
+            )
+
+        key_id = str(
+            payload.get(
+                "keyId"
+            )
+            or ""
+        ).strip()
+
+        if not key_id:
+            raise RuntimeError(
+                "Identificador da chave automática local ausente."
+            )
+
+        try:
+            key = decode_b64(
+                self.unprotect_secret(
+                    protected
+                )
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                "Não foi possível abrir a chave automática local."
+            ) from exc
+
+        return (
+            key_id,
+            validate_auto_key(
+                key
+            ),
+        )
+
+    def _save_local_auto_key(
+        self,
+        *,
+        key_id: str,
+        key: bytes,
+    ) -> None:
+        key = validate_auto_key(
+            key
+        )
+
+        key_id = str(
+            key_id
+            or ""
+        ).strip()
+
+        if not key_id:
+            raise ValueError(
+                "Identificador da chave automática ausente."
+            )
+
+        payload = {
+            "version": 2,
+            "mode": (
+                "google_drive_auto"
+            ),
+            "keyId": key_id,
+            "protectedKey": (
+                self.protect_secret(
+                    encode_b64(
+                        key
+                    )
+                )
+            ),
+            "updatedAt": (
+                utc_now_iso()
+            ),
+        }
+
+        self.atomic_write_json(
+            self.key_file,
+            payload,
+        )
+
+    def _read_remote_auto_key(
+        self,
+    ) -> Optional[
+        tuple[
+            str,
+            bytes,
+        ]
+    ]:
+        reader = getattr(
+            self.google_drive,
+            "read_cloud_key",
+            None,
+        )
+
+        if not callable(
+            reader
+        ):
+            return None
+
+        result = reader()
+
+        if not result:
+            return None
+
+        payload = (
+            result.get(
+                "payload"
+            )
+            if isinstance(
+                result,
+                dict,
+            )
+            else None
+        )
+
+        if not isinstance(
+            payload,
+            dict,
+        ):
+            raise RuntimeError(
+                "Arquivo de chave automática do Google Drive inválido."
+            )
+
+        if (
+            payload.get(
+                "format"
+            )
+            != CLOUD_AUTO_KEY_FORMAT
+            or int(
+                payload.get(
+                    "formatVersion"
+                )
+                or 0
+            )
+            != CLOUD_AUTO_KEY_VERSION
+        ):
+            raise RuntimeError(
+                "Formato da chave automática do Google Drive não suportado."
+            )
+
+        key_id = str(
+            payload.get(
+                "keyId"
+            )
+            or ""
+        ).strip()
+
+        try:
+            key = decode_b64(
+                payload[
+                    "key"
+                ]
+            )
+        except Exception as exc:
+            raise RuntimeError(
+                "Chave automática do Google Drive inválida."
+            ) from exc
+
+        if not key_id:
+            raise RuntimeError(
+                "Identificador da chave automática do Google Drive ausente."
+            )
+
+        return (
+            key_id,
+            validate_auto_key(
+                key
+            ),
+        )
+
+    def _write_remote_auto_key(
+        self,
+        *,
+        key_id: str,
+        key: bytes,
+    ) -> None:
+        writer = getattr(
+            self.google_drive,
+            "write_cloud_key",
+            None,
+        )
+
+        if not callable(
+            writer
+        ):
+            raise RuntimeError(
+                "Esta versão do conector Google Drive não suporta chave automática."
+            )
+
+        key = validate_auto_key(
+            key
+        )
+
+        writer(
+            {
+                "format": (
+                    CLOUD_AUTO_KEY_FORMAT
+                ),
+                "formatVersion": (
+                    CLOUD_AUTO_KEY_VERSION
+                ),
+                "keyMode": (
+                    CLOUD_AUTO_KEY_MODE
+                ),
+                "keyId": str(
+                    key_id
+                ),
+                "key": encode_b64(
+                    key
+                ),
+                "createdAtUtc": (
+                    utc_now_iso()
+                ),
+                "note": (
+                    "Chave gerenciada pelo ControleFin. "
+                    "Não exclua este arquivo enquanto houver snapshots."
+                ),
+            }
+        )
+
+    def automatic_key_configured(
+        self,
+    ) -> bool:
+        try:
+            return (
+                self._load_local_auto_key()
+                is not None
+            )
+        except Exception:
+            return False
+
+    def key_configured(self) -> bool:
+        # Mantido para compatibilidade com código antigo. A versão atual não
+        # exige senha; uma chave automática é obtida do Google Drive.
+        return self.automatic_key_configured()
+
+    def ensure_automatic_key(
+        self,
+        *,
+        create_if_missing: bool,
+    ) -> tuple[str, bytes]:
+        local = (
+            self._load_local_auto_key()
+        )
+
+        remote = (
+            self._read_remote_auto_key()
+        )
+
+        if remote is not None:
+            remote_id, remote_key = (
+                remote
+            )
+
+            if (
+                local is None
+                or local[
+                    0
+                ]
+                != remote_id
+                or not secrets.compare_digest(
+                    local[
+                        1
+                    ],
+                    remote_key,
+                )
+            ):
+                self._save_local_auto_key(
+                    key_id=remote_id,
+                    key=remote_key,
+                )
+
+            return (
+                remote_id,
+                remote_key,
+            )
+
+        if local is not None:
+            local_id, local_key = (
+                local
+            )
+
+            # Recupera automaticamente um arquivo de chave remoto apagado,
+            # desde que este computador ainda possua a mesma chave.
+            self._write_remote_auto_key(
+                key_id=local_id,
+                key=local_key,
+            )
+
+            return (
+                local_id,
+                local_key,
+            )
+
+        if not create_if_missing:
+            raise RuntimeError(
+                "A chave automática do ControleFin não foi encontrada no Google Drive."
+            )
+
+        key_id = str(
+            uuid.uuid4()
+        )
+        key = secrets.token_bytes(
+            32
+        )
+
+        self._write_remote_auto_key(
+            key_id=key_id,
+            key=key,
+        )
+
+        self._save_local_auto_key(
+            key_id=key_id,
+            key=key,
+        )
+
+        return (
+            key_id,
+            key,
+        )
 
     def save_passphrase(
         self,
@@ -445,53 +1074,152 @@ class CloudSyncManager:
         *,
         verify_remote: bool = True,
     ) -> dict[str, Any]:
-        passphrase = validate_cloud_passphrase(passphrase)
+        """
+        Compatibilidade exclusiva para snapshots v1 antigos.
+
+        Novos snapshots não usam senha da nuvem.
+        """
+        passphrase = (
+            validate_cloud_passphrase(
+                passphrase
+            )
+        )
 
         if verify_remote:
-            snapshots = self.remote_snapshots()
-            if snapshots:
-                tip = self._latest_remote_tip_allowing_branch(snapshots)
-                encrypted = self.google_drive.download_bytes(file_id=tip["id"])
-                decrypt_cloud_payload(
+            snapshots = (
+                self.remote_snapshots()
+            )
+
+            legacy = [
+                item
+                for item
+                in snapshots
+                if int(
+                    item.get(
+                        "snapshotFormatVersion"
+                    )
+                    or 0
+                )
+                == LEGACY_CLOUD_FORMAT_VERSION
+            ]
+
+            if legacy:
+                tip = (
+                    self._latest_remote_by_time(
+                        legacy
+                    )
+                )
+
+                encrypted = (
+                    self.google_drive
+                    .download_bytes(
+                        file_id=(
+                            tip[
+                                "id"
+                            ]
+                        )
+                    )
+                )
+
+                decrypt_legacy_cloud_payload(
                     encrypted=encrypted,
                     passphrase=passphrase,
                 )
 
         payload = {
             "version": 1,
-            "protected": self.protect_secret(passphrase),
-            "updatedAt": utc_now_iso(),
-        }
-        self.atomic_write_json(self.key_file, payload)
-        return {
-            "configured": True,
-            "updatedAt": payload["updatedAt"],
+            "mode": (
+                "legacy_passphrase"
+            ),
+            "protected": (
+                self.protect_secret(
+                    passphrase
+                )
+            ),
+            "updatedAt": (
+                utc_now_iso()
+            ),
         }
 
-    def clear_passphrase(self) -> None:
+        self.atomic_write_json(
+            self.key_file,
+            payload,
+        )
+
+        return {
+            "configured": True,
+            "legacy": True,
+            "updatedAt": (
+                payload[
+                    "updatedAt"
+                ]
+            ),
+        }
+
+    def clear_passphrase(
+        self,
+    ) -> None:
+        payload = (
+            self._load_key_file_payload()
+        )
+
+        if (
+            isinstance(
+                payload,
+                dict,
+            )
+            and payload.get(
+                "mode"
+            )
+            == "google_drive_auto"
+        ):
+            return
+
         try:
             self.key_file.unlink()
         except FileNotFoundError:
             pass
 
-    def load_passphrase(self) -> str:
-        if not self.key_file.exists():
-            raise RuntimeError("Senha da nuvem ainda não configurada.")
+    def load_passphrase(
+        self,
+    ) -> str:
+        payload = (
+            self._load_key_file_payload()
+        )
 
-        try:
-            payload = json.loads(self.key_file.read_text(encoding="utf-8"))
-        except Exception as exc:
-            raise RuntimeError(
-                "Configuração da senha da nuvem está corrompida."
-            ) from exc
-
-        if not isinstance(payload, dict) or not isinstance(
-            payload.get("protected"), dict
+        if not isinstance(
+            payload,
+            dict,
         ):
-            raise RuntimeError("Configuração da senha da nuvem está inválida.")
+            raise RuntimeError(
+                "Senha antiga da nuvem não está disponível neste computador."
+            )
+
+        if (
+            payload.get(
+                "mode"
+            )
+            not in (
+                None,
+                "legacy_passphrase",
+            )
+            or not isinstance(
+                payload.get(
+                    "protected"
+                ),
+                dict,
+            )
+        ):
+            raise RuntimeError(
+                "Senha antiga da nuvem não está disponível neste computador."
+            )
 
         return validate_cloud_passphrase(
-            self.unprotect_secret(payload["protected"])
+            self.unprotect_secret(
+                payload[
+                    "protected"
+                ]
+            )
         )
 
     def _remote_snapshot_from_file(
@@ -503,7 +1231,24 @@ class CloudSyncManager:
             return None
         if props.get("kind") != CLOUD_KIND:
             return None
-        if str(props.get("formatVersion") or "") != str(CLOUD_FORMAT_VERSION):
+
+        try:
+            format_version = int(
+                props.get(
+                    "formatVersion"
+                )
+                or 0
+            )
+        except (
+            TypeError,
+            ValueError,
+        ):
+            return None
+
+        if format_version not in {
+            LEGACY_CLOUD_FORMAT_VERSION,
+            CLOUD_FORMAT_VERSION,
+        }:
             return None
 
         try:
@@ -517,6 +1262,9 @@ class CloudSyncManager:
         return {
             **item,
             "revision": revision,
+            "snapshotFormatVersion": (
+                format_version
+            ),
             "snapshotDeviceId": str(props.get("deviceId") or ""),
             "snapshotCreatedAt": str(props.get("createdAtUtc") or ""),
         }
@@ -548,9 +1296,18 @@ class CloudSyncManager:
                         or snapshot.get("snapshotCreatedAt")
                     ),
                     "updatedAtUtc": utc_now_iso(),
+                    "protectionMode": (
+                        "GOOGLE_ACCOUNT_MANAGED_KEY"
+                    ),
+                    "snapshotFormatVersion": int(
+                        snapshot.get(
+                            "snapshotFormatVersion"
+                        )
+                        or CLOUD_FORMAT_VERSION
+                    ),
                     "note": (
-                        "Os arquivos .bin em Snapshots são criptografados "
-                        "pelo ControleFin."
+                        "Os arquivos .bin são criptografados pelo ControleFin. "
+                        "A chave automática fica na mesma conta Google."
                     ),
                 }
             )
@@ -748,6 +1505,21 @@ class CloudSyncManager:
             "deviceId": latest.get("snapshotDeviceId"),
             "fileId": latest.get("id"),
             "fileName": latest.get("name"),
+            "formatVersion": int(
+                latest.get(
+                    "snapshotFormatVersion"
+                )
+                or 0
+            ),
+            "legacyPasswordRequired": (
+                int(
+                    latest.get(
+                        "snapshotFormatVersion"
+                    )
+                    or 0
+                )
+                == LEGACY_CLOUD_FORMAT_VERSION
+            ),
         }
 
     def status(self, *, include_remote: bool = False) -> dict[str, Any]:
@@ -755,7 +1527,15 @@ class CloudSyncManager:
         local_info = self.local_state_info()
 
         result = {
-            "keyConfigured": self.key_configured(),
+            "keyConfigured": (
+                self.automatic_key_configured()
+            ),
+            "protectionMode": (
+                "GOOGLE_ACCOUNT_MANAGED_KEY"
+            ),
+            "legacyPassphraseConfigured": (
+                self.legacy_passphrase_configured()
+            ),
             "deviceId": state["deviceId"],
             "lastAppliedRevision": int(state.get("lastAppliedRevision") or 0),
             "dirty": bool(state.get("dirty")),
@@ -1141,299 +1921,951 @@ class CloudSyncManager:
 
     def upload(self, *, force: bool = False) -> dict[str, Any]:
         with self._lock:
-            passphrase = self.load_passphrase()
             state = self.load_state()
 
-            snapshots_before = self.remote_snapshots()
+            snapshots_before = (
+                self.remote_snapshots()
+            )
+
             remote_revision = 0
+
             if snapshots_before:
                 if force:
                     remote_revision = max(
-                        int(item["revision"])
-                        for item in snapshots_before
+                        int(
+                            item[
+                                "revision"
+                            ]
+                        )
+                        for item
+                        in snapshots_before
                     )
                 else:
-                    tip_before = self._unique_remote_tip(snapshots_before)
-                    remote_revision = int(tip_before["revision"])
+                    tip_before = (
+                        self._unique_remote_tip(
+                            snapshots_before
+                        )
+                    )
+                    remote_revision = int(
+                        tip_before[
+                            "revision"
+                        ]
+                    )
 
-            local_revision = int(state.get("lastAppliedRevision") or 0)
-            if not force and remote_revision != local_revision:
+            local_revision = int(
+                state.get(
+                    "lastAppliedRevision"
+                )
+                or 0
+            )
+
+            if (
+                not force
+                and remote_revision
+                != local_revision
+            ):
                 raise RuntimeError(
                     "Conflito: a nuvem mudou desde a última revisão local. "
                     "Sincronize/baixe primeiro antes de enviar."
                 )
 
-            next_revision = remote_revision + 1
-            device_id = str(state["deviceId"])
-            plain = self.build_plain_payload(
-                revision=next_revision,
-                device_id=device_id,
+            key_id, key = (
+                self.ensure_automatic_key(
+                    create_if_missing=True
+                )
             )
 
-            snapshots_after_build = self.remote_snapshots()
+            next_revision = (
+                remote_revision
+                + 1
+            )
+
+            device_id = str(
+                state[
+                    "deviceId"
+                ]
+            )
+
+            plain = (
+                self.build_plain_payload(
+                    revision=(
+                        next_revision
+                    ),
+                    device_id=(
+                        device_id
+                    ),
+                )
+            )
+
+            snapshots_after_build = (
+                self.remote_snapshots()
+            )
+
             current_revision = 0
+
             if snapshots_after_build:
                 if force:
                     current_revision = max(
-                        int(item["revision"])
-                        for item in snapshots_after_build
+                        int(
+                            item[
+                                "revision"
+                            ]
+                        )
+                        for item
+                        in snapshots_after_build
                     )
                 else:
-                    current_tip = self._unique_remote_tip(snapshots_after_build)
-                    current_revision = int(current_tip["revision"])
+                    current_tip = (
+                        self._unique_remote_tip(
+                            snapshots_after_build
+                        )
+                    )
+                    current_revision = int(
+                        current_tip[
+                            "revision"
+                        ]
+                    )
 
-            if not force and current_revision != remote_revision:
+            if (
+                not force
+                and current_revision
+                != remote_revision
+            ):
                 raise RuntimeError(
                     "Conflito: outro dispositivo publicou uma nova revisão "
                     "enquanto este computador preparava o snapshot."
                 )
 
-            if force and current_revision != remote_revision:
-                remote_revision = current_revision
-                next_revision = remote_revision + 1
-                plain = self.build_plain_payload(
-                    revision=next_revision,
-                    device_id=device_id,
+            if (
+                force
+                and current_revision
+                != remote_revision
+            ):
+                remote_revision = (
+                    current_revision
+                )
+                next_revision = (
+                    remote_revision
+                    + 1
+                )
+                plain = (
+                    self.build_plain_payload(
+                        revision=(
+                            next_revision
+                        ),
+                        device_id=(
+                            device_id
+                        ),
+                    )
                 )
 
-            created_at = utc_now_iso()
-            encrypted = encrypt_cloud_payload(
-                payload=plain,
-                passphrase=passphrase,
-                revision=next_revision,
-                device_id=device_id,
-                created_at=created_at,
+            created_at = (
+                utc_now_iso()
             )
 
-            created = self.google_drive.create_bytes(
-                name=self._snapshot_filename(
-                    revision=next_revision,
-                    device_id=device_id,
-                ),
-                data=encrypted,
-                mime_type=CLOUD_MIME_TYPE,
-                app_properties={
-                    "kind": CLOUD_KIND,
-                    "formatVersion": CLOUD_FORMAT_VERSION,
-                    "revision": next_revision,
-                    "deviceId": device_id,
-                    "createdAtUtc": created_at,
-                },
+            encrypted = (
+                encrypt_cloud_payload(
+                    payload=plain,
+                    key=key,
+                    key_id=key_id,
+                    revision=(
+                        next_revision
+                    ),
+                    device_id=(
+                        device_id
+                    ),
+                    created_at=(
+                        created_at
+                    ),
+                )
             )
 
-            indexed_snapshot = self._remote_snapshot_from_file(created)
+            created = (
+                self.google_drive
+                .create_bytes(
+                    name=(
+                        self._snapshot_filename(
+                            revision=(
+                                next_revision
+                            ),
+                            device_id=(
+                                device_id
+                            ),
+                        )
+                    ),
+                    data=encrypted,
+                    mime_type=(
+                        CLOUD_MIME_TYPE
+                    ),
+                    app_properties={
+                        "kind": (
+                            CLOUD_KIND
+                        ),
+                        "formatVersion": (
+                            CLOUD_FORMAT_VERSION
+                        ),
+                        "revision": (
+                            next_revision
+                        ),
+                        "deviceId": (
+                            device_id
+                        ),
+                        "keyId": key_id,
+                        "createdAtUtc": (
+                            created_at
+                        ),
+                    },
+                )
+            )
+
+            indexed_snapshot = (
+                self._remote_snapshot_from_file(
+                    created
+                )
+            )
+
             if indexed_snapshot:
-                self._write_remote_index(indexed_snapshot)
+                self._write_remote_index(
+                    indexed_snapshot
+                )
 
-            local_info = self.local_state_info()
+            local_info = (
+                self.local_state_info()
+            )
 
             state.update(
                 {
-                    "lastAppliedRevision": next_revision,
-                    "lastRemoteFileId": created.get("id"),
+                    "lastAppliedRevision": (
+                        next_revision
+                    ),
+                    "lastRemoteFileId": (
+                        created.get(
+                            "id"
+                        )
+                    ),
                     "dirty": False,
                     "dirtyReason": None,
                     "localChangeAt": None,
-                    "lastLocalSignature": local_info.get("signature"),
-                    "lastLocalModifiedAt": local_info.get("modifiedTime"),
-                    "lastRemoteModifiedTime": (
-                        created.get("modifiedTime") or created_at
+                    "lastLocalSignature": (
+                        local_info.get(
+                            "signature"
+                        )
                     ),
-                    "lastSyncAt": utc_now_iso(),
-                    "lastAction": "UPLOADED",
+                    "lastLocalModifiedAt": (
+                        local_info.get(
+                            "modifiedTime"
+                        )
+                    ),
+                    "lastRemoteModifiedTime": (
+                        created.get(
+                            "modifiedTime"
+                        )
+                        or created_at
+                    ),
+                    "lastSyncAt": (
+                        utc_now_iso()
+                    ),
+                    "lastAction": (
+                        "UPLOADED"
+                    ),
                     "lastError": None,
                 }
             )
-            self.save_state(state)
+
+            self.save_state(
+                state
+            )
+
             self._prune_history()
 
             return {
                 "ok": True,
                 "action": "UPLOADED",
-                "revision": next_revision,
-                "fileId": created.get("id"),
-                "fileName": created.get("name"),
-                "sizeBytes": len(encrypted),
-                "forced": bool(force),
-                "decision": "LOCAL_NEWER",
-                "localModifiedTime": local_info.get("modifiedTime"),
+                "revision": (
+                    next_revision
+                ),
+                "formatVersion": (
+                    CLOUD_FORMAT_VERSION
+                ),
+                "protectionMode": (
+                    CLOUD_AUTO_KEY_MODE
+                ),
+                "fileId": (
+                    created.get(
+                        "id"
+                    )
+                ),
+                "fileName": (
+                    created.get(
+                        "name"
+                    )
+                ),
+                "sizeBytes": len(
+                    encrypted
+                ),
+                "forced": bool(
+                    force
+                ),
+                "decision": (
+                    "LOCAL_NEWER"
+                ),
+                "localModifiedTime": (
+                    local_info.get(
+                        "modifiedTime"
+                    )
+                ),
                 "remoteModifiedTime": (
-                    created.get("modifiedTime") or created_at
+                    created.get(
+                        "modifiedTime"
+                    )
+                    or created_at
                 ),
             }
 
-    def download(self, *, force: bool = False) -> dict[str, Any]:
+    def _decrypt_remote_snapshot(
+        self,
+        *,
+        tip: dict[str, Any],
+        legacy_passphrase: Optional[str] = None,
+    ) -> tuple[
+        dict[str, Any],
+        bytes,
+    ]:
+        encrypted = (
+            self.google_drive
+            .download_bytes(
+                file_id=(
+                    tip[
+                        "id"
+                    ]
+                )
+            )
+        )
+
+        format_version = int(
+            tip.get(
+                "snapshotFormatVersion"
+            )
+            or 0
+        )
+
+        if (
+            format_version
+            == CLOUD_FORMAT_VERSION
+        ):
+            key_id, key = (
+                self.ensure_automatic_key(
+                    create_if_missing=False
+                )
+            )
+
+            return decrypt_cloud_payload(
+                encrypted=encrypted,
+                key=key,
+                expected_key_id=(
+                    key_id
+                ),
+            )
+
+        if (
+            format_version
+            == LEGACY_CLOUD_FORMAT_VERSION
+        ):
+            passphrase = (
+                legacy_passphrase
+            )
+
+            if not passphrase:
+                passphrase = (
+                    self.load_passphrase()
+                )
+
+            return (
+                decrypt_legacy_cloud_payload(
+                    encrypted=encrypted,
+                    passphrase=(
+                        passphrase
+                    ),
+                )
+            )
+
+        raise ValueError(
+            "Formato de snapshot remoto não suportado."
+        )
+
+    def download(
+        self,
+        *,
+        force: bool = False,
+        legacy_passphrase: Optional[
+            str
+        ] = None,
+    ) -> dict[str, Any]:
         with self._lock:
-            passphrase = self.load_passphrase()
             state = self.load_state()
 
-            if state.get("dirty") and not force:
+            if (
+                state.get(
+                    "dirty"
+                )
+                and not force
+            ):
                 raise RuntimeError(
                     "Conflito: existem alterações locais ainda não enviadas. "
                     "Escolha explicitamente usar a nuvem para descartá-las."
                 )
 
-            snapshots = self.remote_snapshots()
-            tip = self._latest_remote_by_time(snapshots)
-            encrypted = self.google_drive.download_bytes(file_id=tip["id"])
-            metadata, plain = decrypt_cloud_payload(
-                encrypted=encrypted,
-                passphrase=passphrase,
+            snapshots = (
+                self.remote_snapshots()
             )
 
-            revision = int(metadata.get("revision") or 0)
-            device_id = str(metadata.get("deviceId") or "")
-            if revision != int(tip["revision"]):
+            tip = (
+                self._latest_remote_by_time(
+                    snapshots
+                )
+            )
+
+            format_version = int(
+                tip.get(
+                    "snapshotFormatVersion"
+                )
+                or 0
+            )
+
+            if (
+                format_version
+                == LEGACY_CLOUD_FORMAT_VERSION
+                and not legacy_passphrase
+                and not self.legacy_passphrase_configured()
+            ):
+                raise RuntimeError(
+                    "BACKUP_LEGADO_REQUER_SENHA: este snapshot foi criado "
+                    "pela versão antiga. Migre-o uma única vez usando a senha "
+                    "antiga da nuvem, ou sincronize primeiro no computador "
+                    "original para convertê-lo automaticamente."
+                )
+
+            metadata, plain = (
+                self._decrypt_remote_snapshot(
+                    tip=tip,
+                    legacy_passphrase=(
+                        legacy_passphrase
+                    ),
+                )
+            )
+
+            revision = int(
+                metadata.get(
+                    "revision"
+                )
+                or 0
+            )
+
+            device_id = str(
+                metadata.get(
+                    "deviceId"
+                )
+                or ""
+            )
+
+            if revision != int(
+                tip[
+                    "revision"
+                ]
+            ):
                 raise ValueError(
                     "A revisão criptografada não corresponde ao arquivo remoto."
                 )
 
-            result = self.apply_plain_payload(
-                payload=plain,
-                revision=revision,
-                device_id=device_id,
+            result = (
+                self.apply_plain_payload(
+                    payload=plain,
+                    revision=revision,
+                    device_id=device_id,
+                )
             )
 
-            local_info = self.local_state_info()
+            local_info = (
+                self.local_state_info()
+            )
 
             state.update(
                 {
-                    "lastAppliedRevision": revision,
-                    "lastRemoteFileId": tip.get("id"),
+                    "lastAppliedRevision": (
+                        revision
+                    ),
+                    "lastRemoteFileId": (
+                        tip.get(
+                            "id"
+                        )
+                    ),
                     "dirty": False,
                     "dirtyReason": None,
                     "localChangeAt": None,
-                    "lastLocalSignature": local_info.get("signature"),
-                    "lastLocalModifiedAt": local_info.get("modifiedTime"),
-                    "lastRemoteModifiedTime": (
-                        tip.get("modifiedTime")
-                        or tip.get("snapshotCreatedAt")
+                    "lastLocalSignature": (
+                        local_info.get(
+                            "signature"
+                        )
                     ),
-                    "lastSyncAt": utc_now_iso(),
-                    "lastAction": "DOWNLOADED",
+                    "lastLocalModifiedAt": (
+                        local_info.get(
+                            "modifiedTime"
+                        )
+                    ),
+                    "lastRemoteModifiedTime": (
+                        tip.get(
+                            "modifiedTime"
+                        )
+                        or tip.get(
+                            "snapshotCreatedAt"
+                        )
+                    ),
+                    "lastSyncAt": (
+                        utc_now_iso()
+                    ),
+                    "lastAction": (
+                        "DOWNLOADED"
+                    ),
                     "lastError": None,
                 }
             )
-            self.save_state(state)
+
+            self.save_state(
+                state
+            )
 
             return {
                 "ok": True,
                 "action": "DOWNLOADED",
-                "revision": revision,
-                "fileId": tip.get("id"),
-                "fileName": tip.get("name"),
-                "forced": bool(force),
-                "decision": "REMOTE_NEWER",
-                "localModifiedTime": local_info.get("modifiedTime"),
+                "revision": (
+                    revision
+                ),
+                "formatVersion": (
+                    format_version
+                ),
+                "fileId": (
+                    tip.get(
+                        "id"
+                    )
+                ),
+                "fileName": (
+                    tip.get(
+                        "name"
+                    )
+                ),
+                "forced": bool(
+                    force
+                ),
+                "decision": (
+                    "REMOTE_NEWER"
+                ),
+                "localModifiedTime": (
+                    local_info.get(
+                        "modifiedTime"
+                    )
+                ),
                 "remoteModifiedTime": (
-                    tip.get("modifiedTime")
-                    or tip.get("snapshotCreatedAt")
+                    tip.get(
+                        "modifiedTime"
+                    )
+                    or tip.get(
+                        "snapshotCreatedAt"
+                    )
                 ),
                 **result,
             }
+
+    def migrate_legacy_snapshot(
+        self,
+        passphrase: str,
+    ) -> dict[str, Any]:
+        """
+        Migração única v1 -> v2.
+
+        Usa a senha somente para abrir o snapshot legado. Depois cria a chave
+        automática na conta Google e publica uma nova revisão v2.
+        """
+        with self._lock:
+            passphrase = (
+                validate_cloud_passphrase(
+                    passphrase
+                )
+            )
+
+            snapshots = (
+                self.remote_snapshots()
+            )
+
+            if not snapshots:
+                raise FileNotFoundError(
+                    "Nenhum backup existe no Google Drive."
+                )
+
+            tip = (
+                self._latest_remote_by_time(
+                    snapshots
+                )
+            )
+
+            format_version = int(
+                tip.get(
+                    "snapshotFormatVersion"
+                )
+                or 0
+            )
+
+            if (
+                format_version
+                == CLOUD_FORMAT_VERSION
+            ):
+                result = (
+                    self.download(
+                        force=True
+                    )
+                )
+                result[
+                    "migration"
+                ] = (
+                    "ALREADY_PASSWORDLESS"
+                )
+                return result
+
+            metadata, plain = (
+                self._decrypt_remote_snapshot(
+                    tip=tip,
+                    legacy_passphrase=(
+                        passphrase
+                    ),
+                )
+            )
+
+            revision = int(
+                metadata.get(
+                    "revision"
+                )
+                or 0
+            )
+
+            restored = (
+                self.apply_plain_payload(
+                    payload=plain,
+                    revision=revision,
+                    device_id=str(
+                        metadata.get(
+                            "deviceId"
+                        )
+                        or ""
+                    ),
+                )
+            )
+
+            # A chave v2 é criada somente depois de o snapshot legado ter sido
+            # autenticado/descriptografado com sucesso.
+            self.ensure_automatic_key(
+                create_if_missing=True
+            )
+
+            uploaded = (
+                self.upload(
+                    force=True
+                )
+            )
+
+            uploaded[
+                "action"
+            ] = "MIGRATED_LEGACY"
+
+            uploaded[
+                "decision"
+            ] = "LEGACY_TO_PASSWORDLESS"
+
+            uploaded[
+                "legacyRevision"
+            ] = revision
+
+            uploaded[
+                "restored"
+            ] = restored
+
+            return uploaded
 
     def smart_sync(self) -> dict[str, Any]:
         """
         NEWEST_WINS:
         Drive mais recente -> baixa/substitui local.
         Caso contrário -> envia o estado local.
+
+        Snapshots v2 usam chave automática da própria conta Google.
         """
         with self._lock:
-            if not self.key_configured():
-                return {
-                    "ok": False,
-                    "action": "KEY_REQUIRED",
-                    "message": "Configure a senha da nuvem.",
-                }
-
             state = self.load_state()
 
             try:
-                snapshots = self.remote_snapshots()
-                local_info = self.local_state_info()
+                snapshots = (
+                    self.remote_snapshots()
+                )
+
+                local_info = (
+                    self.local_state_info()
+                )
 
                 if not snapshots:
-                    result = self.upload(force=True)
-                    result["decision"] = "NO_REMOTE_UPLOAD_LOCAL"
+                    result = (
+                        self.upload(
+                            force=True
+                        )
+                    )
+                    result[
+                        "decision"
+                    ] = (
+                        "NO_REMOTE_UPLOAD_LOCAL"
+                    )
                     return result
 
-                remote_tip = self._latest_remote_by_time(snapshots)
-                remote_revision = int(remote_tip.get("revision") or 0)
-                remote_modified = self._remote_modified_epoch(remote_tip)
+                remote_tip = (
+                    self._latest_remote_by_time(
+                        snapshots
+                    )
+                )
+
+                remote_format = int(
+                    remote_tip.get(
+                        "snapshotFormatVersion"
+                    )
+                    or 0
+                )
+
+                if (
+                    remote_format
+                    == LEGACY_CLOUD_FORMAT_VERSION
+                ):
+                    if self.legacy_passphrase_configured():
+                        return (
+                            self.migrate_legacy_snapshot(
+                                self.load_passphrase()
+                            )
+                        )
+
+                    return {
+                        "ok": False,
+                        "action": (
+                            "LEGACY_PASSWORD_REQUIRED"
+                        ),
+                        "message": (
+                            "Backup antigo encontrado. Ele precisa ser migrado "
+                            "uma única vez. No computador original a conversão "
+                            "é automática se a senha antiga ainda estiver salva."
+                        ),
+                        "revision": int(
+                            remote_tip.get(
+                                "revision"
+                            )
+                            or 0
+                        ),
+                        "formatVersion": (
+                            remote_format
+                        ),
+                    }
+
+                # Garante que uma instalação nova obtenha a chave v2 do Drive
+                # antes de tentar abrir o snapshot.
+                self.ensure_automatic_key(
+                    create_if_missing=False
+                )
+
+                remote_revision = int(
+                    remote_tip.get(
+                        "revision"
+                    )
+                    or 0
+                )
+
+                remote_modified = (
+                    self._remote_modified_epoch(
+                        remote_tip
+                    )
+                )
+
                 remote_modified_iso = (
-                    remote_tip.get("modifiedTime")
-                    or remote_tip.get("snapshotCreatedAt")
+                    remote_tip.get(
+                        "modifiedTime"
+                    )
+                    or remote_tip.get(
+                        "snapshotCreatedAt"
+                    )
                 )
 
-                local_modified = local_info.get("modifiedEpoch")
-                local_modified_iso = local_info.get("modifiedTime")
+                local_modified = (
+                    local_info.get(
+                        "modifiedEpoch"
+                    )
+                )
+
+                local_modified_iso = (
+                    local_info.get(
+                        "modifiedTime"
+                    )
+                )
+
                 local_revision = int(
-                    state.get("lastAppliedRevision") or 0
+                    state.get(
+                        "lastAppliedRevision"
+                    )
+                    or 0
                 )
 
-                last_signature = state.get("lastLocalSignature")
-                current_signature = local_info.get("signature")
+                last_signature = (
+                    state.get(
+                        "lastLocalSignature"
+                    )
+                )
+
+                current_signature = (
+                    local_info.get(
+                        "signature"
+                    )
+                )
+
                 signature_changed = bool(
                     last_signature
-                    and last_signature != current_signature
+                    and last_signature
+                    != current_signature
                 )
+
                 local_changed = bool(
-                    state.get("dirty") or signature_changed
+                    state.get(
+                        "dirty"
+                    )
+                    or signature_changed
                 )
 
                 same_remote = (
-                    str(state.get("lastRemoteFileId") or "")
-                    == str(remote_tip.get("id") or "")
+                    str(
+                        state.get(
+                            "lastRemoteFileId"
+                        )
+                        or ""
+                    )
+                    == str(
+                        remote_tip.get(
+                            "id"
+                        )
+                        or ""
+                    )
                 )
 
-                # Um PC novo não deve sobrescrever o Drive só porque
-                # settings locais foram criados agora.
-                if local_revision == 0 and not state.get("dirty"):
-                    result = self.download(force=True)
-                    result["decision"] = "INITIAL_REMOTE_RESTORE"
+                if (
+                    local_revision
+                    == 0
+                    and not state.get(
+                        "dirty"
+                    )
+                ):
+                    result = (
+                        self.download(
+                            force=True
+                        )
+                    )
+                    result[
+                        "decision"
+                    ] = (
+                        "INITIAL_REMOTE_RESTORE"
+                    )
                     return result
 
-                if same_remote and not local_changed:
+                if (
+                    same_remote
+                    and not local_changed
+                ):
                     self._update_state(
-                        lastSyncAt=utc_now_iso(),
-                        lastAction="UP_TO_DATE",
+                        lastSyncAt=(
+                            utc_now_iso()
+                        ),
+                        lastAction=(
+                            "UP_TO_DATE"
+                        ),
                         lastError=None,
-                        lastRemoteModifiedTime=remote_modified_iso,
-                        lastLocalModifiedAt=local_modified_iso,
-                        lastLocalSignature=current_signature,
+                        lastRemoteModifiedTime=(
+                            remote_modified_iso
+                        ),
+                        lastLocalModifiedAt=(
+                            local_modified_iso
+                        ),
+                        lastLocalSignature=(
+                            current_signature
+                        ),
                     )
+
                     return {
                         "ok": True,
                         "action": "UP_TO_DATE",
                         "decision": "SAME_VERSION",
-                        "revision": remote_revision,
-                        "localModifiedTime": local_modified_iso,
-                        "remoteModifiedTime": remote_modified_iso,
+                        "revision": (
+                            remote_revision
+                        ),
+                        "formatVersion": (
+                            CLOUD_FORMAT_VERSION
+                        ),
+                        "localModifiedTime": (
+                            local_modified_iso
+                        ),
+                        "remoteModifiedTime": (
+                            remote_modified_iso
+                        ),
                     }
 
                 remote_is_newer = False
 
-                if remote_modified is not None and local_modified is None:
+                if (
+                    remote_modified
+                    is not None
+                    and local_modified
+                    is None
+                ):
                     remote_is_newer = True
                 elif (
-                    remote_modified is not None
-                    and local_modified is not None
+                    remote_modified
+                    is not None
+                    and local_modified
+                    is not None
                 ):
-                    remote_is_newer = remote_modified > local_modified
+                    remote_is_newer = (
+                        remote_modified
+                        > local_modified
+                    )
 
                 if remote_is_newer:
-                    result = self.download(force=True)
-                    result["decision"] = "REMOTE_NEWER"
+                    result = (
+                        self.download(
+                            force=True
+                        )
+                    )
+                    result[
+                        "decision"
+                    ] = (
+                        "REMOTE_NEWER"
+                    )
                     return result
 
-                result = self.upload(force=True)
-                result["decision"] = "LOCAL_NEWER_OR_EQUAL"
+                result = (
+                    self.upload(
+                        force=True
+                    )
+                )
+
+                result[
+                    "decision"
+                ] = (
+                    "LOCAL_NEWER_OR_EQUAL"
+                )
+
                 return result
 
             except Exception as exc:
                 self._update_state(
                     lastAction="ERROR",
-                    lastError=str(exc),
+                    lastError=str(
+                        exc
+                    ),
                 )
                 raise
-

@@ -8,7 +8,7 @@ import unittest
 from contextlib import closing
 from pathlib import Path
 
-from controlefin_cloud_sync import CloudSyncManager
+from controlefin_cloud_sync import CloudSyncManager, encrypt_legacy_cloud_payload
 
 
 class FakeDrive:
@@ -18,6 +18,7 @@ class FakeDrive:
         self.payloads = {}
         self.next_id = 1
         self.index_payload = None
+        self.cloud_key_payload = None
 
     def list_files(self, *, page_size=100):
         return [dict(item) for item in self.files]
@@ -57,6 +58,27 @@ class FakeDrive:
         return {
             "id": "index",
             "name": "controlefin-state.json",
+        }
+
+    def write_cloud_key(self, payload):
+        self.cloud_key_payload = dict(payload)
+        return {
+            "id": "cloud-key",
+            "name": "controlefin-key.json",
+        }
+
+    def read_cloud_key(self):
+        if self.cloud_key_payload is None:
+            return None
+
+        return {
+            "file": {
+                "id": "cloud-key",
+                "name": "controlefin-key.json",
+            },
+            "payload": dict(
+                self.cloud_key_payload
+            ),
         }
 
     def download_bytes(self, *, file_id=None, name=None):
@@ -268,34 +290,134 @@ class CloudSyncTests(unittest.TestCase):
             self.assertEqual(second_pluggy["clientSecret"], "PLUGGY-ONE")
             self.assertEqual(second_pluggy["itemIds"], ["ITEM-ONE"])
 
-    def test_wrong_cloud_password_is_rejected_before_saving(self):
+    def test_legacy_snapshot_requires_correct_password_only_once(self):
         with tempfile.TemporaryDirectory() as tmp:
             base = Path(tmp)
             drive = FakeDrive()
+
             first, _, _, _ = self.make_manager(
                 base / "one",
                 drive,
-                marker="ONE",
-                pluggy_secret="S1",
+                marker="LEGACY",
+                pluggy_secret="LEGACY-SECRET",
             )
-            first.save_passphrase(
-                "this is the correct password",
-                verify_remote=False,
-            )
-            first.upload()
 
-            second, _, _, _ = self.make_manager(
+            state = first.load_state()
+
+            plain = first.build_plain_payload(
+                revision=1,
+                device_id=state["deviceId"],
+            )
+
+            encrypted = encrypt_legacy_cloud_payload(
+                payload=plain,
+                passphrase="legacy cloud password 123",
+                revision=1,
+                device_id=state["deviceId"],
+                created_at="2026-09-20T12:00:00Z",
+            )
+
+            drive.create_bytes(
+                name="controlefin-state-v1-r000000000001-legacy.bin",
+                data=encrypted,
+                mime_type="application/octet-stream",
+                app_properties={
+                    "kind": "controlefin_state",
+                    "formatVersion": "1",
+                    "revision": "1",
+                    "deviceId": state["deviceId"],
+                    "createdAtUtc": "2026-09-20T12:00:00Z",
+                },
+            )
+
+            second, second_db, _, _ = self.make_manager(
                 base / "two",
                 drive,
                 marker="TWO",
-                pluggy_secret="S2",
+                pluggy_secret="TWO-SECRET",
             )
-            with self.assertRaisesRegex(ValueError, "senha da nuvem"):
-                second.save_passphrase(
-                    "this password is definitely wrong",
-                    verify_remote=True,
+
+            with self.assertRaisesRegex(
+                ValueError,
+                "descriptografar",
+            ):
+                second.migrate_legacy_snapshot(
+                    "this is definitely wrong"
                 )
-            self.assertFalse(second.key_file.exists())
+
+            migrated = second.migrate_legacy_snapshot(
+                "legacy cloud password 123"
+            )
+
+            self.assertEqual(
+                migrated["action"],
+                "MIGRATED_LEGACY",
+            )
+            self.assertEqual(
+                migrated["formatVersion"],
+                2,
+            )
+            self.assertEqual(
+                database_marker(second_db),
+                "LEGACY",
+            )
+            self.assertIsNotNone(
+                drive.cloud_key_payload
+            )
+
+    def test_new_device_restores_v2_without_cloud_password(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            base = Path(tmp)
+            drive = FakeDrive()
+
+            first, _, _, _ = self.make_manager(
+                base / "one",
+                drive,
+                marker="FIRST",
+                pluggy_secret="FIRST-SECRET",
+            )
+
+            first.upload(force=True)
+
+            second, second_db, _, second_pluggy = self.make_manager(
+                base / "two",
+                drive,
+                marker="SECOND",
+                pluggy_secret="SECOND-SECRET",
+            )
+
+            self.assertFalse(
+                second.key_file.exists()
+            )
+
+            result = second.smart_sync()
+
+            self.assertEqual(
+                result["action"],
+                "DOWNLOADED",
+            )
+            self.assertEqual(
+                database_marker(second_db),
+                "FIRST",
+            )
+            self.assertEqual(
+                second_pluggy["clientSecret"],
+                "FIRST-SECRET",
+            )
+            self.assertTrue(
+                second.key_file.exists()
+            )
+
+            key_record = json.loads(
+                second.key_file.read_text(
+                    encoding="utf-8"
+                )
+            )
+
+            self.assertEqual(
+                key_record["mode"],
+                "google_drive_auto",
+            )
 
     def test_force_upload_resolves_same_revision_branch(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -320,7 +442,7 @@ class CloudSyncTests(unittest.TestCase):
                 mime_type="application/octet-stream",
                 app_properties={
                     "kind": "controlefin_state",
-                    "formatVersion": "1",
+                    "formatVersion": "2",
                     "revision": "1",
                     "deviceId": "other-device",
                     "createdAtUtc": "2026-09-20T12:01:00Z",

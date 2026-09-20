@@ -164,7 +164,7 @@
 
     <div class="access-view hidden" id="accessDriveRestore">
       <h2>Restaurar do Google Drive</h2>
-      <p>Conecte a mesma conta Google usada no outro computador e informe a mesma senha da nuvem.</p>
+      <p>Use a mesma conta Google do outro computador. Backups atuais são restaurados automaticamente, sem senha da nuvem.</p>
 
       <div class="onboarding-restore-status">
         <div class="onboarding-restore-line">
@@ -185,9 +185,10 @@
         </div>
       </div>
 
-      <label class="onboarding-cloud-password">
-        Senha da nuvem
-        <input id="onboardingCloudPassphrase" type="password" autocomplete="current-password" minlength="12" maxlength="256" placeholder="A mesma senha usada no outro computador">
+      <label id="legacyCloudPasswordWrap" class="onboarding-cloud-password hidden">
+        Senha antiga do backup
+        <input id="onboardingCloudPassphrase" type="password" autocomplete="current-password" minlength="12" maxlength="256" placeholder="Somente para migrar backups da versão antiga">
+        <span>Esta senha será usada apenas uma vez para converter o backup antigo ao formato automático.</span>
       </label>
 
       <div class="onboarding-restore-actions">
@@ -201,7 +202,7 @@
       </div>
 
       <div class="auth-message" id="onboardingRestoreMessage"></div>
-      <p class="auth-hint">A restauração só baixa um backup existente. Se nenhum backup for encontrado, o ControleFin não enviará um estado vazio para o Drive.</p>
+      <p class="auth-hint">A restauração só baixa um backup existente. A chave dos backups atuais é gerenciada automaticamente dentro da mesma conta Google. Backups antigos protegidos por senha exigem uma única migração.</p>
     </div>
 
     <div class="access-view hidden" id="accessPluggy">
@@ -301,7 +302,7 @@
       <div class="cloud-sync-title">Sincronização entre computadores</div>
 
       <div class="cloud-status-box">
-        <div class="cloud-status-line"><span>Criptografia</span><strong id="cloudKeyStatus">—</strong></div>
+        <div class="cloud-status-line"><span>Proteção do backup</span><strong id="cloudKeyStatus">—</strong></div>
         <div class="cloud-status-line"><span>Revisão local</span><strong id="cloudLocalRevision">—</strong></div>
         <div class="cloud-status-line"><span>Revisão na nuvem</span><strong id="cloudRemoteRevision">—</strong></div>
         <div class="cloud-status-line"><span>Estado local</span><strong id="cloudDirtyStatus">—</strong></div>
@@ -309,15 +310,9 @@
         <div class="cloud-status-line"><span>Arquivo mais recente no Drive</span><strong id="cloudRemoteModifiedTime">—</strong></div>
       </div>
 
-      <div class="cloud-password-row">
-        <label>Senha da nuvem
-          <input id="cloudPassphraseInput" type="password" autocomplete="new-password" minlength="12" maxlength="256" placeholder="Mínimo de 12 caracteres">
-        </label>
-        <button id="saveCloudPassphraseBtn" type="button">Salvar senha</button>
-      </div>
-
-      <div class="cloud-actions">
-        <button id="clearCloudPassphraseBtn" class="ghost" type="button">Esquecer senha neste PC</button>
+      <div class="cloud-status-box">
+        <div class="cloud-status-line"><span>Chave</span><strong>Automática pela conta Google</strong></div>
+        <div class="cloud-status-line"><span>Senha da nuvem</span><strong>Não necessária</strong></div>
       </div>
 
       <div class="cloud-conflict hidden" id="cloudConflictBox">
@@ -331,8 +326,7 @@
     </div>
 
     <p class="cloud-note">
-      A senha da nuvem não é sua senha Google. Ela criptografa o banco, os ajustes e a configuração Pluggy antes do upload e deve ser a mesma nos outros computadores. Na sincronização, a versão mais recente vence: Drive mais novo é baixado; caso contrário, o estado local é enviado.
-      Cada usuário local conecta a própria conta Google e recebe sua própria pasta Meu Drive / ControleFin. O OAuth Client do aplicativo é compartilhado, mas o token Google e os dados continuam isolados por usuário.
+      Os snapshots continuam criptografados, mas a chave é gerenciada automaticamente na pasta ControleFin da própria conta Google. Isso elimina a senha da nuvem e facilita o uso em outros computadores. A proteção passa a depender da segurança da conta Google; a chave e os snapshots ficam no mesmo Drive. Na sincronização, a versão mais recente vence.
     </p>
   </div>
 </section>
@@ -1027,7 +1021,7 @@
   const safeText = (v) => v == null || v === '' ? '—' : String(v);
   const esc = (v) => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 
-  const UI_EN_EXACT = {"Entrar com Google":"Sign in with Google","Continuar com Google":"Continue with Google","Senha adicional":"Additional password","Continuar":"Continue","Usar outra conta Google":"Use another Google account","Segurança":"Security","Segurança do acesso":"Access security","Login principal":"Primary sign-in","Conta Google":"Google account","Ativada":"Enabled","Não ativada":"Not enabled","Senha adicional atual":"Current additional password","Nova senha adicional":"New additional password","Confirmar nova senha":"Confirm new password","Ativar / alterar senha":"Enable / change password","Remover senha adicional":"Remove additional password","Configurar OAuth do aplicativo":"Configure app OAuth","Como deseja começar?":"How would you like to start?","Restaurar meus dados do Google Drive":"Restore my data from Google Drive","Configurar Pluggy manualmente":"Configure Pluggy manually","Restaurar do Google Drive":"Restore from Google Drive","Conectar minha conta Google":"Connect my Google account","Restaurar dados deste Drive":"Restore data from this Drive","Verificar novamente":"Check again","Usar outro usuário":"Use another user","Backup encontrado":"Backup found","Última versão":"Latest version","Última alteração local":"Latest local change","Arquivo mais recente no Drive":"Latest Drive file","Conectar / sincronizar Google Drive":"Connect / sync Google Drive","Sincronizar Google Drive":"Sync Google Drive","Sincronização entre computadores":"Cross-device synchronization","Criptografia":"Encryption","Configurada":"Configured","Não configurada":"Not configured","Revisão local":"Local revision","Revisão na nuvem":"Cloud revision","Estado local":"Local state","Alterações pendentes":"Pending changes","Sincronizado":"Synchronized","Sem snapshot":"No snapshot","Senha da nuvem":"Cloud password","Salvar senha":"Save password","Sincronizar agora":"Sync now","Esquecer senha neste PC":"Forget password on this PC","Conflito entre computadores":"Conflict between computers","Usar versão da nuvem":"Use cloud version","Substituir nuvem por este PC":"Replace cloud with this PC","Mínimo de 12 caracteres":"At least 12 characters","ControleFin — Saúde Financeira":"ControleFin — Financial Health","Dashboard local — nenhum dado carregado":"Local dashboard — no data loaded","Pluggy":"Pluggy","Sincronizar":"Sync","Sair":"Sign out","Recarregar SQLite":"Reload SQLite","Banco local":"Local database","Os dados financeiros são carregados exclusivamente de data/controlefin.db pelo backend local.":"Financial data is loaded exclusively from data/controlefin.db by the local backend.","Tentar novamente":"Try again","Aguardando SQLite.":"Waiting for SQLite.","Banco SQLite indisponível. Inicie o ControleFin pelo backend local e tente novamente.":"SQLite database unavailable. Start ControleFin through the local backend and try again.","Mostrar IDs":"Show IDs","Ocultar IDs":"Hide IDs","Exibir identificadores dos blocos":"Show block identifiers","Controle financeiro pessoal":"Personal finance control","Veja onde seu dinheiro está indo.":"See where your money is going.","Um painel local, focado em gastos de cartão, PIX e boletos. Filtre, investigue e reclassifique cada transação sem enviar seus dados para fora do computador.":"A local dashboard focused on card, PIX, and boleto spending. Filter, investigate, and reclassify each transaction without sending your data outside your computer.","100% local no navegador. Sem APIs ou bibliotecas externas.":"100% local in your browser. No external APIs or libraries.","Como executar":"How to run","Aguardando dados.":"Waiting for data.","Gastos":"Expenses","Entradas":"Income","Contas e cartões":"Accounts and cards","Visão geral":"Overview","Saldos atuais, faturas dos cartões e fluxo efetivo com as mesmas regras de Gastos e Entradas.":"Current balances, card bills, and effective cash flow using the same rules as Expenses and Income.","Entradas e gastos mensais após exclusões, resarcimentos, reclassificações e transações manuais.":"Monthly income and expenses after exclusions, reimbursements, reclassifications, and manual transactions.","Detalhes operacionais das contas bancárias e cartões de crédito na moeda selecionada.":"Operational details for bank accounts and credit cards in the selected currency.","Saldo atual":"Current balance","Os gráficos usam a janela selecionada e os filtros ativos; cada compra parcelada considera no máximo uma única parcela por mês, distribuída pelo número da parcela, e os valores exibidos já descontam resarcimentos previstos e mostram somente a parcela efetivamente atribuída a você. O filtro de mês não corta a tendência.":"Charts use the selected window and active filters; each installment purchase contributes at most one installment per month, distributed by installment number, and displayed values already deduct expected reimbursements and show only the share effectively attributed to you. The month filter does not truncate the trend.","Fatura atual":"Current bill","Mês da fatura":"Bill month","projetada":"projected","Parcela":"Installment","Entradas e gastos mensais após exclusões, resarcimentos, reclassificações, transações manuais e distribuição das compras parceladas.":"Monthly income and expenses after exclusions, reimbursements, reclassifications, manual transactions, and installment distribution.","Os gráficos usam a janela selecionada e os filtros ativos; compras parceladas são distribuídas pelo número da parcela ao longo dos meses, e os valores exibidos já descontam resarcimentos previstos e mostram somente a parcela efetivamente atribuída a você. O filtro de mês não corta a tendência.":"Charts use the selected window and active filters; installment purchases are distributed across months by installment number, and displayed values already deduct expected reimbursements and show only the share effectively attributed to you. The month filter does not truncate the trend.","Limite disponível":"Available credit","Limite total":"Credit limit","Vence":"Due","Fonte do saldo":"Balance source","Saldo informado pela conta":"Balance reported by the account","Conta bancária":"Bank account","Cartão de crédito":"Credit card","Sem contas bancárias ou cartões para esta moeda.":"No bank accounts or credit cards for this currency.","Nenhuma conta bancária ou cartão encontrado nesta moeda.":"No bank account or credit card found in this currency.","Sem entradas ou gastos considerados para a moeda/janela selecionada.":"No considered income or expenses for the selected currency/window.","Entradas de salário":"Salary income","Gastos futuros":"Future expenses","Entrada líquida projetada":"Projected net income","Salários − gastos futuros":"Salary income − future expenses","Entradas, gastos e líquido projetados":"Projected income, expenses, and net","Salários usam a última ocorrência por origem; gastos somam custos fixos e parcelas restantes. A linha líquida é a diferença entre os dois.":"Salary uses the latest occurrence for each source; expenses combine fixed costs and remaining installments. The net line is the difference between them.","Salário projetado":"Projected salary","Entrada líquida":"Net income","Referências de salário":"Salary references","Cada origem usa o valor da última entrada efetivamente classificada como Salário.":"Each source uses the latest income effectively classified as Salary.","Nenhuma entrada de salário identificada para esta moeda.":"No salary income identified for this currency.","Salários":"Salaries","Salário":"Salary","Projeções futuras":"Future projections","Planejamento":"Planning","Visão mês a mês dos gastos já comprometidos por parcelas restantes e custos fixos recorrentes.":"Month-by-month view of expenses already committed through remaining installments and recurring fixed costs.","Horizonte":"Horizon","18 meses":"18 months","24 meses":"24 months","A janela global não altera esta projeção. O horizonte começa no próximo mês.":"The global window does not change this projection. The horizon starts next month.","Total projetado":"Projected total","Custos fixos + parcelas restantes":"Fixed costs + remaining installments","Média mensal projetada":"Projected monthly average","Custos fixos":"Fixed costs","Parcelas restantes":"Remaining installments","Compromissos futuros por mês":"Future commitments by month","Custos fixos usam o valor líquido da última ocorrência; parcelas usam a agenda já distribuída por mês.":"Fixed costs use the net amount of the latest occurrence; installments use the schedule already distributed by month.","Projeção mês a mês":"Month-by-month projection","Os detalhes mostram quais custos fixos e parcelas compõem cada mês.":"Details show which fixed costs and installments make up each month.","Composição":"Composition","Referências de custos fixos":"Fixed-cost references","O valor de cada custo fixo é a última ocorrência efetivamente observada.":"Each fixed cost uses the latest effectively observed occurrence.","Parcelamentos em aberto":"Open installment plans","Somente parcelas posteriores ao mês atual entram na projeção.":"Only installments after the current month are included in the projection.","Sem projeções futuras para esta moeda.":"No future projections for this currency.","Sem compromissos projetados.":"No projected commitments.","Nenhum custo fixo identificado para esta moeda.":"No fixed cost identified for this currency.","Nenhuma parcela futura identificada neste horizonte.":"No future installment identified in this horizon.","Parcelado":"Installment plan","Transações":"Transactions","Navegação do dashboard":"Dashboard navigation","Moeda":"Currency","Janela":"Window","3 meses":"3 months","6 meses":"6 months","12 meses":"12 months","Tudo":"All","Contas: aguardando":"Accounts: waiting","Gastos consolidados":"Consolidated expenses","Gasto médio mensal da janela":"Average monthly expense in the window","Total na janela:":"Total in window:","transações consideradas":"transactions considered","Média mensal · Cartão":"Monthly average · Card","Média mensal · PIX":"Monthly average · PIX","Média mensal · Boleto":"Monthly average · Boleto","Movimentações patrimoniais excluídas: —":"Excluded asset movements: —","Movimentações / faturas consolidadas excluídas: —":"Excluded movements / consolidated card bills: —","Resarcimentos previstos: —":"Expected reimbursements: —","Mês":"Month","Todos":"All","Conta / cartão":"Account / card","Todas":"All","Meio":"Method","Fixo / variável":"Fixed / variable","Fixos":"Fixed","Variáveis":"Variable","Categoria":"Category","Merchant":"Merchant","Buscar":"Search","Valor mín.":"Min. amount","Valor máx.":"Max. amount","Limpar filtros":"Clear filters","Gerenciar categorias personalizadas e salvamento":"Manage custom categories and saving","Nova categoria":"New category","Criar categoria":"Create category","Salvamento automático ativo.":"Automatic saving is active.","Categorias, reclassificações, regras automáticas e padrões de gastos fixos são gravados pelo backend em":"Categories, reclassifications, automatic rules, and fixed-expense patterns are saved by the backend in",". O navegador apenas envia e lê os ajustes; o arquivo permanente fica na pasta local do ControleFin.":". The browser only sends and reads the settings; the permanent file stays in the local ControleFin folder.","Baixar backup dos ajustes":"Download settings backup","Restaurar backup":"Restore backup","Nenhuma alteração nesta sessão":"No changes in this session","Regras automáticas de categorização":"Automatic categorization rules","Campo":"Field","Descrição":"Description","Banco":"Bank","Tipo de gasto":"Expense type","Condição":"Condition","contém":"contains","é igual a":"equals","começa com":"starts with","Valor a procurar":"Value to match","Classificar como":"Classify as","Criar regra":"Create rule","A primeira regra ativa que combinar com a transação é aplicada. Ajustes manuais de uma transação sempre têm prioridade sobre as regras. Use ↑ e ↓ para alterar a prioridade.":"The first active rule that matches the transaction is applied. Manual transaction adjustments always take priority over rules. Use ↑ and ↓ to change priority.","Padrões automáticos de gastos fixos":"Automatic fixed-expense patterns","Ao marcar uma transação como":"When you mark a transaction as","Fixo":"Fixed",", o ControleFin aprende um padrão pela descrição/merchant e usa valor, conta e meio de pagamento como sinais de proximidade. Transações semelhantes passam a ser classificadas como fixas automaticamente. Excluir um padrão faz com que essas transações voltem ao padrão":", ControleFin learns a pattern from the description/merchant and uses amount, account, and payment method as similarity signals. Similar transactions are then automatically classified as fixed. Deleting a pattern makes those transactions return to the default","Variável":"Variable",", salvo quando houver um ajuste manual específico.":", unless there is a specific manual adjustment.","Mês a mês":"Month by month","Quanto gasto e onde gasto?":"How much do I spend and where?","Os gráficos usam a janela selecionada e os filtros ativos; valores exibidos já descontam resarcimentos previstos e mostram somente a parcela efetivamente atribuída a você. O filtro de mês não corta a tendência.":"Charts use the selected window and active filters; displayed amounts already deduct expected reimbursements and show only the share actually attributed to you. The month filter does not truncate the trend.","gastos visíveis":"visible expenses","Gastos mensais em reais":"Monthly expenses in reais","Barras lado a lado por mês. O total do mês aparece acima do grupo.":"Side-by-side bars by month. The monthly total appears above the group.","Agrupar por":"Group by","Fixo x variável":"Fixed vs variable","Clique nas legendas para ocultar ou exibir séries sem perder o contexto mensal.":"Click legend items to hide or show series without losing monthly context.","Composição percentual do mês":"Monthly percentage composition","Cada coluna representa 100% do gasto do mês; os segmentos mostram onde o dinheiro foi gasto.":"Each column represents 100% of the month's spending; segments show where the money was spent.","Compor por":"Break down by","Passe o mouse para ver valor e percentual. As legendas continuam clicáveis.":"Hover to see amount and percentage. Legend items remain clickable.","Onde":"Where","Principais destinos do gasto":"Top spending destinations","Clique em uma categoria ou merchant para aplicar o filtro imediatamente.":"Click a category or merchant to apply the filter immediately.","Categorias":"Categories","Ranking da seleção atual.":"Ranking for the current selection.","Merchants":"Merchants","Estabelecimentos e beneficiários com maior gasto.":"Merchants and recipients with the highest spending.","Transações de gastos":"Expense transactions","Detalhe completo dos gastos considerados nesta aba. Edite a categoria e marque cada gasto como fixo ou variável. Variável é o padrão; ao marcar Fixo, transações semelhantes também serão reconhecidas automaticamente.":"Full detail of the expenses considered on this tab. Edit the category and mark each expense as fixed or variable. Variable is the default; when you mark Fixed, similar transactions will also be recognized automatically.","Data":"Date","Banco / conta":"Bank / account","Resarcimento":"Reimbursement","Seu gasto":"Your expense","Detalhes":"Details","Ação":"Action","Entradas consolidadas":"Consolidated income","Entradas identificadas como RENDIMENTO ou RESGATE RDB são ignoradas nesta aba.":"Entries identified as RENDIMENTO or RESGATE RDB are ignored on this tab.","Entrada média mensal da janela":"Average monthly income in the window","Média mensal · Transferências":"Monthly average · Transfers","Média mensal · Outros":"Monthly average · Other","Resarcimentos excluídos: —":"Excluded reimbursements: —","Conta":"Account","Fixas":"Fixed","Origem":"Source","Padrões automáticos de entradas fixas":"Automatic fixed-income patterns","Toda entrada é":"Every income transaction is","por padrão. Ao marcar uma entrada como":"by default. When you mark an income transaction as","Fixa":"Fixed",", o ControleFin aprende um padrão por descrição/origem e usa valor, conta e meio de pagamento como sinais de proximidade para reconhecer entradas semelhantes antigas e futuras. Categorias personalizadas e regras automáticas de categoria são compartilhadas com a aba Gastos.":", ControleFin learns a pattern from description/source and uses amount, account, and payment method as similarity signals to recognize similar past and future income transactions. Custom categories and automatic category rules are shared with the Expenses tab.","Regras automáticas de salário por origem":"Automatic salary rules by source","Ao salvar uma entrada como":"When you save an income transaction as","Salário":"Salary","ou":"or",", o ControleFin cria uma regra persistente para a mesma origem. O":", ControleFin creates a persistent rule for the same source. The","tem prioridade; quando ele não existe, merchant/descrição são usados de forma mais conservadora.":"takes priority; when it is unavailable, merchant/description are used more conservatively.","Quanto entra e de onde vem?":"How much comes in and where does it come from?","Os gráficos usam a janela selecionada e os filtros de conta, meio, fixo/variável, categoria, origem, busca e valor. O filtro de mês não corta a tendência.":"Charts use the selected window and account, method, fixed/variable, category, source, search, and amount filters. The month filter does not truncate the trend.","entradas visíveis":"visible income transactions","Entradas mensais em reais":"Monthly income in reais","Tipo de entrada":"Income type","Clique nas legendas para ocultar ou exibir séries.":"Click legend items to hide or show series.","Cada coluna representa 100% das entradas do mês e mostra sua origem.":"Each column represents 100% of the month's income and shows its source.","Passe o mouse para ver valor e percentual. As legendas são clicáveis.":"Hover to see amount and percentage. Legend items are clickable.","Principais fontes das entradas":"Top income sources","Clique em uma categoria ou origem para aplicar o filtro imediatamente.":"Click a category or source to apply the filter immediately.","Origens":"Sources","Pagadores/origens com maior entrada.":"Payers/sources with the highest income.","Transações de entradas":"Income transactions","Edite a categoria e marque cada entrada como fixa ou variável. Alterações recalculam os visuais imediatamente e são persistidas.":"Edit the category and mark each income transaction as fixed or variable. Changes immediately recalculate the visuals and are persisted.","Pagador":"Payer","Resarcimento / vínculo":"Reimbursement / link","Valor":"Amount","Posição financeira":"Financial position","Resumo patrimonial sem competir com a leitura de gastos.":"Net-worth summary without competing with the spending view.","Patrimônio líquido":"Net worth","Estimado":"Estimated","Saldo bancário":"Bank balance","Investimentos":"Investments","Cartões em aberto":"Open card balances","Caixa médio mensal":"Average monthly cash flow","Fluxo de caixa":"Cash flow","Entradas e saídas bancárias mensais.":"Monthly bank inflows and outflows.","Saúde financeira":"Financial health","Heurística explicável sobre os dados disponíveis.":"Explainable heuristic based on the available data.","Leitura automática":"Automatic insights","Sinais relevantes do fluxo, gastos, patrimônio e qualidade dos dados.":"Relevant signals from cash flow, expenses, net worth, and data quality.","Contas":"Accounts","BTG Banking, BTG Investimentos e Nubank tratados separadamente.":"BTG Banking, BTG Investments, and Nubank are handled separately.","Investimentos e detalhes técnicos":"Investments and technical details","Alocação de investimentos":"Investment allocation","Posições por instituição":"Positions by institution","Ajustes":"Settings","Transações e reclassificação":"Transactions and reclassification","Adicionar transação manual":"Add manual transaction","Use quando uma movimentação legítima não chegar pela integração. Campos com * são obrigatórios e o registro fica salvo permanentemente nos ajustes locais.":"Use this when a legitimate transaction is missing from the integration. Fields marked * are required and the record is permanently saved in local settings.","+ Gasto manual":"+ Manual expense","+ Entrada manual":"+ Manual income","Natureza *":"Type *","Data *":"Date *","Valor *":"Amount *","Conta / cartão *":"Account / card *","Meio *":"Method *","Descrição *":"Description *","Categoria *":"Category *","Merchant / pagador":"Merchant / payer","Moeda *":"Currency *","Outra conta / cartão manual":"Other manual account / card","Instituição *":"Institution *","Nome da conta / cartão *":"Account / card name *","Tipo da conta *":"Account type *","Conta bancária":"Bank account","Salvar transação manual":"Save manual transaction","Atualizar transação manual":"Update manual transaction","Cancelar edição":"Cancel editing","Preencha os campos obrigatórios.":"Fill in the required fields.","Nenhuma transação manual cadastrada.":"No manual transactions added.","Manual":"Manual","Editar":"Edit","Excluir":"Delete","Dinheiro":"Cash","Auditoria local de inclusão em Gastos":"Local expense inclusion audit","Pesquise merchant, descrição ou ID. A auditoria examina inclusive transações pendentes ou normalmente excluídas e mostra por que entram ou não na aba Gastos.":"Search merchant, description, or ID. The audit also examines pending or normally excluded transactions and shows why they are or are not included in Expenses.","Pesquisar transação":"Search transaction","Auditar":"Audit","Em Gastos?":"In Expenses?","Diagnóstico":"Diagnosis","Digite um termo e clique em Auditar.":"Enter a term and click Audit.","Nenhuma transação bruta encontrada. Nesse caso, o registro não chegou ao dataset transactions da Pluggy/exportador.":"No raw transaction found. In that case, the record did not reach the Pluggy/exporter transactions dataset.","Corrija categoria, merchant, meio ou natureza. Todos os gráficos são atualizados imediatamente.":"Correct category, merchant, method, or nature. All charts update immediately.","Exportar ajustes":"Export settings","Limpar ajustes":"Clear adjustments","Natureza":"Nature","Transferências próprias":"Own-account transfers","Aportes / transferências para investimentos":"Contributions / transfers to investments","Pagamento de fatura":"Card bill payment","CardBankslip · ":"CardBankslip · ","Estornos":"Refunds","Ignoradas":"Ignored","Os dados financeiros permanecem locais. Categorias, reclassificações, regras automáticas, padrões de gastos/entradas fixos, resarcimentos, vínculos e regras de salário por origem são salvos em user_data/ajustes.json pelo backend; pagamentos de fatura, transferências próprias e aportes/resgates ficam fora de Gastos e Entradas para evitar dupla contagem patrimonial.":"Financial data remains local. Categories, reclassifications, automatic rules, fixed expense/income patterns, reimbursements, links, and salary-by-source rules are saved by the backend in user_data/ajustes.json; card bill payments, own-account transfers, and investment contributions/redemptions are excluded from Expenses and Income to avoid double-counting.","Sem saída média suficiente":"Not enough average outflow data","Geração de caixa":"Cash generation","Sem entrada média suficiente":"Not enough average inflow data","Dívida sem ativos líquidos identificados":"Debt without identified liquid assets","Uso de crédito":"Credit utilization","Sem limite comparável":"No comparable limit","Sem carteira comparável":"No comparable portfolio","Diversificação":"Diversification","Sem dados de conexão":"No connection data","Atualização dos dados":"Data freshness","Dados insuficientes":"Insufficient data","Não foi possível calcular uma leitura consolidada.":"A consolidated assessment could not be calculated.","Saúde forte":"Strong health","Liquidez, caixa e obrigações estão relativamente equilibrados dentro das métricas disponíveis.":"Liquidity, cash flow, and obligations are relatively balanced within the available metrics.","Saúde razoável":"Fair health","A estrutura geral é funcional, mas há pontos que merecem acompanhamento.":"The overall structure is functional, but some areas deserve monitoring.","Atenção":"Attention","Existem pressões relevantes de caixa, dívida, crédito ou qualidade dos dados.":"There are meaningful pressures in cash flow, debt, credit, or data quality.","Pressão elevada":"High pressure","Os dados disponíveis indicam fragilidade em mais de uma dimensão financeira.":"Available data indicates weakness in more than one financial dimension.","Score indisponível":"Score unavailable","Sem dados":"No data","Saídas de caixa":"Cash outflows","Líquido":"Net","Obrigações financeiras":"Financial obligations","Não há saldo de cartão ou empréstimo identificado nessa moeda nos KPIs atuais.":"No card balance or loan is identified in this currency in the current KPIs.","Sem categoria":"Uncategorized","Maior categoria de consumo":"Largest consumption category","Qualidade dos dados":"Data quality","As conexões carregadas não exibem erro e não há atraso superior a 7 dias nas datas disponíveis.":"Loaded connections show no errors and no available timestamp is more than 7 days stale.","Faturas próximas":"Upcoming bills","Cartões":"Cards","Empréstimos":"Loans","Não identificado":"Not identified","Cartão":"Card","Conta bancária":"Bank account","Empréstimo":"Loan","Outra conta":"Other account","Não identificada":"Not identified","Conta não identificada":"Unidentified account","Não":"No","Sim":"Yes","Cartão de crédito":"Credit card","Transferência":"Transfer","Débito / compra em conta":"Debit / account purchase","Backend indisponível — usando armazenamento local temporariamente":"Backend unavailable — temporarily using browser storage","Erro ao salvar ajustes":"Error saving settings","Alteração pendente de salvamento…":"Change pending save…","Ativar regra":"Enable rule","Desativar regra":"Disable rule","Informe o valor que a regra deve procurar.":"Enter the value the rule should match.","Informe a categoria que será aplicada.":"Enter the category to apply.","Use um valor de regra com até 120 caracteres.":"Use a rule value of up to 120 characters.","Use uma categoria com até 80 caracteres.":"Use a category of up to 80 characters.","Essa regra já existe.":"This rule already exists.","Regra automática criada e salva.":"Automatic rule created and saved.","Regra ativada.":"Rule enabled.","Regra desativada.":"Rule disabled.","Regra excluída.":"Rule deleted.","Sem resarcimento":"No reimbursement","100% resarcido — não fiz parte":"100% reimbursed — I was not part of the expense","Compartilhado — fiz parte":"Shared — I was part of the expense","Aplicado pelo padrão do gasto fixo":"Applied by fixed-expense pattern","Ajuste desta transação":"Adjustment for this transaction","Somente para gastos":"Expenses only","Pessoas":"People","Gasto fixo":"Fixed expense","valor não disponível":"amount unavailable","sem resarcimento":"no reimbursement","Padrão":"Pattern","padrão por similaridade":"similarity pattern","gasto fixo":"fixed expense","Entrada fixa":"Fixed income","entrada fixa":"fixed income","Digite um nome para a nova categoria.":"Enter a name for the new category.","Formato de reclassificações inválido":"Invalid reclassification format","Backup de categorias, reclassificações, resarcimentos, vínculos e regras automáticas restaurado.":"Backup of categories, reclassifications, reimbursements, links, and automatic rules restored.","Não foi possível restaurar esse backup JSON.":"Could not restore this JSON backup.","Todos da janela":"All in window","Todas as contas":"All accounts","Todos os meios":"All methods","Todas as categorias":"All categories","Todos os merchants":"All merchants","Automático por similaridade":"Automatic by similarity","Padrão: Variável":"Default: Variable","Entrada normal":"Normal income","Gasto não encontrado":"Expense not found","Gasto":"Expense","Selecionar gasto…":"Select expense…","Sem vínculo específico":"No specific link","Remover vínculo":"Remove link","Todas as origens":"All sources","Pagador não informado pela transação":"Payer not provided by the transaction","Excluído dos gráficos de entradas.":"Excluded from income charts.","Considerado normalmente nos gráficos.":"Included normally in charts.","Entrada marcada como resarcimento e excluída dos gráficos.":"Income marked as reimbursement and excluded from charts.","Entrada marcada como Fixa.":"Income marked as Fixed.","Entrada atualizada e salva.":"Income updated and saved.","Sem entradas na janela":"No income in the window","Sem entradas identificadas na janela.":"No income identified in the window.","Entrada":"Income","Transferência própria":"Own-account transfer","Aporte / transferência de investimento":"Investment contribution / transfer","Estorno/crédito cartão":"Refund/card credit","Automático":"Automatic","automático por similaridade":"automatic by similarity","padrão":"default","Somente para gastos e entradas":"Expenses and income only","Classificação atualizada e salva.":"Classification updated and saved.","Não há ajustes salvos.":"There are no saved adjustments.","Remover todas as reclassificações locais? As categorias personalizadas serão mantidas.":"Remove all local reclassifications? Custom categories will be kept.","Reclassificações removidas; categorias personalizadas mantidas.":"Reclassifications removed; custom categories kept.","Estornos/créditos":"Refunds/credits","Maior categoria de gasto":"Largest expense category","Principal meio de gasto":"Main spending method","Movimentações patrimoniais separadas":"Separated asset movements","Cobertura: sem fluxo":"Coverage: no cash flow","Sincronização: —":"Sync: —","Dados carregados.":"Data loaded.","Dados financeiros e ajustes carregados localmente.":"Financial data and settings loaded locally.","tradução(ões) semântica(s)":"semantic translation(s)","Carregando dados do SQLite…":"Loading data from SQLite…","Classificação restaurada para automático.":"Classification restored to automatic.","Excluir regra":"Delete rule","Excluir padrão automático":"Delete automatic pattern","Remover categoria personalizada":"Remove custom category","Ver dados":"View data","Salvar":"Save","Resetar":"Reset","Anterior":"Previous","Próxima":"Next","Sem limite":"No limit","Descrição, merchant…":"Description, merchant…","Descrição, origem, pagador, categoria…":"Description, source, payer, category…","Ex.: IFOOD, UBER, SPOTIFY…":"e.g. IFOOD, UBER, SPOTIFY…","Ex.: Alimentação":"e.g. Food","Nenhuma regra automática criada. Crie uma regra acima para categorizar novas transações automaticamente.":"No automatic rule created. Create a rule above to categorize new transactions automatically.","Nenhum padrão aprendido ainda. Marque um gasto recorrente como Fixo para criar o primeiro padrão.":"No learned pattern yet. Mark a recurring expense as Fixed to create the first pattern.","Nenhum padrão aprendido ainda. Marque uma entrada recorrente como Fixa para criar o primeiro padrão.":"No learned pattern yet. Mark recurring income as Fixed to create the first pattern.","Nenhuma regra de salário por origem criada ainda.":"No salary-by-source rule created yet.","Sem dados para esta seleção.":"No data for this selection.","Sem gastos mensais para esta seleção.":"No monthly expenses for this selection.","Sem gastos para esta seleção.":"No expenses for this selection.","Nenhum gasto encontrado para os filtros atuais.":"No expenses found for the current filters.","Sem gastos mensais para os filtros atuais.":"No monthly expenses for the current filters.","Sem gastos na janela":"No expenses in the window","Nenhuma conta ou posição encontrada nesta moeda.":"No account or position found in this currency.","Sem entradas para esta seleção.":"No income for this selection.","Nenhuma entrada encontrada para os filtros atuais.":"No income found for the current filters.","Nenhuma transação encontrada.":"No transaction found.","Nenhum cartão encontrado nesta moeda.":"No card found in this currency.","Sem contas para esta moeda.":"No accounts for this currency.","Nenhum cartão nessa moeda.":"No card in this currency.","Sem posições financeiras nessa moeda.":"No financial positions in this currency.","Sem dados de conexão.":"No connection_health.csv.","Nenhum erro ou aviso registrado.":"No errors or warnings recorded.","Sem entradas ou gastos considerados para a moeda/janela selecionada.":"No bank cash flow for the selected currency/window.","Sem atividade de cartões para a seleção.":"No card activity for this selection.","Sem posições nessa moeda.":"No positions in this currency.","Sem sinais suficientes.":"Not enough signals."};
+  const UI_EN_EXACT = {"Proteção do backup":"Backup protection","Automática pela conta Google":"Automatic via Google account","Senha da nuvem":"Cloud password","Não necessária":"Not required","Senha antiga do backup":"Old backup password","Migrar e restaurar backup antigo":"Migrate and restore old backup","Entrar com Google":"Sign in with Google","Continuar com Google":"Continue with Google","Senha adicional":"Additional password","Continuar":"Continue","Usar outra conta Google":"Use another Google account","Segurança":"Security","Segurança do acesso":"Access security","Login principal":"Primary sign-in","Conta Google":"Google account","Ativada":"Enabled","Não ativada":"Not enabled","Senha adicional atual":"Current additional password","Nova senha adicional":"New additional password","Confirmar nova senha":"Confirm new password","Ativar / alterar senha":"Enable / change password","Remover senha adicional":"Remove additional password","Configurar OAuth do aplicativo":"Configure app OAuth","Como deseja começar?":"How would you like to start?","Restaurar meus dados do Google Drive":"Restore my data from Google Drive","Configurar Pluggy manualmente":"Configure Pluggy manually","Restaurar do Google Drive":"Restore from Google Drive","Conectar minha conta Google":"Connect my Google account","Restaurar dados deste Drive":"Restore data from this Drive","Verificar novamente":"Check again","Usar outro usuário":"Use another user","Backup encontrado":"Backup found","Última versão":"Latest version","Última alteração local":"Latest local change","Arquivo mais recente no Drive":"Latest Drive file","Conectar / sincronizar Google Drive":"Connect / sync Google Drive","Sincronizar Google Drive":"Sync Google Drive","Sincronização entre computadores":"Cross-device synchronization","Criptografia":"Encryption","Configurada":"Configured","Não configurada":"Not configured","Revisão local":"Local revision","Revisão na nuvem":"Cloud revision","Estado local":"Local state","Alterações pendentes":"Pending changes","Sincronizado":"Synchronized","Sem snapshot":"No snapshot","Senha da nuvem":"Cloud password","Salvar senha":"Save password","Sincronizar agora":"Sync now","Esquecer senha neste PC":"Forget password on this PC","Conflito entre computadores":"Conflict between computers","Usar versão da nuvem":"Use cloud version","Substituir nuvem por este PC":"Replace cloud with this PC","Mínimo de 12 caracteres":"At least 12 characters","ControleFin — Saúde Financeira":"ControleFin — Financial Health","Dashboard local — nenhum dado carregado":"Local dashboard — no data loaded","Pluggy":"Pluggy","Sincronizar":"Sync","Sair":"Sign out","Recarregar SQLite":"Reload SQLite","Banco local":"Local database","Os dados financeiros são carregados exclusivamente de data/controlefin.db pelo backend local.":"Financial data is loaded exclusively from data/controlefin.db by the local backend.","Tentar novamente":"Try again","Aguardando SQLite.":"Waiting for SQLite.","Banco SQLite indisponível. Inicie o ControleFin pelo backend local e tente novamente.":"SQLite database unavailable. Start ControleFin through the local backend and try again.","Mostrar IDs":"Show IDs","Ocultar IDs":"Hide IDs","Exibir identificadores dos blocos":"Show block identifiers","Controle financeiro pessoal":"Personal finance control","Veja onde seu dinheiro está indo.":"See where your money is going.","Um painel local, focado em gastos de cartão, PIX e boletos. Filtre, investigue e reclassifique cada transação sem enviar seus dados para fora do computador.":"A local dashboard focused on card, PIX, and boleto spending. Filter, investigate, and reclassify each transaction without sending your data outside your computer.","100% local no navegador. Sem APIs ou bibliotecas externas.":"100% local in your browser. No external APIs or libraries.","Como executar":"How to run","Aguardando dados.":"Waiting for data.","Gastos":"Expenses","Entradas":"Income","Contas e cartões":"Accounts and cards","Visão geral":"Overview","Saldos atuais, faturas dos cartões e fluxo efetivo com as mesmas regras de Gastos e Entradas.":"Current balances, card bills, and effective cash flow using the same rules as Expenses and Income.","Entradas e gastos mensais após exclusões, resarcimentos, reclassificações e transações manuais.":"Monthly income and expenses after exclusions, reimbursements, reclassifications, and manual transactions.","Detalhes operacionais das contas bancárias e cartões de crédito na moeda selecionada.":"Operational details for bank accounts and credit cards in the selected currency.","Saldo atual":"Current balance","Os gráficos usam a janela selecionada e os filtros ativos; cada compra parcelada considera no máximo uma única parcela por mês, distribuída pelo número da parcela, e os valores exibidos já descontam resarcimentos previstos e mostram somente a parcela efetivamente atribuída a você. O filtro de mês não corta a tendência.":"Charts use the selected window and active filters; each installment purchase contributes at most one installment per month, distributed by installment number, and displayed values already deduct expected reimbursements and show only the share effectively attributed to you. The month filter does not truncate the trend.","Fatura atual":"Current bill","Mês da fatura":"Bill month","projetada":"projected","Parcela":"Installment","Entradas e gastos mensais após exclusões, resarcimentos, reclassificações, transações manuais e distribuição das compras parceladas.":"Monthly income and expenses after exclusions, reimbursements, reclassifications, manual transactions, and installment distribution.","Os gráficos usam a janela selecionada e os filtros ativos; compras parceladas são distribuídas pelo número da parcela ao longo dos meses, e os valores exibidos já descontam resarcimentos previstos e mostram somente a parcela efetivamente atribuída a você. O filtro de mês não corta a tendência.":"Charts use the selected window and active filters; installment purchases are distributed across months by installment number, and displayed values already deduct expected reimbursements and show only the share effectively attributed to you. The month filter does not truncate the trend.","Limite disponível":"Available credit","Limite total":"Credit limit","Vence":"Due","Fonte do saldo":"Balance source","Saldo informado pela conta":"Balance reported by the account","Conta bancária":"Bank account","Cartão de crédito":"Credit card","Sem contas bancárias ou cartões para esta moeda.":"No bank accounts or credit cards for this currency.","Nenhuma conta bancária ou cartão encontrado nesta moeda.":"No bank account or credit card found in this currency.","Sem entradas ou gastos considerados para a moeda/janela selecionada.":"No considered income or expenses for the selected currency/window.","Entradas de salário":"Salary income","Gastos futuros":"Future expenses","Entrada líquida projetada":"Projected net income","Salários − gastos futuros":"Salary income − future expenses","Entradas, gastos e líquido projetados":"Projected income, expenses, and net","Salários usam a última ocorrência por origem; gastos somam custos fixos e parcelas restantes. A linha líquida é a diferença entre os dois.":"Salary uses the latest occurrence for each source; expenses combine fixed costs and remaining installments. The net line is the difference between them.","Salário projetado":"Projected salary","Entrada líquida":"Net income","Referências de salário":"Salary references","Cada origem usa o valor da última entrada efetivamente classificada como Salário.":"Each source uses the latest income effectively classified as Salary.","Nenhuma entrada de salário identificada para esta moeda.":"No salary income identified for this currency.","Salários":"Salaries","Salário":"Salary","Projeções futuras":"Future projections","Planejamento":"Planning","Visão mês a mês dos gastos já comprometidos por parcelas restantes e custos fixos recorrentes.":"Month-by-month view of expenses already committed through remaining installments and recurring fixed costs.","Horizonte":"Horizon","18 meses":"18 months","24 meses":"24 months","A janela global não altera esta projeção. O horizonte começa no próximo mês.":"The global window does not change this projection. The horizon starts next month.","Total projetado":"Projected total","Custos fixos + parcelas restantes":"Fixed costs + remaining installments","Média mensal projetada":"Projected monthly average","Custos fixos":"Fixed costs","Parcelas restantes":"Remaining installments","Compromissos futuros por mês":"Future commitments by month","Custos fixos usam o valor líquido da última ocorrência; parcelas usam a agenda já distribuída por mês.":"Fixed costs use the net amount of the latest occurrence; installments use the schedule already distributed by month.","Projeção mês a mês":"Month-by-month projection","Os detalhes mostram quais custos fixos e parcelas compõem cada mês.":"Details show which fixed costs and installments make up each month.","Composição":"Composition","Referências de custos fixos":"Fixed-cost references","O valor de cada custo fixo é a última ocorrência efetivamente observada.":"Each fixed cost uses the latest effectively observed occurrence.","Parcelamentos em aberto":"Open installment plans","Somente parcelas posteriores ao mês atual entram na projeção.":"Only installments after the current month are included in the projection.","Sem projeções futuras para esta moeda.":"No future projections for this currency.","Sem compromissos projetados.":"No projected commitments.","Nenhum custo fixo identificado para esta moeda.":"No fixed cost identified for this currency.","Nenhuma parcela futura identificada neste horizonte.":"No future installment identified in this horizon.","Parcelado":"Installment plan","Transações":"Transactions","Navegação do dashboard":"Dashboard navigation","Moeda":"Currency","Janela":"Window","3 meses":"3 months","6 meses":"6 months","12 meses":"12 months","Tudo":"All","Contas: aguardando":"Accounts: waiting","Gastos consolidados":"Consolidated expenses","Gasto médio mensal da janela":"Average monthly expense in the window","Total na janela:":"Total in window:","transações consideradas":"transactions considered","Média mensal · Cartão":"Monthly average · Card","Média mensal · PIX":"Monthly average · PIX","Média mensal · Boleto":"Monthly average · Boleto","Movimentações patrimoniais excluídas: —":"Excluded asset movements: —","Movimentações / faturas consolidadas excluídas: —":"Excluded movements / consolidated card bills: —","Resarcimentos previstos: —":"Expected reimbursements: —","Mês":"Month","Todos":"All","Conta / cartão":"Account / card","Todas":"All","Meio":"Method","Fixo / variável":"Fixed / variable","Fixos":"Fixed","Variáveis":"Variable","Categoria":"Category","Merchant":"Merchant","Buscar":"Search","Valor mín.":"Min. amount","Valor máx.":"Max. amount","Limpar filtros":"Clear filters","Gerenciar categorias personalizadas e salvamento":"Manage custom categories and saving","Nova categoria":"New category","Criar categoria":"Create category","Salvamento automático ativo.":"Automatic saving is active.","Categorias, reclassificações, regras automáticas e padrões de gastos fixos são gravados pelo backend em":"Categories, reclassifications, automatic rules, and fixed-expense patterns are saved by the backend in",". O navegador apenas envia e lê os ajustes; o arquivo permanente fica na pasta local do ControleFin.":". The browser only sends and reads the settings; the permanent file stays in the local ControleFin folder.","Baixar backup dos ajustes":"Download settings backup","Restaurar backup":"Restore backup","Nenhuma alteração nesta sessão":"No changes in this session","Regras automáticas de categorização":"Automatic categorization rules","Campo":"Field","Descrição":"Description","Banco":"Bank","Tipo de gasto":"Expense type","Condição":"Condition","contém":"contains","é igual a":"equals","começa com":"starts with","Valor a procurar":"Value to match","Classificar como":"Classify as","Criar regra":"Create rule","A primeira regra ativa que combinar com a transação é aplicada. Ajustes manuais de uma transação sempre têm prioridade sobre as regras. Use ↑ e ↓ para alterar a prioridade.":"The first active rule that matches the transaction is applied. Manual transaction adjustments always take priority over rules. Use ↑ and ↓ to change priority.","Padrões automáticos de gastos fixos":"Automatic fixed-expense patterns","Ao marcar uma transação como":"When you mark a transaction as","Fixo":"Fixed",", o ControleFin aprende um padrão pela descrição/merchant e usa valor, conta e meio de pagamento como sinais de proximidade. Transações semelhantes passam a ser classificadas como fixas automaticamente. Excluir um padrão faz com que essas transações voltem ao padrão":", ControleFin learns a pattern from the description/merchant and uses amount, account, and payment method as similarity signals. Similar transactions are then automatically classified as fixed. Deleting a pattern makes those transactions return to the default","Variável":"Variable",", salvo quando houver um ajuste manual específico.":", unless there is a specific manual adjustment.","Mês a mês":"Month by month","Quanto gasto e onde gasto?":"How much do I spend and where?","Os gráficos usam a janela selecionada e os filtros ativos; valores exibidos já descontam resarcimentos previstos e mostram somente a parcela efetivamente atribuída a você. O filtro de mês não corta a tendência.":"Charts use the selected window and active filters; displayed amounts already deduct expected reimbursements and show only the share actually attributed to you. The month filter does not truncate the trend.","gastos visíveis":"visible expenses","Gastos mensais em reais":"Monthly expenses in reais","Barras lado a lado por mês. O total do mês aparece acima do grupo.":"Side-by-side bars by month. The monthly total appears above the group.","Agrupar por":"Group by","Fixo x variável":"Fixed vs variable","Clique nas legendas para ocultar ou exibir séries sem perder o contexto mensal.":"Click legend items to hide or show series without losing monthly context.","Composição percentual do mês":"Monthly percentage composition","Cada coluna representa 100% do gasto do mês; os segmentos mostram onde o dinheiro foi gasto.":"Each column represents 100% of the month's spending; segments show where the money was spent.","Compor por":"Break down by","Passe o mouse para ver valor e percentual. As legendas continuam clicáveis.":"Hover to see amount and percentage. Legend items remain clickable.","Onde":"Where","Principais destinos do gasto":"Top spending destinations","Clique em uma categoria ou merchant para aplicar o filtro imediatamente.":"Click a category or merchant to apply the filter immediately.","Categorias":"Categories","Ranking da seleção atual.":"Ranking for the current selection.","Merchants":"Merchants","Estabelecimentos e beneficiários com maior gasto.":"Merchants and recipients with the highest spending.","Transações de gastos":"Expense transactions","Detalhe completo dos gastos considerados nesta aba. Edite a categoria e marque cada gasto como fixo ou variável. Variável é o padrão; ao marcar Fixo, transações semelhantes também serão reconhecidas automaticamente.":"Full detail of the expenses considered on this tab. Edit the category and mark each expense as fixed or variable. Variable is the default; when you mark Fixed, similar transactions will also be recognized automatically.","Data":"Date","Banco / conta":"Bank / account","Resarcimento":"Reimbursement","Seu gasto":"Your expense","Detalhes":"Details","Ação":"Action","Entradas consolidadas":"Consolidated income","Entradas identificadas como RENDIMENTO ou RESGATE RDB são ignoradas nesta aba.":"Entries identified as RENDIMENTO or RESGATE RDB are ignored on this tab.","Entrada média mensal da janela":"Average monthly income in the window","Média mensal · Transferências":"Monthly average · Transfers","Média mensal · Outros":"Monthly average · Other","Resarcimentos excluídos: —":"Excluded reimbursements: —","Conta":"Account","Fixas":"Fixed","Origem":"Source","Padrões automáticos de entradas fixas":"Automatic fixed-income patterns","Toda entrada é":"Every income transaction is","por padrão. Ao marcar uma entrada como":"by default. When you mark an income transaction as","Fixa":"Fixed",", o ControleFin aprende um padrão por descrição/origem e usa valor, conta e meio de pagamento como sinais de proximidade para reconhecer entradas semelhantes antigas e futuras. Categorias personalizadas e regras automáticas de categoria são compartilhadas com a aba Gastos.":", ControleFin learns a pattern from description/source and uses amount, account, and payment method as similarity signals to recognize similar past and future income transactions. Custom categories and automatic category rules are shared with the Expenses tab.","Regras automáticas de salário por origem":"Automatic salary rules by source","Ao salvar uma entrada como":"When you save an income transaction as","Salário":"Salary","ou":"or",", o ControleFin cria uma regra persistente para a mesma origem. O":", ControleFin creates a persistent rule for the same source. The","tem prioridade; quando ele não existe, merchant/descrição são usados de forma mais conservadora.":"takes priority; when it is unavailable, merchant/description are used more conservatively.","Quanto entra e de onde vem?":"How much comes in and where does it come from?","Os gráficos usam a janela selecionada e os filtros de conta, meio, fixo/variável, categoria, origem, busca e valor. O filtro de mês não corta a tendência.":"Charts use the selected window and account, method, fixed/variable, category, source, search, and amount filters. The month filter does not truncate the trend.","entradas visíveis":"visible income transactions","Entradas mensais em reais":"Monthly income in reais","Tipo de entrada":"Income type","Clique nas legendas para ocultar ou exibir séries.":"Click legend items to hide or show series.","Cada coluna representa 100% das entradas do mês e mostra sua origem.":"Each column represents 100% of the month's income and shows its source.","Passe o mouse para ver valor e percentual. As legendas são clicáveis.":"Hover to see amount and percentage. Legend items are clickable.","Principais fontes das entradas":"Top income sources","Clique em uma categoria ou origem para aplicar o filtro imediatamente.":"Click a category or source to apply the filter immediately.","Origens":"Sources","Pagadores/origens com maior entrada.":"Payers/sources with the highest income.","Transações de entradas":"Income transactions","Edite a categoria e marque cada entrada como fixa ou variável. Alterações recalculam os visuais imediatamente e são persistidas.":"Edit the category and mark each income transaction as fixed or variable. Changes immediately recalculate the visuals and are persisted.","Pagador":"Payer","Resarcimento / vínculo":"Reimbursement / link","Valor":"Amount","Posição financeira":"Financial position","Resumo patrimonial sem competir com a leitura de gastos.":"Net-worth summary without competing with the spending view.","Patrimônio líquido":"Net worth","Estimado":"Estimated","Saldo bancário":"Bank balance","Investimentos":"Investments","Cartões em aberto":"Open card balances","Caixa médio mensal":"Average monthly cash flow","Fluxo de caixa":"Cash flow","Entradas e saídas bancárias mensais.":"Monthly bank inflows and outflows.","Saúde financeira":"Financial health","Heurística explicável sobre os dados disponíveis.":"Explainable heuristic based on the available data.","Leitura automática":"Automatic insights","Sinais relevantes do fluxo, gastos, patrimônio e qualidade dos dados.":"Relevant signals from cash flow, expenses, net worth, and data quality.","Contas":"Accounts","BTG Banking, BTG Investimentos e Nubank tratados separadamente.":"BTG Banking, BTG Investments, and Nubank are handled separately.","Investimentos e detalhes técnicos":"Investments and technical details","Alocação de investimentos":"Investment allocation","Posições por instituição":"Positions by institution","Ajustes":"Settings","Transações e reclassificação":"Transactions and reclassification","Adicionar transação manual":"Add manual transaction","Use quando uma movimentação legítima não chegar pela integração. Campos com * são obrigatórios e o registro fica salvo permanentemente nos ajustes locais.":"Use this when a legitimate transaction is missing from the integration. Fields marked * are required and the record is permanently saved in local settings.","+ Gasto manual":"+ Manual expense","+ Entrada manual":"+ Manual income","Natureza *":"Type *","Data *":"Date *","Valor *":"Amount *","Conta / cartão *":"Account / card *","Meio *":"Method *","Descrição *":"Description *","Categoria *":"Category *","Merchant / pagador":"Merchant / payer","Moeda *":"Currency *","Outra conta / cartão manual":"Other manual account / card","Instituição *":"Institution *","Nome da conta / cartão *":"Account / card name *","Tipo da conta *":"Account type *","Conta bancária":"Bank account","Salvar transação manual":"Save manual transaction","Atualizar transação manual":"Update manual transaction","Cancelar edição":"Cancel editing","Preencha os campos obrigatórios.":"Fill in the required fields.","Nenhuma transação manual cadastrada.":"No manual transactions added.","Manual":"Manual","Editar":"Edit","Excluir":"Delete","Dinheiro":"Cash","Auditoria local de inclusão em Gastos":"Local expense inclusion audit","Pesquise merchant, descrição ou ID. A auditoria examina inclusive transações pendentes ou normalmente excluídas e mostra por que entram ou não na aba Gastos.":"Search merchant, description, or ID. The audit also examines pending or normally excluded transactions and shows why they are or are not included in Expenses.","Pesquisar transação":"Search transaction","Auditar":"Audit","Em Gastos?":"In Expenses?","Diagnóstico":"Diagnosis","Digite um termo e clique em Auditar.":"Enter a term and click Audit.","Nenhuma transação bruta encontrada. Nesse caso, o registro não chegou ao dataset transactions da Pluggy/exportador.":"No raw transaction found. In that case, the record did not reach the Pluggy/exporter transactions dataset.","Corrija categoria, merchant, meio ou natureza. Todos os gráficos são atualizados imediatamente.":"Correct category, merchant, method, or nature. All charts update immediately.","Exportar ajustes":"Export settings","Limpar ajustes":"Clear adjustments","Natureza":"Nature","Transferências próprias":"Own-account transfers","Aportes / transferências para investimentos":"Contributions / transfers to investments","Pagamento de fatura":"Card bill payment","CardBankslip · ":"CardBankslip · ","Estornos":"Refunds","Ignoradas":"Ignored","Os dados financeiros permanecem locais. Categorias, reclassificações, regras automáticas, padrões de gastos/entradas fixos, resarcimentos, vínculos e regras de salário por origem são salvos em user_data/ajustes.json pelo backend; pagamentos de fatura, transferências próprias e aportes/resgates ficam fora de Gastos e Entradas para evitar dupla contagem patrimonial.":"Financial data remains local. Categories, reclassifications, automatic rules, fixed expense/income patterns, reimbursements, links, and salary-by-source rules are saved by the backend in user_data/ajustes.json; card bill payments, own-account transfers, and investment contributions/redemptions are excluded from Expenses and Income to avoid double-counting.","Sem saída média suficiente":"Not enough average outflow data","Geração de caixa":"Cash generation","Sem entrada média suficiente":"Not enough average inflow data","Dívida sem ativos líquidos identificados":"Debt without identified liquid assets","Uso de crédito":"Credit utilization","Sem limite comparável":"No comparable limit","Sem carteira comparável":"No comparable portfolio","Diversificação":"Diversification","Sem dados de conexão":"No connection data","Atualização dos dados":"Data freshness","Dados insuficientes":"Insufficient data","Não foi possível calcular uma leitura consolidada.":"A consolidated assessment could not be calculated.","Saúde forte":"Strong health","Liquidez, caixa e obrigações estão relativamente equilibrados dentro das métricas disponíveis.":"Liquidity, cash flow, and obligations are relatively balanced within the available metrics.","Saúde razoável":"Fair health","A estrutura geral é funcional, mas há pontos que merecem acompanhamento.":"The overall structure is functional, but some areas deserve monitoring.","Atenção":"Attention","Existem pressões relevantes de caixa, dívida, crédito ou qualidade dos dados.":"There are meaningful pressures in cash flow, debt, credit, or data quality.","Pressão elevada":"High pressure","Os dados disponíveis indicam fragilidade em mais de uma dimensão financeira.":"Available data indicates weakness in more than one financial dimension.","Score indisponível":"Score unavailable","Sem dados":"No data","Saídas de caixa":"Cash outflows","Líquido":"Net","Obrigações financeiras":"Financial obligations","Não há saldo de cartão ou empréstimo identificado nessa moeda nos KPIs atuais.":"No card balance or loan is identified in this currency in the current KPIs.","Sem categoria":"Uncategorized","Maior categoria de consumo":"Largest consumption category","Qualidade dos dados":"Data quality","As conexões carregadas não exibem erro e não há atraso superior a 7 dias nas datas disponíveis.":"Loaded connections show no errors and no available timestamp is more than 7 days stale.","Faturas próximas":"Upcoming bills","Cartões":"Cards","Empréstimos":"Loans","Não identificado":"Not identified","Cartão":"Card","Conta bancária":"Bank account","Empréstimo":"Loan","Outra conta":"Other account","Não identificada":"Not identified","Conta não identificada":"Unidentified account","Não":"No","Sim":"Yes","Cartão de crédito":"Credit card","Transferência":"Transfer","Débito / compra em conta":"Debit / account purchase","Backend indisponível — usando armazenamento local temporariamente":"Backend unavailable — temporarily using browser storage","Erro ao salvar ajustes":"Error saving settings","Alteração pendente de salvamento…":"Change pending save…","Ativar regra":"Enable rule","Desativar regra":"Disable rule","Informe o valor que a regra deve procurar.":"Enter the value the rule should match.","Informe a categoria que será aplicada.":"Enter the category to apply.","Use um valor de regra com até 120 caracteres.":"Use a rule value of up to 120 characters.","Use uma categoria com até 80 caracteres.":"Use a category of up to 80 characters.","Essa regra já existe.":"This rule already exists.","Regra automática criada e salva.":"Automatic rule created and saved.","Regra ativada.":"Rule enabled.","Regra desativada.":"Rule disabled.","Regra excluída.":"Rule deleted.","Sem resarcimento":"No reimbursement","100% resarcido — não fiz parte":"100% reimbursed — I was not part of the expense","Compartilhado — fiz parte":"Shared — I was part of the expense","Aplicado pelo padrão do gasto fixo":"Applied by fixed-expense pattern","Ajuste desta transação":"Adjustment for this transaction","Somente para gastos":"Expenses only","Pessoas":"People","Gasto fixo":"Fixed expense","valor não disponível":"amount unavailable","sem resarcimento":"no reimbursement","Padrão":"Pattern","padrão por similaridade":"similarity pattern","gasto fixo":"fixed expense","Entrada fixa":"Fixed income","entrada fixa":"fixed income","Digite um nome para a nova categoria.":"Enter a name for the new category.","Formato de reclassificações inválido":"Invalid reclassification format","Backup de categorias, reclassificações, resarcimentos, vínculos e regras automáticas restaurado.":"Backup of categories, reclassifications, reimbursements, links, and automatic rules restored.","Não foi possível restaurar esse backup JSON.":"Could not restore this JSON backup.","Todos da janela":"All in window","Todas as contas":"All accounts","Todos os meios":"All methods","Todas as categorias":"All categories","Todos os merchants":"All merchants","Automático por similaridade":"Automatic by similarity","Padrão: Variável":"Default: Variable","Entrada normal":"Normal income","Gasto não encontrado":"Expense not found","Gasto":"Expense","Selecionar gasto…":"Select expense…","Sem vínculo específico":"No specific link","Remover vínculo":"Remove link","Todas as origens":"All sources","Pagador não informado pela transação":"Payer not provided by the transaction","Excluído dos gráficos de entradas.":"Excluded from income charts.","Considerado normalmente nos gráficos.":"Included normally in charts.","Entrada marcada como resarcimento e excluída dos gráficos.":"Income marked as reimbursement and excluded from charts.","Entrada marcada como Fixa.":"Income marked as Fixed.","Entrada atualizada e salva.":"Income updated and saved.","Sem entradas na janela":"No income in the window","Sem entradas identificadas na janela.":"No income identified in the window.","Entrada":"Income","Transferência própria":"Own-account transfer","Aporte / transferência de investimento":"Investment contribution / transfer","Estorno/crédito cartão":"Refund/card credit","Automático":"Automatic","automático por similaridade":"automatic by similarity","padrão":"default","Somente para gastos e entradas":"Expenses and income only","Classificação atualizada e salva.":"Classification updated and saved.","Não há ajustes salvos.":"There are no saved adjustments.","Remover todas as reclassificações locais? As categorias personalizadas serão mantidas.":"Remove all local reclassifications? Custom categories will be kept.","Reclassificações removidas; categorias personalizadas mantidas.":"Reclassifications removed; custom categories kept.","Estornos/créditos":"Refunds/credits","Maior categoria de gasto":"Largest expense category","Principal meio de gasto":"Main spending method","Movimentações patrimoniais separadas":"Separated asset movements","Cobertura: sem fluxo":"Coverage: no cash flow","Sincronização: —":"Sync: —","Dados carregados.":"Data loaded.","Dados financeiros e ajustes carregados localmente.":"Financial data and settings loaded locally.","tradução(ões) semântica(s)":"semantic translation(s)","Carregando dados do SQLite…":"Loading data from SQLite…","Classificação restaurada para automático.":"Classification restored to automatic.","Excluir regra":"Delete rule","Excluir padrão automático":"Delete automatic pattern","Remover categoria personalizada":"Remove custom category","Ver dados":"View data","Salvar":"Save","Resetar":"Reset","Anterior":"Previous","Próxima":"Next","Sem limite":"No limit","Descrição, merchant…":"Description, merchant…","Descrição, origem, pagador, categoria…":"Description, source, payer, category…","Ex.: IFOOD, UBER, SPOTIFY…":"e.g. IFOOD, UBER, SPOTIFY…","Ex.: Alimentação":"e.g. Food","Nenhuma regra automática criada. Crie uma regra acima para categorizar novas transações automaticamente.":"No automatic rule created. Create a rule above to categorize new transactions automatically.","Nenhum padrão aprendido ainda. Marque um gasto recorrente como Fixo para criar o primeiro padrão.":"No learned pattern yet. Mark a recurring expense as Fixed to create the first pattern.","Nenhum padrão aprendido ainda. Marque uma entrada recorrente como Fixa para criar o primeiro padrão.":"No learned pattern yet. Mark recurring income as Fixed to create the first pattern.","Nenhuma regra de salário por origem criada ainda.":"No salary-by-source rule created yet.","Sem dados para esta seleção.":"No data for this selection.","Sem gastos mensais para esta seleção.":"No monthly expenses for this selection.","Sem gastos para esta seleção.":"No expenses for this selection.","Nenhum gasto encontrado para os filtros atuais.":"No expenses found for the current filters.","Sem gastos mensais para os filtros atuais.":"No monthly expenses for the current filters.","Sem gastos na janela":"No expenses in the window","Nenhuma conta ou posição encontrada nesta moeda.":"No account or position found in this currency.","Sem entradas para esta seleção.":"No income for this selection.","Nenhuma entrada encontrada para os filtros atuais.":"No income found for the current filters.","Nenhuma transação encontrada.":"No transaction found.","Nenhum cartão encontrado nesta moeda.":"No card found in this currency.","Sem contas para esta moeda.":"No accounts for this currency.","Nenhum cartão nessa moeda.":"No card in this currency.","Sem posições financeiras nessa moeda.":"No financial positions in this currency.","Sem dados de conexão.":"No connection_health.csv.","Nenhum erro ou aviso registrado.":"No errors or warnings recorded.","Sem entradas ou gastos considerados para a moeda/janela selecionada.":"No bank cash flow for the selected currency/window.","Sem atividade de cartões para a seleção.":"No card activity for this selection.","Sem posições nessa moeda.":"No positions in this currency.","Sem sinais suficientes.":"Not enough signals."};
   const i18nOriginalText = new WeakMap();
   const i18nOriginalAttrs = new WeakMap();
   let i18nApplying = false;
@@ -10170,6 +10164,27 @@
           : '—';
     }
 
+    const legacyBackup =
+      Boolean(
+        remote
+          ?.legacyPasswordRequired
+      );
+
+    $('legacyCloudPasswordWrap')
+      ?.classList.toggle(
+        'hidden',
+        !legacyBackup
+      );
+
+    if(
+      $('onboardingRestoreNowBtn')
+    ) {
+      $('onboardingRestoreNowBtn').textContent =
+        legacyBackup
+          ? 'Migrar e restaurar backup antigo'
+          : 'Restaurar dados deste Drive';
+    }
+
     $('onboardingConnectGoogleBtn')
       ?.classList.toggle(
         'hidden',
@@ -10235,9 +10250,19 @@
         google?.connected
         && payload?.cloud?.remote?.available
       ) {
+        const legacy =
+          Boolean(
+            payload?.cloud?.remote
+              ?.legacyPasswordRequired
+          );
+
         setOnboardingRestoreMessage(
-          'Backup encontrado. Informe a senha da nuvem e restaure os dados.',
-          'good'
+          legacy
+            ? 'Backup antigo encontrado. Informe a senha antiga uma única vez para migrá-lo.'
+            : 'Backup encontrado. A restauração pode ser feita automaticamente.',
+          legacy
+            ? ''
+            : 'good'
         );
       } else if(
         google?.connected
@@ -10397,17 +10422,31 @@
       return;
     }
 
+    const remote =
+      state.onboardingRestoreStatus
+        ?.cloud
+        ?.remote
+      || null;
+
+    const legacy =
+      Boolean(
+        remote
+          ?.legacyPasswordRequired
+      );
+
     const passphrase =
       String(
-        $('onboardingCloudPassphrase')?.value
+        $('onboardingCloudPassphrase')
+          ?.value
         || ''
       );
 
     if(
-      passphrase.length < 12
+      legacy
+      && passphrase.length < 12
     ) {
       setOnboardingRestoreMessage(
-        'Informe a mesma senha da nuvem usada no outro computador (mínimo de 12 caracteres).',
+        'Este backup é da versão antiga. Informe a senha antiga da nuvem para fazer a migração única.',
         'bad'
       );
       $('onboardingCloudPassphrase')
@@ -10418,24 +10457,40 @@
     state.onboardingRestoreBusy = true;
 
     setAccessLoading(
-      'Restaurando seus dados…',
-      'Baixando, descriptografando e validando o snapshot do Google Drive.'
+      legacy
+        ? 'Migrando backup antigo…'
+        : 'Restaurando seus dados…',
+      legacy
+        ? 'Abrindo o snapshot antigo e convertendo para o formato automático.'
+        : 'Baixando, descriptografando e validando o snapshot do Google Drive.'
     );
 
     try {
+      const endpoint =
+        legacy
+          ? './api/google/cloud/migrate-legacy'
+          : './api/google/cloud/restore';
+
+      const options = {
+        method:'POST',
+        credentials:'same-origin',
+      };
+
+      if(legacy) {
+        options.headers = {
+          'Content-Type':
+            'application/json',
+        };
+        options.body =
+          JSON.stringify({
+            passphrase,
+          });
+      }
+
       const response =
         await authenticatedFetch(
-          './api/google/cloud/restore',
-          {
-            method:'POST',
-            headers:{
-              'Content-Type':
-                'application/json',
-            },
-            body:JSON.stringify({
-              passphrase,
-            }),
-          }
+          endpoint,
+          options
         );
 
       if(
@@ -10444,7 +10499,9 @@
         throw new Error(
           await readApiError(
             response,
-            'Não foi possível restaurar o backup do Google Drive.'
+            legacy
+              ? 'Não foi possível migrar o backup antigo.'
+              : 'Não foi possível restaurar o backup do Google Drive.'
           )
         );
       }
@@ -10462,8 +10519,12 @@
       }
 
       setAccessLoading(
-        'Dados restaurados com sucesso',
-        `Revisão ${result?.revision ?? '—'} recuperada. Reabrindo o ControleFin…`
+        legacy
+          ? 'Backup migrado e restaurado'
+          : 'Dados restaurados com sucesso',
+        legacy
+          ? `A revisão antiga foi convertida. Nova revisão ${result?.revision ?? '—'} criada sem senha da nuvem.`
+          : `Revisão ${result?.revision ?? '—'} recuperada. Reabrindo o ControleFin…`
       );
 
       window.setTimeout(
@@ -11959,15 +12020,21 @@
       || null;
 
     if($('cloudKeyStatus')) {
+      const legacy =
+        Boolean(
+          remote
+            ?.legacyPasswordRequired
+        );
+
       $('cloudKeyStatus').textContent =
-        cloud?.keyConfigured
-          ? 'Configurada'
-          : 'Não configurada';
+        legacy
+          ? 'Backup antigo — migração necessária'
+          : 'Automática pela conta Google';
 
       $('cloudKeyStatus').className =
-        cloud?.keyConfigured
-          ? 'good'
-          : 'warn';
+        legacy
+          ? 'warn'
+          : 'good';
     }
 
     if($('cloudLocalRevision')) {
@@ -12037,18 +12104,6 @@
         );
     }
 
-    $('saveCloudPassphraseBtn')?.toggleAttribute(
-      'disabled',
-      state.googleCloudBusy
-      || !google?.connected
-    );
-
-    $('clearCloudPassphraseBtn')?.toggleAttribute(
-      'disabled',
-      state.googleCloudBusy
-      || !cloud?.keyConfigured
-    );
-
     const connectSyncButton =
       $('connectGoogleDriveBtn');
 
@@ -12079,46 +12134,6 @@
     renderGoogleDriveStatus(state.googleDriveStatus || {});
     renderGoogleCloudStatus(payload);
     return payload;
-  }
-
-  async function saveCloudPassphrase() {
-    if(state.googleCloudBusy) return;
-    const passphrase=String($('cloudPassphraseInput')?.value || '');
-    const message=$('googleDriveMessage');
-    state.googleCloudBusy=true;
-    setCloudConflict(false);
-    try {
-      if(message) {message.textContent='Validando a senha da nuvem…';message.className='form-status';}
-      const response=await authenticatedFetch('./api/google/cloud/passphrase',{
-        method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({passphrase})
-      });
-      if(!response.ok) throw new Error(await readApiError(response,'Não foi possível salvar a senha da nuvem.'));
-      if($('cloudPassphraseInput')) $('cloudPassphraseInput').value='';
-      await refreshGoogleCloudPanel();
-      if(message) {message.textContent='Senha da nuvem configurada neste computador. Clique em Sincronizar Google Drive.';message.className='form-status good';}
-    } catch(error) {
-      if(message) {message.textContent=error?.message || String(error);message.className='form-status bad';}
-    } finally {
-      state.googleCloudBusy=false;
-      renderGoogleCloudStatus(state.googleCloudStatus || {});
-    }
-  }
-
-  async function clearCloudPassphrase() {
-    if(state.googleCloudBusy) return;
-    const message=$('googleDriveMessage');
-    state.googleCloudBusy=true;
-    try {
-      const response=await authenticatedFetch('./api/google/cloud/passphrase',{method:'DELETE'});
-      if(!response.ok) throw new Error(await readApiError(response,'Não foi possível esquecer a senha da nuvem.'));
-      await refreshGoogleCloudPanel();
-      if(message) {message.textContent='A senha da nuvem foi removida somente deste computador.';message.className='form-status good';}
-    } catch(error) {
-      if(message) {message.textContent=error?.message || String(error);message.className='form-status bad';}
-    } finally {
-      state.googleCloudBusy=false;
-      renderGoogleCloudStatus(state.googleCloudStatus || {});
-    }
   }
 
   async function cloudSyncRequest(endpoint,body=null) {
@@ -12157,11 +12172,37 @@
 
       if(
         result?.action
-        === 'KEY_REQUIRED'
+        === 'LEGACY_PASSWORD_REQUIRED'
       ) {
-        throw new Error(
-          'Configure primeiro a senha da nuvem.'
+        if(message) {
+          message.textContent =
+            'Backup antigo encontrado. Abra o fluxo de restauração para migrá-lo uma única vez, ou sincronize primeiro no computador original.';
+          message.className =
+            'form-status bad';
+        }
+
+        await refreshGoogleCloudPanel();
+        return;
+      }
+
+      if(
+        result?.action
+        === 'MIGRATED_LEGACY'
+      ) {
+        if(message) {
+          message.textContent =
+            `Backup antigo convertido para o formato automático na revisão ${result?.revision ?? '—'}.`;
+          message.className =
+            'form-status good';
+        }
+
+        window.setTimeout(
+          ()=>{
+            window.location.reload();
+          },
+          650
         );
+        return;
       }
 
       if(
@@ -12272,22 +12313,6 @@
         cloudPayload
       );
 
-      if(
-        !cloudPayload?.cloud?.keyConfigured
-      ) {
-        if(message) {
-          message.textContent =
-            'Google Drive está conectado. Defina e salve a senha da nuvem antes da primeira sincronização.';
-          message.className =
-            'form-status bad';
-        }
-
-        $('cloudPassphraseInput')
-          ?.focus();
-
-        return;
-      }
-
       await syncGoogleCloudNow();
 
     } catch(error) {
@@ -12305,7 +12330,7 @@
       const payload=await loadGoogleCloudStatus();
       state.googleDriveStatus=payload?.google || null;
       state.googleCloudStatus=payload;
-      if(!payload?.google?.connected || !payload?.cloud?.keyConfigured) return null;
+      if(!payload?.google?.connected) return null;
       const result=await cloudSyncRequest('./api/google/cloud/sync');
       return result;
     } catch(error) {
@@ -12874,8 +12899,6 @@
   $('connectGoogleDriveBtn')?.addEventListener('click',connectOrSyncGoogleDrive);
   $('testGoogleDriveBtn')?.addEventListener('click',testGoogleDriveAccess);
   $('disconnectGoogleDriveBtn')?.addEventListener('click',disconnectGoogleDrive);
-  $('saveCloudPassphraseBtn')?.addEventListener('click',saveCloudPassphrase);
-  $('clearCloudPassphraseBtn')?.addEventListener('click',clearCloudPassphrase);
   $('closePluggySettingsBtn')?.addEventListener('click',closePluggySettings);
   $('testPluggySettingsBtn')?.addEventListener('click',testPluggySettings);
   $('pluggySettingsForm')?.addEventListener('submit',savePluggySettings);

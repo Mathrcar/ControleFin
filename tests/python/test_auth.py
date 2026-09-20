@@ -328,6 +328,118 @@ class AuthenticationRegressionTests(unittest.TestCase):
             b"legacy-db",
         )
 
+    def test_legacy_google_profile_does_not_inherit_old_local_password(self):
+        legacy = self.server.build_auth_config(
+            "alice",
+            "senha-local-antiga",
+        )
+
+        profile_id = (
+            self.server.new_profile_id()
+        )
+
+        registry = {
+            "version": (
+                self.server.AUTH_REGISTRY_VERSION
+            ),
+            "users": [
+                {
+                    **legacy,
+                    "profileId": profile_id,
+                    "usernameKey": "alice",
+                    # Estrutura produzida pela versão antiga:
+                    # havia Google associado, mas ainda não existiam
+                    # authMode/localPasswordEnabled.
+                    "googleAccount": {
+                        "displayName": "Alice",
+                        "emailAddress": "alice@example.com",
+                        "permissionId": "perm-alice",
+                    },
+                }
+            ],
+            "updatedAt": (
+                self.server.utc_iso_now()
+            ),
+        }
+
+        self.server.atomic_write_json(
+            self.server.AUTH_USERS_FILE,
+            registry,
+        )
+
+        user = (
+            self.server.find_auth_user_by_google_account(
+                {
+                    "emailAddress": "alice@example.com",
+                    "permissionId": "perm-alice",
+                }
+            )
+        )
+
+        self.assertIsNotNone(
+            user
+        )
+        self.assertEqual(
+            user["authMode"],
+            "google",
+        )
+        self.assertFalse(
+            self.server.user_local_password_enabled(
+                user
+            )
+        )
+        self.assertFalse(
+            user["localPasswordEnabled"]
+        )
+
+        persisted = __import__(
+            "json"
+        ).loads(
+            self.server.AUTH_USERS_FILE.read_text(
+                encoding="utf-8"
+            )
+        )
+
+        self.assertFalse(
+            persisted["users"][0][
+                "localPasswordEnabled"
+            ]
+        )
+
+    def test_explicit_optional_password_survives_registry_reload(self):
+        user, _ = (
+            self.server.create_google_user(
+                {
+                    "displayName": "Alice",
+                    "emailAddress": "alice@example.com",
+                    "permissionId": "perm-alice",
+                }
+            )
+        )
+
+        self.server.set_user_local_password(
+            user["profileId"],
+            "nova-senha-opcional-123",
+        )
+
+        reloaded = (
+            self.server.find_auth_user_by_profile(
+                user["profileId"]
+            )
+        )
+
+        self.assertTrue(
+            self.server.user_local_password_enabled(
+                reloaded
+            )
+        )
+        self.assertTrue(
+            self.server.verify_auth_password(
+                reloaded,
+                "nova-senha-opcional-123",
+            )
+        )
+
     def test_google_account_creates_profile_without_local_password_requirement(self):
         account = {
             "displayName": "Alice",

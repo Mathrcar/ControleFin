@@ -154,6 +154,54 @@ BUNDLED_GOOGLE_OAUTH_CLIENT_FILE = (
     / "google_oauth_client.bundled.json"
 )
 
+
+def bundled_google_oauth_candidates():
+    candidates = [
+        BUNDLED_GOOGLE_OAUTH_CLIENT_FILE,
+        (
+            BASE_DIR
+            / "_internal"
+            / "google_oauth_client.bundled.json"
+        ),
+    ]
+
+    if getattr(
+        sys,
+        "frozen",
+        False,
+    ):
+        meipass = getattr(
+            sys,
+            "_MEIPASS",
+            None,
+        )
+
+        if meipass:
+            candidates.append(
+                Path(meipass)
+                / "google_oauth_client.bundled.json"
+            )
+
+    unique = []
+    seen = set()
+
+    for candidate in candidates:
+        key = str(
+            candidate.resolve()
+        )
+
+        if key in seen:
+            continue
+
+        seen.add(
+            key
+        )
+        unique.append(
+            candidate
+        )
+
+    return unique
+
 # Antes do login apontamos para o layout legado/bootstrap. Nenhuma API
 # financeira é acessível sem sessão; no login estes caminhos são substituídos
 # pelos caminhos do perfil autenticado.
@@ -476,20 +524,62 @@ def install_bundled_google_oauth_client():
     if GOOGLE_OAUTH_CLIENT_FILE.exists():
         return False
 
-    if not BUNDLED_GOOGLE_OAUTH_CLIENT_FILE.exists():
+    bundled_file = next(
+        (
+            candidate
+            for candidate
+            in bundled_google_oauth_candidates()
+            if candidate.exists()
+        ),
+        None,
+    )
+
+    if bundled_file is None:
         return False
 
     try:
         payload = json.loads(
-            BUNDLED_GOOGLE_OAUTH_CLIENT_FILE.read_text(
+            bundled_file.read_text(
                 encoding="utf-8"
             )
         )
+
+        installed = (
+            payload.get(
+                "installed"
+            )
+            if isinstance(
+                payload,
+                dict,
+            )
+            else None
+        )
+
+        if not isinstance(
+            installed,
+            dict,
+        ):
+            raise ValueError(
+                "OAuth Client precisa ser do tipo Desktop/Installed."
+            )
+
+        if not str(
+            installed.get(
+                "client_id"
+            )
+            or ""
+        ).strip():
+            raise ValueError(
+                "OAuth Client não possui client_id."
+            )
+
         GOOGLE_DRIVE.save_client_config(
             payload,
             clear_token=False,
         )
+
         return True
+
     except Exception as exc:
         raise RuntimeError(
             "O OAuth Client embutido no ControleFin está inválido."
@@ -1302,11 +1392,49 @@ def validate_auth_registry(
                 "Associação Google inválida."
             )
 
+        # Migração para autenticação Google-primary:
+        #
+        # - registros novos sempre possuem localPasswordEnabled;
+        # - registros antigos não possuíam este campo porque a senha local era
+        #   o login principal;
+        # - ao migrar, a senha antiga fica DESABILITADA;
+        # - somente a tela Segurança pode ativá-la novamente como segunda
+        #   camada.
+        if (
+            "localPasswordEnabled"
+            in raw_user
+        ):
+            local_password_enabled = bool(
+                raw_user.get(
+                    "localPasswordEnabled"
+                )
+            )
+        else:
+            local_password_enabled = False
+
+        auth_mode = str(
+            raw_user.get(
+                "authMode"
+            )
+            or (
+                "google"
+                if isinstance(
+                    google_account,
+                    dict,
+                )
+                else "legacy"
+            )
+        ).strip().lower()
+
         users.append(
             {
                 **user,
                 "profileId": profile_id,
                 "usernameKey": username_key,
+                "authMode": auth_mode,
+                "localPasswordEnabled": (
+                    local_password_enabled
+                ),
                 "googleAccount": (
                     dict(
                         google_account
@@ -1463,6 +1591,11 @@ def migrate_single_user_auth_to_registry():
                 "username"
             ]
         ),
+        "authMode": "legacy",
+        # O hash é mantido somente para compatibilidade/recuperação.
+        # Login local não é mais o método principal e não vira senha adicional
+        # automaticamente.
+        "localPasswordEnabled": False,
         "googleAccount": None,
     }
 
@@ -1534,9 +1667,21 @@ def load_auth_registry():
                 encoding="utf-8"
             )
         )
-        return validate_auth_registry(
+
+        validated = validate_auth_registry(
             registry
         )
+
+        # Persiste migrações estruturais (por exemplo a conversão de senha
+        # local obrigatória antiga para senha adicional DESABILITADA).
+        if registry != validated:
+            atomic_write_json(
+                AUTH_USERS_FILE,
+                validated,
+            )
+
+        return validated
+
     except Exception as exc:
         raise RuntimeError(
             "O registro local de usuários está inválido."
@@ -1657,11 +1802,16 @@ def user_local_password_enabled(
     ):
         return False
 
-    # Registros antigos tinham senha obrigatória e não possuíam este campo.
+    # A senha adicional existe somente quando foi explicitamente ativada
+    # na arquitetura Google-primary.
+    #
+    # Perfis das versões antigas possuíam um hash de senha local obrigatório,
+    # mas não tinham o campo localPasswordEnabled. Esse hash legado NÃO deve
+    # ser reinterpretado como a nova segunda camada de autenticação.
     return bool(
         user.get(
             "localPasswordEnabled",
-            True,
+            False,
         )
     )
 
@@ -4593,40 +4743,13 @@ def api_google_cloud_status():
 async def api_google_cloud_passphrase(
     request: Request,
 ):
-    payload = await auth_json_payload(request)
-    passphrase = payload.get("passphrase")
-
-    if not GOOGLE_DRIVE.status().get("connected"):
-        raise HTTPException(
-            status_code=409,
-            detail=(
-                "Conecte o Google Drive antes de configurar a senha da nuvem."
-            ),
-        )
-
-    try:
-        saved = CLOUD_SYNC.save_passphrase(
-            passphrase,
-            verify_remote=True,
-        )
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=400,
-            detail=str(exc),
-        ) from exc
-    except Exception as exc:
-        raise HTTPException(
-            status_code=409,
-            detail=str(exc),
-        ) from exc
-
-    return {
-        "ok": True,
-        **saved,
-        "cloud": CLOUD_SYNC.status(
-            include_remote=True
+    raise HTTPException(
+        status_code=410,
+        detail=(
+            "A senha da nuvem foi removida da versão atual. "
+            "Novos backups usam uma chave automática vinculada à conta Google."
         ),
-    }
+    )
 
 
 @app.post("/api/google/cloud/restore")
@@ -4634,23 +4757,11 @@ async def api_google_cloud_restore(
     request: Request,
 ):
     """
-    Fluxo seguro de primeiro acesso / novo computador.
+    Restaura o snapshot mais recente sem pedir senha da nuvem.
 
-    Este endpoint é somente de RESTAURAÇÃO:
-    - exige Google conectado;
-    - exige que já exista snapshot remoto;
-    - valida a senha da nuvem;
-    - baixa e aplica o snapshot mais recente;
-    - nunca cria/upload um snapshot vazio quando não há backup remoto.
+    Snapshots v2 obtêm automaticamente a chave a partir da pasta ControleFin
+    da mesma conta Google. Snapshots v1 antigos precisam de migração única.
     """
-    payload = await auth_json_payload(
-        request
-    )
-
-    passphrase = payload.get(
-        "passphrase"
-    )
-
     if not GOOGLE_DRIVE.status().get(
         "connected"
     ):
@@ -4684,22 +4795,17 @@ async def api_google_cloud_restore(
             ),
         )
 
-    try:
-        # Verifica a senha contra o snapshot remoto ANTES de persistir.
-        CLOUD_SYNC.save_passphrase(
-            passphrase,
-            verify_remote=True,
-        )
-    except ValueError as exc:
-        raise HTTPException(
-            status_code=400,
-            detail=str(exc),
-        ) from exc
-    except Exception as exc:
+    if remote.get(
+        "legacyPasswordRequired"
+    ):
         raise HTTPException(
             status_code=409,
-            detail=str(exc),
-        ) from exc
+            detail=(
+                "BACKUP_LEGADO_REQUER_SENHA: este backup foi criado pela "
+                "versão antiga. Migre-o uma única vez com a senha antiga ou "
+                "sincronize primeiro no computador original."
+            ),
+        )
 
     result = run_cloud_operation(
         lambda: CLOUD_SYNC.download(
@@ -4716,11 +4822,47 @@ async def api_google_cloud_restore(
     }
 
 
+@app.post("/api/google/cloud/migrate-legacy")
+async def api_google_cloud_migrate_legacy(
+    request: Request,
+):
+    """
+    Compatibilidade: usa a senha antiga apenas uma vez para converter o backup
+    v1 em uma nova revisão v2 sem senha.
+    """
+    if not GOOGLE_DRIVE.status().get(
+        "connected"
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Conecte sua conta Google antes de migrar o backup antigo."
+            ),
+        )
+
+    payload = await auth_json_payload(
+        request
+    )
+
+    passphrase = payload.get(
+        "passphrase"
+    )
+
+    return run_cloud_operation(
+        lambda: CLOUD_SYNC.migrate_legacy_snapshot(
+            passphrase
+        )
+    )
+
+
 @app.delete("/api/google/cloud/passphrase")
 def api_google_cloud_clear_passphrase():
-    CLOUD_SYNC.clear_passphrase()
     return {
         "ok": True,
+        "deprecated": True,
+        "message": (
+            "A versão atual não utiliza senha da nuvem."
+        ),
         "cloud": CLOUD_SYNC.status(
             include_remote=False
         ),
@@ -4732,14 +4874,6 @@ def run_cloud_operation(operation):
         raise HTTPException(
             status_code=409,
             detail="Google Drive não conectado.",
-        )
-
-    if not CLOUD_SYNC.key_configured():
-        raise HTTPException(
-            status_code=409,
-            detail=(
-                "Configure a senha da nuvem antes de sincronizar."
-            ),
         )
 
     if not SYNC_LOCK.acquire(blocking=False):
@@ -5512,8 +5646,9 @@ CLOUD_BACKGROUND_TIMER = None
 def _cloud_operation_available():
     google_status = GOOGLE_DRIVE.status()
     return bool(
-        google_status.get("connected")
-        and CLOUD_SYNC.key_configured()
+        google_status.get(
+            "connected"
+        )
     )
 
 

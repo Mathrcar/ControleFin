@@ -1,0 +1,481 @@
+{
+  "version": 9,
+  "customCategories": [
+    "@pluggy:08010000",
+    "@pluggy:08020000",
+    "@pluggy:19050002",
+    "FGTS - Cancer",
+    "Futebol",
+    "@pluggy:15010000",
+    "@pluggy:21000000",
+    "@cf:salary",
+    "Terapia"
+  ],
+  "customCategoryTranslations": [
+    {
+      "id": "custom_category_translation_ffbbb2a6-3dd1-40e0-9129-ecdb998f4e19",
+      "canonical": "FGTS - Cancer",
+      "sourceLanguage": "pt-BR",
+      "ptBR": "FGTS - Cancer",
+      "enUS": "FGTS - Cancer"
+    },
+    {
+      "id": "custom_category_translation_1ee15119-2fa8-4999-be84-963b84377975",
+      "canonical": "Imposto de Renda",
+      "sourceLanguage": "pt-BR",
+      "ptBR": "Imposto de Renda",
+      "enUS": "Tax of income"
+    },
+    {
+      "id": "custom_category_translation_735f031d-c7f5-40d4-b4ed-363fd6b5d54d",
+      "canonical": "Soccer",
+      "sourceLanguage": "pt-BR",
+      "ptBR": "Soccer",
+      "enUS": "Soccer"
+    },
+    {
+      "id": "custom_category_translation_3c7b0eff-83e5-4300-aea8-a7eea99b872b",
+      "canonical": "Futebol",
+      "sourceLanguage": "pt-BR",
+      "ptBR": "Futebol",
+      "enUS": "Futebol"
+    },
+    {
+      "id": "custom_category_translation_77afad03-fc64-4bce-a305-485c12b36f85",
+      "canonical": "Terapia",
+      "sourceLanguage": "pt-BR",
+      "ptBR": "Terapia",
+      "enUS": "Terapia"
+    }
+  ],
+  "manualTransactions": [
+    {
+      "id": "manual_1e44e560-0665-4869-b93b-d1815ea187d7",
+      "source": "MANUAL",
+      "manual": true,
+      "manualKind": "EXPENSE",
+      "date": "2026-08-05",
+      "month": "2026-08",
+      "amount": -241.97,
+      "currencyCode": "BRL",
+      "status": "POSTED",
+      "type": "DEBIT",
+      "description": "CLARO",
+      "institutionName": "BTG Banking",
+      "accountName": "Cartão BTG BLACK",
+      "accountId": "f371a714-16ea-4bb4-b3c6-24381eac1642",
+      "accountType": "CREDIT",
+      "category": "@pluggy:17000000",
+      "manualMethod": "Cartão de crédito",
+      "manualClass": "FIXED",
+      "counterparty": "CLARO",
+      "merchantName": "CLARO",
+      "payer_name": "",
+      "normalizedExpense": 241.97,
+      "normalizedOutflow": 0.0,
+      "normalizedInflow": 0.0,
+      "normalizedCardCredit": 0.0,
+      "createdAt": "2026-09-13T22:09:30.197Z",
+      "updatedAt": "2026-09-13T22:10:48.744Z"
+    },
+    {
+      "id": "manual_00f431ce-4e6a-4e3b-bfe7-81f109ee4a2d",
+      "source": "MANUAL",
+      "manual": true,
+      "manualKind": "EXPENSE",
+      "date": "2026-08-27",
+      "month": "2026-08",
+      "amount": -23.9,
+      "currencyCode": "BRL",
+      "status": "POSTED",
+      "type": "DEBIT",
+      "description": "Spotify",
+      "institutionName": "BTG Banking",
+      "accountName": "Cartão BTG BLACK",
+      "accountId": "f371a714-16ea-4bb4-b3c6-24381eac1642",
+      "accountType": "CREDIT",
+      "category": "@pluggy:09000000",
+      "manualMethod": "Cartão de crédito",
+      "manualClass": "FIXED",
+      "counterparty": "SPOTIFY",
+      "merchantName": "SPOTIFY",
+      "payer_name": "",
+      "normalizedExpense": 23.9,
+      "normalizedOutflow": 0.0,
+      "normalizedInflow": 0.0,
+      "normalizedCardCredit": 0.0,
+      "createdAt": "2026-09-13T22:10:35.230Z",
+      "updatedAt": "2026-09-13T22:10:35.230Z"
+    }
+  ],
+  "transactionOverrides": {
+    "id:36f555bb-8843-40a5-9f53-e4381d838cd5": {
+      "category": "Futebol"
+    },
+    "id:a89f72fc-4a24-418f-abcb-95de0b972c17": {
+      "incomePurpose": "REIMBURSEMENT",
+      "linkedExpenseKey": "id:8d97babe-435c-4e2f-9f92-8b03fc488d3d"
+    },
+    "id:c831f066-0a97-41ed-92a9-23745c17c85d": {
+      "category": "FGTS - Cancer"
+    },
+    "id:5941e3fd-05ee-4f25-88f9-2e145ef0e4f7": {
+      "category": "FGTS - Cancer"
+    },
+    "id:0d33c998-c8f0-4338-bc10-7ff6ca89ce3b": {
+      "category": "FGTS - Cancer"
+    },
+    "id:2ad6e2c0-8ff8-4a02-a292-ae6ab925c801": {
+      "category": "FGTS - Cancer"
+    },
+    "id:9c6e2bf7-f1df-444c-88b0-e327e383dd18": {
+      "incomePurpose": "REIMBURSEMENT"
+    },
+    "id:524a2219-758a-40b8-8d89-253084c19aac": {
+      "incomePurpose": "REIMBURSEMENT"
+    },
+    "id:e5c105c8-c38d-4783-8fde-349ee3ae2252": {
+      "incomePurpose": "REIMBURSEMENT"
+    },
+    "id:feb77580-4bb5-44f4-ba09-34f831858ab5": {
+      "incomePurpose": "REIMBURSEMENT"
+    },
+    "id:520b3c18-2486-4618-ba62-7e727481b12f": {
+      "incomePurpose": "REIMBURSEMENT"
+    },
+    "id:da240591-fc7f-4a5b-9760-d4c48d45bacd": {
+      "category": "FGTS - Cancer"
+    },
+    "id:169bfe7d-3834-418c-a4c2-0ccf22dd6dcc": {
+      "incomePurpose": "REIMBURSEMENT"
+    },
+    "id:8dc3d276-f114-4de1-ac1e-df60722ec765": {
+      "category": "@pluggy:15010000"
+    },
+    "id:be76741e-399b-4775-a059-8a04aff6e75a": {
+      "incomePurpose": "REIMBURSEMENT"
+    },
+    "id:cb95f6c6-f236-4ea5-8160-21821b745746": {
+      "incomePurpose": "REIMBURSEMENT"
+    },
+    "id:ac01d74e-b9bc-4ae4-9923-9b6664d84a89": {
+      "category": "FGTS - Cancer"
+    },
+    "id:e095b623-9447-4b92-8cdf-af18561d73d1": {
+      "incomePurpose": "REIMBURSEMENT"
+    },
+    "id:560173ff-5e43-4763-8474-faebffa64095": {
+      "incomePurpose": "REIMBURSEMENT"
+    },
+    "id:5b515282-4ba4-44a7-a9ab-5abc66f17833": {
+      "incomePurpose": "REIMBURSEMENT"
+    },
+    "id:c761880c-a1a1-435e-8746-320e6fb793cc": {
+      "incomePurpose": "REIMBURSEMENT"
+    },
+    "id:0ab8666b-645f-4b21-aafd-46a96f713d84": {
+      "incomePurpose": "REIMBURSEMENT"
+    },
+    "id:b3fdbc8d-a12a-44d3-ae12-cf2d4ccff2ad": {
+      "incomePurpose": "REIMBURSEMENT"
+    },
+    "id:9c688d2b-4bc0-46a8-8cac-476b56bbbf3d": {
+      "category": "FGTS - Cancer"
+    },
+    "id:b09301b0-1204-4eaf-a8d9-f4c2ea20ef37": {
+      "reimbursementMode": "SHARED",
+      "splitPeople": 2
+    },
+    "id:581c8a0d-84b5-4f9f-8149-0b8fe6ca628a": {
+      "category": "@pluggy:08010000"
+    },
+    "id:5959e183-8494-4559-a6ff-a1766cb249c7": {
+      "category": "@pluggy:08010000"
+    },
+    "id:35a52214-546e-410d-9cc4-a4ce83cae69b": {
+      "category": "@pluggy:08010000"
+    },
+    "id:f859b0a4-772d-4edb-b3fb-54fe454213d4": {
+      "category": "@pluggy:08010000"
+    },
+    "id:cf561fca-ceb1-43c5-b417-5e48b6af7d8e": {
+      "category": "@pluggy:21000000"
+    },
+    "id:24b1b624-781c-4ebc-936c-5e163569f553": {
+      "category": "@pluggy:21000000"
+    },
+    "id:c1212ee8-2d3f-4561-814c-bb79ac4e9010": {
+      "category": "Futebol"
+    },
+    "id:89b08d26-e2c4-4474-9a00-ea053f1ee748": {
+      "category": "Futebol"
+    },
+    "id:f01966c1-5a5c-4261-8491-8d493a137da5": {
+      "category": "@pluggy:08010000"
+    },
+    "id:aea06fee-8fac-4b62-af72-ede1fc9671cc": {
+      "category": "@pluggy:19050002"
+    },
+    "id:4b4e1dec-087f-49ac-a4ff-4c43acc707e7": {
+      "category": "Futebol"
+    },
+    "id:ebf4af87-d8a9-4cf4-b699-1d5811433de4": {
+      "category": "@pluggy:21000000"
+    },
+    "id:03fc77b9-f613-45c2-8feb-2b259f1e27c4": {
+      "category": "Terapia",
+      "expenseClass": "FIXED"
+    },
+    "id:4867bcf2-d094-491f-b1e0-b84267f15401": {
+      "category": "Futebol"
+    },
+    "id:c04dfd14-c0f6-482e-a3b9-61a47b9e1f4f": {
+      "category": "@pluggy:21000000"
+    },
+    "id:e55ff6aa-6e9c-4be0-92c1-c912390f9f46": {
+      "category": "@pluggy:21000000"
+    },
+    "id:ab7f0446-978d-464e-bd8c-7000030494c2": {
+      "category": "Terapia",
+      "expenseClass": "FIXED"
+    },
+    "id:98ae2525-ec69-4629-9aca-dacaf9d1f299": {
+      "category": "@pluggy:21000000"
+    },
+    "id:a08b3d4b-7ba1-4e4b-9f2d-6e44b9c8dc9d": {
+      "category": "Terapia",
+      "expenseClass": "FIXED"
+    },
+    "id:c9901d9a-5fe4-4283-8698-a4458b838897": {
+      "category": "@pluggy:08010000"
+    },
+    "id:5c842a0f-224c-479c-b357-bef9ded94665": {
+      "incomePurpose": "REIMBURSEMENT"
+    },
+    "id:8764d0cf-7ac9-43c8-84b3-a88ff60275ab": {
+      "category": "FGTS - Cancer"
+    },
+    "id:d91b408a-1ff0-4f14-973d-0e2bcc5f898e": {
+      "incomePurpose": "REIMBURSEMENT"
+    }
+  },
+  "categoryRules": [
+    {
+      "id": "rule_716ed3ab-f615-4ceb-9a84-39df74e0c983",
+      "enabled": true,
+      "field": "merchant",
+      "operator": "contains",
+      "value": "IFOOD",
+      "category": "@cf:delivery"
+    }
+  ],
+  "fixedExpenseRules": [
+    {
+      "id": "fixed_rule_935615d0-7e53-413f-bcc8-3c9666eb3587",
+      "enabled": true,
+      "merchantSignature": "condominio liber bosque dos buritis",
+      "descriptionSignature": "bankslip",
+      "institution": "BTG Banking",
+      "accountId": "27c723c0-a206-4931-b908-d738248a7473",
+      "method": "Boleto",
+      "category": "@cf:housing",
+      "amount": 468.01,
+      "reimbursementMode": "NONE",
+      "splitPeople": 2,
+      "sourceLabel": "CONDOMINIO LIBER BOSQUE DOS BURITIS",
+      "sourceTransactionKey": "id:611ec230-0e5e-444f-bb80-05e61cdfbec8",
+      "createdAt": "2026-09-13T16:25:46.993Z"
+    },
+    {
+      "id": "fixed_rule_0e4b1950-3c9b-47fb-9828-ec2a72b29d9b",
+      "enabled": true,
+      "merchantSignature": "tatiane rodrigues cappelari",
+      "descriptionSignature": "",
+      "institution": "BTG Banking",
+      "accountId": "27c723c0-a206-4931-b908-d738248a7473",
+      "method": "PIX",
+      "category": "@cf:education",
+      "amount": 300.0,
+      "reimbursementMode": "NONE",
+      "splitPeople": 2,
+      "sourceLabel": "TATIANE RODRIGUES CAPPELARI 39517987854",
+      "sourceTransactionKey": "id:f75f8e5f-5f39-4307-a6f4-77844c46996d",
+      "createdAt": "2026-09-13T16:26:06.802Z"
+    },
+    {
+      "id": "fixed_rule_aa9ec19d-2346-448d-954b-a418679b73b1",
+      "enabled": true,
+      "merchantSignature": "adobe systems ltda",
+      "descriptionSignature": "adobe",
+      "institution": "BTG Banking",
+      "accountId": "f371a714-16ea-4bb4-b3c6-24381eac1642",
+      "method": "Cartão de crédito",
+      "category": "@pluggy:09000000",
+      "amount": 55.0,
+      "reimbursementMode": "NONE",
+      "splitPeople": 2,
+      "sourceLabel": "ADOBE SYSTEMS BRASIL LTDA.",
+      "sourceTransactionKey": "id:06f148a0-507f-4dd3-a9b7-ca75edb05b8b",
+      "createdAt": "2026-09-13T16:27:19.098Z"
+    },
+    {
+      "id": "fixed_rule_d9725c49-5909-4d52-b280-0e8f5c7550a9",
+      "enabled": true,
+      "merchantSignature": "",
+      "descriptionSignature": "mongeral",
+      "institution": "BTG Banking",
+      "accountId": "f371a714-16ea-4bb4-b3c6-24381eac1642",
+      "method": "Cartão de crédito",
+      "category": "@cf:insurance",
+      "amount": 360.89,
+      "reimbursementMode": "NONE",
+      "splitPeople": 2,
+      "sourceLabel": "Mongeral",
+      "sourceTransactionKey": "id:d9028090-4922-4e78-93f6-c718722f35da",
+      "createdAt": "2026-09-13T16:27:42.354Z"
+    },
+    {
+      "id": "fixed_rule_5d21e449-e19e-4da3-8887-a88d8c23951c",
+      "enabled": true,
+      "merchantSignature": "spotify servicos musica ltda",
+      "descriptionSignature": "spotify",
+      "institution": "BTG Banking",
+      "accountId": "f371a714-16ea-4bb4-b3c6-24381eac1642",
+      "method": "Cartão de crédito",
+      "category": "@pluggy:09000000",
+      "amount": 23.9,
+      "reimbursementMode": "NONE",
+      "splitPeople": 2,
+      "sourceLabel": "SPOTIFY BRASIL SERVICOS DE MUSICA LTDA.",
+      "sourceTransactionKey": "id:aa02831d-9b59-4ef2-a7ca-a6fc830fcc26",
+      "createdAt": "2026-09-13T16:27:56.412Z"
+    },
+    {
+      "id": "fixed_rule_4b0445a9-4d8a-4eeb-8e04-72e34e8a3293",
+      "enabled": true,
+      "merchantSignature": "quintoandar",
+      "descriptionSignature": "quintoandar",
+      "institution": "BTG Banking",
+      "accountId": "f371a714-16ea-4bb4-b3c6-24381eac1642",
+      "method": "Cartão de crédito",
+      "category": "@cf:rent",
+      "amount": 2751.37,
+      "reimbursementMode": "NONE",
+      "splitPeople": 2,
+      "sourceLabel": "quintoandar",
+      "sourceTransactionKey": "id:389ce28e-1f58-4684-b82f-404fb9763db7",
+      "createdAt": "2026-09-13T16:28:28.277Z"
+    },
+    {
+      "id": "fixed_rule_d3f0fdce-c073-4514-9d8f-e259af123f0a",
+      "enabled": true,
+      "merchantSignature": "",
+      "descriptionSignature": "enel",
+      "institution": "BTG Banking",
+      "accountId": "f371a714-16ea-4bb4-b3c6-24381eac1642",
+      "method": "Cartão de crédito",
+      "category": "@cf:utilities",
+      "amount": 71.88,
+      "reimbursementMode": "NONE",
+      "splitPeople": 2,
+      "sourceLabel": "Enel",
+      "sourceTransactionKey": "id:fdc10e42-cdc5-452e-867a-694d635fbe4d",
+      "createdAt": "2026-09-13T16:30:25.718Z"
+    },
+    {
+      "id": "fixed_rule_12774c22-06e2-43ae-9c15-2d4e43867381",
+      "enabled": true,
+      "merchantSignature": "",
+      "descriptionSignature": "wellhub barbara martin",
+      "institution": "BTG Banking",
+      "accountId": "f371a714-16ea-4bb4-b3c6-24381eac1642",
+      "method": "Cartão de crédito",
+      "category": "@cf:health",
+      "amount": 99.99,
+      "reimbursementMode": "FULL",
+      "splitPeople": 2,
+      "sourceLabel": "Wellhub Barbara Martin",
+      "sourceTransactionKey": "id:8d97babe-435c-4e2f-9f92-8b03fc488d3d",
+      "createdAt": "2026-09-13T16:30:53.075Z"
+    },
+    {
+      "id": "fixed_rule_a6892c9c-c923-4e17-bc44-d7cce4d8941e",
+      "enabled": true,
+      "merchantSignature": "",
+      "descriptionSignature": "wellhub gabriel neves",
+      "institution": "BTG Banking",
+      "accountId": "f371a714-16ea-4bb4-b3c6-24381eac1642",
+      "method": "Cartão de crédito",
+      "category": "@pluggy:09000000",
+      "amount": 99.99,
+      "reimbursementMode": "FULL",
+      "splitPeople": 2,
+      "sourceLabel": "Wellhub Gabriel Neves",
+      "sourceTransactionKey": "id:36b5a98b-f8d3-40fc-8ab6-79203eec0ec8",
+      "createdAt": "2026-09-13T16:30:58.624Z"
+    },
+    {
+      "id": "fixed_rule_5c7a73de-b019-4fbf-95ff-9dcb3e7b26c7",
+      "enabled": true,
+      "merchantSignature": "",
+      "descriptionSignature": "wellhub",
+      "institution": "BTG Banking",
+      "accountId": "f371a714-16ea-4bb4-b3c6-24381eac1642",
+      "method": "Cartão de crédito",
+      "category": "@pluggy:09000000",
+      "amount": 58.7,
+      "reimbursementMode": "NONE",
+      "splitPeople": 2,
+      "sourceLabel": "Wellhub",
+      "sourceTransactionKey": "id:c80444cc-e12f-4567-ba84-e41ec60214b9",
+      "createdAt": "2026-09-13T16:31:16.201Z"
+    },
+    {
+      "id": "fixed_rule_4dc268e2-8bb4-495c-9981-57286c34c517",
+      "enabled": true,
+      "merchantSignature": "",
+      "descriptionSignature": "wellhub marina oliv",
+      "institution": "BTG Banking",
+      "accountId": "f371a714-16ea-4bb4-b3c6-24381eac1642",
+      "method": "Cartão de crédito",
+      "category": "@pluggy:09000000",
+      "amount": 149.99,
+      "reimbursementMode": "FULL",
+      "splitPeople": 2,
+      "sourceLabel": "Wellhub Marina De Oliv",
+      "sourceTransactionKey": "id:c5634285-c8a5-4730-a254-108c237f2983",
+      "createdAt": "2026-09-13T16:31:33.419Z"
+    },
+    {
+      "id": "fixed_rule_b78970d0-92df-46d2-8a82-571302ed8a2c",
+      "enabled": true,
+      "merchantSignature": "claro",
+      "descriptionSignature": "claro",
+      "institution": "BTG Banking",
+      "accountId": "f371a714-16ea-4bb4-b3c6-24381eac1642",
+      "method": "Cartão de crédito",
+      "category": "@pluggy:07010000",
+      "amount": 242.7,
+      "reimbursementMode": "NONE",
+      "splitPeople": 2,
+      "sourceLabel": "CLARO S.A.",
+      "sourceTransactionKey": "id:1af96caf-af24-4e44-8e11-bfa6e725c1d7",
+      "createdAt": "2026-09-13T16:31:39.983Z"
+    }
+  ],
+  "fixedIncomeRules": [],
+  "incomeSourceCategoryRules": [
+    {
+      "id": "income_source_rule_24f4492f-1d51-40b9-aed4-cb9da122228b",
+      "enabled": true,
+      "sourceType": "payer",
+      "sourceSignature": "mastercard brasil solucoes de pagamento ltda.",
+      "sourceLabel": "MASTERCARD BRASIL SOLUCOES DE PAGAMENTO LTDA.",
+      "accountId": "",
+      "institution": "",
+      "category": "@cf:salary",
+      "createdAt": "2026-09-13T18:01:29.585Z"
+    }
+  ],
+  "uiLanguage": "pt-BR"
+}
