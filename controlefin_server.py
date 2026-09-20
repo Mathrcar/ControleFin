@@ -29,35 +29,45 @@ from pluggy_finance_export import (
     PluggyAPIError,
 )
 
+from controlefin_google_drive import (
+    GoogleDriveManager,
+)
+
+from controlefin_cloud_sync import (
+    CloudSyncManager,
+)
+
 
 def get_app_dir():
     """
-    Retorna a pasta permanente do ControleFin.
+    Diretório dos arquivos do programa.
 
     Desenvolvimento:
-        C:/ControleFin/controlefin_server.py
-        -> BASE_DIR = C:/ControleFin
+        pasta que contém controlefin_server.py
 
-    Executável PyInstaller --onedir:
-        C:/ControleFin/dist/ControleFin/ControleFin.exe
-        -> BASE_DIR = C:/ControleFin
+    PyInstaller --onedir:
+        pasta que contém ControleFin.exe
 
-    Dessa forma, recompilar/apagar dist não afeta .env, data, user_data
-    nem controlefin_dashboard.html.
+    Dados pessoais permanecem em %LOCALAPPDATA%\\ControleFin.
     """
-    if getattr(sys, "frozen", False):
-        exe_dir = Path(sys.executable).resolve().parent
+    if getattr(
+        sys,
+        "frozen",
+        False,
+    ):
+        return (
+            Path(
+                sys.executable
+            )
+            .resolve()
+            .parent
+        )
 
-        # Estrutura padrão criada por:
-        # pyinstaller --clean --onedir --name ControleFin controlefin_server.py
-        if exe_dir.parent.name.lower() == "dist":
-            return exe_dir.parent.parent
-
-        # Fallback: se o .exe for movido para outro lugar,
-        # usa a própria pasta do executável como pasta da aplicação.
-        return exe_dir
-
-    return Path(__file__).resolve().parent
+    return (
+        Path(__file__)
+        .resolve()
+        .parent
+    )
 
 
 BASE_DIR = get_app_dir()
@@ -97,22 +107,85 @@ def get_storage_dir():
 
 STORAGE_DIR = get_storage_dir()
 
-DATA_DIR = STORAGE_DIR / "data"
-USER_DATA_DIR = STORAGE_DIR / "user_data"
-CONFIG_DIR = STORAGE_DIR / "config"
+# ---------------------------------------------------------------------------
+# Layout multiusuário
+#
+# %LOCALAPPDATA%\ControleFin
+# ├── auth\users.json
+# ├── config\google_oauth_client.json    <- compartilhado pelo aplicativo
+# └── profiles\<profileId>\
+#     ├── data\controlefin.db
+#     ├── user_data\ajustes.json
+#     └── config\
+#         ├── pluggy.json
+#         ├── google_drive_token.json
+#         ├── cloud_sync_key.json
+#         └── cloud_sync_state.json
+# ---------------------------------------------------------------------------
+
+ROOT_DATA_DIR = STORAGE_DIR / "data"
+ROOT_USER_DATA_DIR = STORAGE_DIR / "user_data"
+ROOT_CONFIG_DIR = STORAGE_DIR / "config"
+AUTH_DIR = STORAGE_DIR / "auth"
+PROFILES_DIR = STORAGE_DIR / "profiles"
+
+# Arquivo antigo, usado somente para migração da instalação single-user.
+LEGACY_AUTH_FILE = ROOT_USER_DATA_DIR / "auth.json"
+AUTH_FILE = LEGACY_AUTH_FILE
+
+AUTH_USERS_FILE = AUTH_DIR / "users.json"
+AUTH_REGISTRY_VERSION = 2
+
+# O OAuth Client identifica o ControleFin como aplicativo e pode ser
+# compartilhado por todos os perfis locais. O token da conta Google não pode.
+GOOGLE_OAUTH_CLIENT_FILE = (
+    ROOT_CONFIG_DIR
+    / "google_oauth_client.json"
+)
+GOOGLE_LOGIN_TOKEN_FILE = (
+    ROOT_CONFIG_DIR
+    / "google_login_token.json"
+)
+# O administrador pode colocar o OAuth Client do aplicativo ao lado do código
+# antes do build. O build o renomeia para este arquivo e todos os usuários usam
+# o mesmo Client ID, cada um autorizando a própria conta Google.
+BUNDLED_GOOGLE_OAUTH_CLIENT_FILE = (
+    BASE_DIR
+    / "google_oauth_client.bundled.json"
+)
+
+# Antes do login apontamos para o layout legado/bootstrap. Nenhuma API
+# financeira é acessível sem sessão; no login estes caminhos são substituídos
+# pelos caminhos do perfil autenticado.
+DATA_DIR = ROOT_DATA_DIR
+USER_DATA_DIR = ROOT_USER_DATA_DIR
+CONFIG_DIR = ROOT_CONFIG_DIR
 
 SETTINGS_FILE = USER_DATA_DIR / "ajustes.json"
-AUTH_FILE = USER_DATA_DIR / "auth.json"
 PLUGGY_CONFIG_FILE = CONFIG_DIR / "pluggy.json"
+GOOGLE_DRIVE_TOKEN_FILE = CONFIG_DIR / "google_drive_token.json"
+CLOUD_SYNC_KEY_FILE = CONFIG_DIR / "cloud_sync_key.json"
+CLOUD_SYNC_STATE_FILE = CONFIG_DIR / "cloud_sync_state.json"
+DB_FILE = DATA_DIR / SQLITE_DATABASE_NAME
+
+ACTIVE_PROFILE_LOCK = threading.RLock()
+ACTIVE_PROFILE_ID = None
+ACTIVE_PROFILE_USERNAME = None
 
 HTML_FILE = BASE_DIR / "controlefin_dashboard.html"
 LEGACY_ENV_FILE = BASE_DIR / ".env"
 
-DB_FILE = DATA_DIR / SQLITE_DATABASE_NAME
-
-DATA_DIR.mkdir(parents=True, exist_ok=True)
-USER_DATA_DIR.mkdir(parents=True, exist_ok=True)
-CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+for _directory in (
+    ROOT_DATA_DIR,
+    ROOT_USER_DATA_DIR,
+    ROOT_CONFIG_DIR,
+    AUTH_DIR,
+    PROFILES_DIR,
+):
+    _directory.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
 
 app = FastAPI()
 
@@ -232,12 +305,11 @@ def _bytes_to_blob(value):
 
 def protect_local_secret(secret):
     """
-    Windows DPAPI: o segredo só pode ser decriptado pelo mesmo usuário do
-    Windows no mesmo contexto de perfil.
+    Windows DPAPI: o conteúdo protegido só pode ser decriptado pelo mesmo
+    usuário do Windows no mesmo contexto de perfil.
 
-    Não há fallback em texto puro. Em outros sistemas, CONTROLEFIN permite
-    desenvolvimento, mas a tela de configuração segura informa que o recurso
-    de armazenamento foi projetado para Windows.
+    É usado para o Client Secret da Pluggy e para o token OAuth persistente
+    do Google Drive.
     """
     secret = str(
         secret or ""
@@ -250,7 +322,7 @@ def protect_local_secret(secret):
 
     if os.name != "nt":
         raise RuntimeError(
-            "O armazenamento seguro das credenciais Pluggy usa Windows DPAPI."
+            "O armazenamento seguro local usa Windows DPAPI."
         )
 
     crypt32 = ctypes.WinDLL(
@@ -271,7 +343,7 @@ def protect_local_secret(secret):
 
     ok = crypt32.CryptProtectData(
         ctypes.byref(source),
-        "ControleFin Pluggy",
+        "ControleFin secret",
         None,
         None,
         None,
@@ -316,7 +388,7 @@ def unprotect_local_secret(record):
 
     if os.name != "nt":
         raise RuntimeError(
-            "O Client Secret está protegido pelo Windows DPAPI e só pode ser lido no Windows."
+            "O segredo local está protegido pelo Windows DPAPI e só pode ser lido no Windows."
         )
 
     try:
@@ -377,6 +449,78 @@ def unprotect_local_secret(record):
     return clear_bytes.decode(
         "utf-8"
     )
+
+
+GOOGLE_DRIVE_LOCK = threading.Lock()
+
+GOOGLE_DRIVE = GoogleDriveManager(
+    client_config_file=(
+        GOOGLE_OAUTH_CLIENT_FILE
+    ),
+    token_file=(
+        GOOGLE_DRIVE_TOKEN_FILE
+    ),
+    protect_secret=(
+        protect_local_secret
+    ),
+    unprotect_secret=(
+        unprotect_local_secret
+    ),
+    atomic_write_json=(
+        atomic_write_json
+    ),
+)
+
+def install_bundled_google_oauth_client():
+    """Instala o OAuth Client compartilhado do aplicativo, se empacotado."""
+    if GOOGLE_OAUTH_CLIENT_FILE.exists():
+        return False
+
+    if not BUNDLED_GOOGLE_OAUTH_CLIENT_FILE.exists():
+        return False
+
+    try:
+        payload = json.loads(
+            BUNDLED_GOOGLE_OAUTH_CLIENT_FILE.read_text(
+                encoding="utf-8"
+            )
+        )
+        GOOGLE_DRIVE.save_client_config(
+            payload,
+            clear_token=False,
+        )
+        return True
+    except Exception as exc:
+        raise RuntimeError(
+            "O OAuth Client embutido no ControleFin está inválido."
+        ) from exc
+
+
+# Em um build distribuído, isto evita que cada pessoa tenha que importar o
+# mesmo credentials.json. Se não houver arquivo embutido, a interface mantém
+# a importação manual como fallback para desenvolvimento.
+install_bundled_google_oauth_client()
+
+# Manager usado somente enquanto ainda não sabemos qual perfil local pertence à
+# conta Google escolhida. O token temporário é movido para o perfil correto
+# depois que o Google identifica o usuário.
+GOOGLE_LOGIN = GoogleDriveManager(
+    client_config_file=(
+        GOOGLE_OAUTH_CLIENT_FILE
+    ),
+    token_file=(
+        GOOGLE_LOGIN_TOKEN_FILE
+    ),
+    protect_secret=(
+        protect_local_secret
+    ),
+    unprotect_secret=(
+        unprotect_local_secret
+    ),
+    atomic_write_json=(
+        atomic_write_json
+    ),
+)
 
 
 def load_pluggy_config(
@@ -579,15 +723,15 @@ def migrate_legacy_storage():
     candidates = [
         (
             BASE_DIR / "data" / SQLITE_DATABASE_NAME,
-            DB_FILE,
+            ROOT_DATA_DIR / SQLITE_DATABASE_NAME,
         ),
         (
             BASE_DIR / "user_data" / "ajustes.json",
-            SETTINGS_FILE,
+            ROOT_USER_DATA_DIR / "ajustes.json",
         ),
         (
             BASE_DIR / "user_data" / "auth.json",
-            AUTH_FILE,
+            LEGACY_AUTH_FILE,
         ),
     ]
 
@@ -618,7 +762,20 @@ def migrate_legacy_env():
     Depois de salvar e validar estruturalmente o novo arquivo, o .env antigo é
     apagado para que o Client Secret não permaneça em texto puro.
     """
-    if PLUGGY_CONFIG_FILE.exists():
+    target_pluggy_file = (
+        PLUGGY_CONFIG_FILE
+        if ACTIVE_PROFILE_ID
+        else ROOT_CONFIG_DIR
+        / "pluggy.json"
+    )
+
+    if target_pluggy_file.exists():
+        return False
+
+    if AUTH_USERS_FILE.exists():
+        # Em modo multiusuário não é possível inferir a qual pessoa um .env
+        # legado pertence. A migração automática fica restrita ao bootstrap
+        # single-user anterior à criação do registro.
         return False
 
     if not LEGACY_ENV_FILE.exists():
@@ -857,7 +1014,9 @@ def synchronize_from_saved_pluggy():
 
 AUTH_FILE_VERSION = 1
 AUTH_COOKIE_NAME = "controlefin_session"
+AUTH_GOOGLE_PENDING_COOKIE_NAME = "controlefin_google_pending"
 AUTH_SESSION_TTL_SECONDS = 12 * 60 * 60
+AUTH_GOOGLE_PENDING_TTL_SECONDS = 5 * 60
 AUTH_PASSWORD_MIN_LENGTH = 8
 AUTH_PASSWORD_MAX_LENGTH = 256
 AUTH_USERNAME_MIN_LENGTH = 3
@@ -867,6 +1026,9 @@ AUTH_PBKDF2_ITERATIONS = 600_000
 AUTH_LOCK = threading.RLock()
 AUTH_SESSIONS_LOCK = threading.RLock()
 AUTH_SESSIONS = {}
+
+GOOGLE_PENDING_AUTH_LOCK = threading.RLock()
+GOOGLE_PENDING_AUTH = {}
 
 LOGIN_FAILURE_LOCK = threading.RLock()
 LOGIN_FAILURES = {}
@@ -1022,6 +1184,1393 @@ def validate_auth_config(config):
     }
 
 
+def auth_username_key(
+    value,
+):
+    return normalize_auth_username(
+        value
+    ).casefold()
+
+
+def new_profile_id():
+    return secrets.token_hex(
+        16
+    )
+
+
+def validate_profile_id(
+    value,
+):
+    profile_id = str(
+        value
+        or ""
+    ).strip().lower()
+
+    if not re.fullmatch(
+        r"[a-f0-9]{32}",
+        profile_id,
+    ):
+        raise ValueError(
+            "Identificador de perfil inválido."
+        )
+
+    return profile_id
+
+
+def empty_auth_registry():
+    return {
+        "version": (
+            AUTH_REGISTRY_VERSION
+        ),
+        "users": [],
+        "updatedAt": utc_iso_now(),
+    }
+
+
+def validate_auth_registry(
+    registry,
+):
+    if not isinstance(
+        registry,
+        dict,
+    ):
+        raise ValueError(
+            "Registro de usuários inválido."
+        )
+
+    if int(
+        registry.get("version")
+        or 0
+    ) != AUTH_REGISTRY_VERSION:
+        raise ValueError(
+            "Versão do registro de usuários não suportada."
+        )
+
+    raw_users = registry.get(
+        "users"
+    )
+
+    if not isinstance(
+        raw_users,
+        list,
+    ):
+        raise ValueError(
+            "Lista de usuários inválida."
+        )
+
+    users = []
+    seen_usernames = set()
+    seen_profiles = set()
+
+    for raw_user in raw_users:
+        user = validate_auth_config(
+            raw_user
+        )
+
+        profile_id = validate_profile_id(
+            raw_user.get(
+                "profileId"
+            )
+        )
+
+        username_key = auth_username_key(
+            user["username"]
+        )
+
+        if username_key in seen_usernames:
+            raise ValueError(
+                "Existem usuários duplicados."
+            )
+
+        if profile_id in seen_profiles:
+            raise ValueError(
+                "Existem perfis duplicados."
+            )
+
+        google_account = raw_user.get(
+            "googleAccount"
+        )
+
+        if (
+            google_account is not None
+            and not isinstance(
+                google_account,
+                dict,
+            )
+        ):
+            raise ValueError(
+                "Associação Google inválida."
+            )
+
+        users.append(
+            {
+                **user,
+                "profileId": profile_id,
+                "usernameKey": username_key,
+                "googleAccount": (
+                    dict(
+                        google_account
+                    )
+                    if isinstance(
+                        google_account,
+                        dict,
+                    )
+                    else None
+                ),
+            }
+        )
+
+        seen_usernames.add(
+            username_key
+        )
+        seen_profiles.add(
+            profile_id
+        )
+
+    return {
+        "version": (
+            AUTH_REGISTRY_VERSION
+        ),
+        "users": users,
+        "updatedAt": (
+            registry.get(
+                "updatedAt"
+            )
+            or utc_iso_now()
+        ),
+    }
+
+
+def save_auth_registry(
+    registry,
+):
+    validated = validate_auth_registry(
+        registry
+    )
+
+    validated[
+        "updatedAt"
+    ] = utc_iso_now()
+
+    atomic_write_json(
+        AUTH_USERS_FILE,
+        validated,
+    )
+
+    return validated
+
+
+def profile_root(
+    profile_id,
+):
+    return (
+        PROFILES_DIR
+        / validate_profile_id(
+            profile_id
+        )
+    )
+
+
+def ensure_profile_directories(
+    profile_id,
+):
+    root = profile_root(
+        profile_id
+    )
+
+    paths = {
+        "root": root,
+        "data": root / "data",
+        "user_data": root / "user_data",
+        "config": root / "config",
+    }
+
+    for path in paths.values():
+        path.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+    return paths
+
+
+def _copy_if_missing(
+    source,
+    destination,
+):
+    source = Path(
+        source
+    )
+    destination = Path(
+        destination
+    )
+
+    if (
+        source.exists()
+        and not destination.exists()
+    ):
+        destination.parent.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+        shutil.copy2(
+            source,
+            destination,
+        )
+        return True
+
+    return False
+
+
+def migrate_single_user_auth_to_registry():
+    """
+    Migração compatível com instalações anteriores.
+
+    O antigo auth.json vira o primeiro usuário do registro e os dados locais
+    existentes são COPIADOS para o novo perfil. O legado não é apagado
+    automaticamente, permitindo recuperação manual.
+    """
+    if AUTH_USERS_FILE.exists():
+        return False
+
+    if not LEGACY_AUTH_FILE.exists():
+        return False
+
+    try:
+        legacy = json.loads(
+            LEGACY_AUTH_FILE.read_text(
+                encoding="utf-8"
+            )
+        )
+        legacy = validate_auth_config(
+            legacy
+        )
+    except Exception as exc:
+        raise RuntimeError(
+            "O auth.json legado está inválido e não pode ser migrado."
+        ) from exc
+
+    profile_id = new_profile_id()
+    paths = ensure_profile_directories(
+        profile_id
+    )
+
+    user = {
+        **legacy,
+        "profileId": profile_id,
+        "usernameKey": auth_username_key(
+            legacy[
+                "username"
+            ]
+        ),
+        "googleAccount": None,
+    }
+
+    registry = empty_auth_registry()
+    registry["users"] = [
+        user
+    ]
+    save_auth_registry(
+        registry
+    )
+
+    copies = (
+        (
+            ROOT_DATA_DIR
+            / SQLITE_DATABASE_NAME,
+            paths["data"]
+            / SQLITE_DATABASE_NAME,
+        ),
+        (
+            ROOT_USER_DATA_DIR
+            / "ajustes.json",
+            paths["user_data"]
+            / "ajustes.json",
+        ),
+        (
+            ROOT_CONFIG_DIR
+            / "pluggy.json",
+            paths["config"]
+            / "pluggy.json",
+        ),
+        (
+            ROOT_CONFIG_DIR
+            / "google_drive_token.json",
+            paths["config"]
+            / "google_drive_token.json",
+        ),
+        (
+            ROOT_CONFIG_DIR
+            / "cloud_sync_key.json",
+            paths["config"]
+            / "cloud_sync_key.json",
+        ),
+        (
+            ROOT_CONFIG_DIR
+            / "cloud_sync_state.json",
+            paths["config"]
+            / "cloud_sync_state.json",
+        ),
+    )
+
+    for source, destination in copies:
+        _copy_if_missing(
+            source,
+            destination,
+        )
+
+    return True
+
+
+def load_auth_registry():
+    migrate_single_user_auth_to_registry()
+
+    if not AUTH_USERS_FILE.exists():
+        return empty_auth_registry()
+
+    try:
+        registry = json.loads(
+            AUTH_USERS_FILE.read_text(
+                encoding="utf-8"
+            )
+        )
+        return validate_auth_registry(
+            registry
+        )
+    except Exception as exc:
+        raise RuntimeError(
+            "O registro local de usuários está inválido."
+        ) from exc
+
+
+def find_auth_user(
+    username,
+):
+    try:
+        key = auth_username_key(
+            username
+        )
+    except ValueError:
+        return None
+
+    registry = load_auth_registry()
+
+    for user in registry[
+        "users"
+    ]:
+        if hmac.compare_digest(
+            user[
+                "usernameKey"
+            ],
+            key,
+        ):
+            return user
+
+    return None
+
+
+def find_auth_user_by_profile(
+    profile_id,
+):
+    profile_id = validate_profile_id(
+        profile_id
+    )
+
+    registry = load_auth_registry()
+
+    for user in registry[
+        "users"
+    ]:
+        if hmac.compare_digest(
+            user[
+                "profileId"
+            ],
+            profile_id,
+        ):
+            return user
+
+    return None
+
+
+def create_local_user(
+    username,
+    password,
+):
+    registry = load_auth_registry()
+
+    key = auth_username_key(
+        username
+    )
+
+    if any(
+        hmac.compare_digest(
+            user[
+                "usernameKey"
+            ],
+            key,
+        )
+        for user in registry[
+            "users"
+        ]
+    ):
+        raise ValueError(
+            "Já existe um usuário com esse nome neste computador."
+        )
+
+    auth = build_auth_config(
+        username,
+        password,
+    )
+
+    profile_id = new_profile_id()
+
+    user = {
+        **auth,
+        "profileId": profile_id,
+        "usernameKey": key,
+        "googleAccount": None,
+    }
+
+    ensure_profile_directories(
+        profile_id
+    )
+
+    registry[
+        "users"
+    ].append(
+        user
+    )
+
+    save_auth_registry(
+        registry
+    )
+
+    return user
+
+
+def user_local_password_enabled(
+    user,
+):
+    if not isinstance(
+        user,
+        dict,
+    ):
+        return False
+
+    # Registros antigos tinham senha obrigatória e não possuíam este campo.
+    return bool(
+        user.get(
+            "localPasswordEnabled",
+            True,
+        )
+    )
+
+
+def google_account_key(
+    account,
+):
+    account = (
+        account
+        if isinstance(
+            account,
+            dict,
+        )
+        else {}
+    )
+
+    permission_id = str(
+        account.get(
+            "permissionId"
+        )
+        or ""
+    ).strip()
+
+    email = str(
+        account.get(
+            "emailAddress"
+        )
+        or ""
+    ).strip().casefold()
+
+    return (
+        permission_id,
+        email,
+    )
+
+
+def find_auth_user_by_google_account(
+    account,
+):
+    permission_id, email = (
+        google_account_key(
+            account
+        )
+    )
+
+    if not (
+        permission_id
+        or email
+    ):
+        return None
+
+    registry = load_auth_registry()
+
+    for user in registry[
+        "users"
+    ]:
+        other = user.get(
+            "googleAccount"
+        )
+
+        if not isinstance(
+            other,
+            dict,
+        ):
+            continue
+
+        other_permission, other_email = (
+            google_account_key(
+                other
+            )
+        )
+
+        same_permission = bool(
+            permission_id
+            and other_permission
+            and hmac.compare_digest(
+                permission_id,
+                other_permission,
+            )
+        )
+
+        same_email = bool(
+            email
+            and other_email
+            and hmac.compare_digest(
+                email,
+                other_email,
+            )
+        )
+
+        if (
+            same_permission
+            or same_email
+        ):
+            return user
+
+    return None
+
+
+def google_profile_username(
+    account,
+    registry,
+):
+    account = (
+        account
+        if isinstance(
+            account,
+            dict,
+        )
+        else {}
+    )
+
+    email = str(
+        account.get(
+            "emailAddress"
+        )
+        or ""
+    ).strip()
+
+    display_name = str(
+        account.get(
+            "displayName"
+        )
+        or ""
+    ).strip()
+
+    permission_id = str(
+        account.get(
+            "permissionId"
+        )
+        or ""
+    ).strip()
+
+    candidates = [
+        email,
+        display_name,
+        (
+            "google-"
+            + (
+                permission_id[-12:]
+                if permission_id
+                else secrets.token_hex(
+                    6
+                )
+            )
+        ),
+    ]
+
+    existing_keys = {
+        str(
+            user.get(
+                "usernameKey"
+            )
+            or ""
+        )
+        for user in registry[
+            "users"
+        ]
+    }
+
+    for raw in candidates:
+        raw = "".join(
+            char
+            for char in str(
+                raw
+                or ""
+            )
+            if ord(char) >= 32
+        ).strip()
+
+        if not raw:
+            continue
+
+        if len(
+            raw
+        ) > AUTH_USERNAME_MAX_LENGTH:
+            raw = raw[
+                :AUTH_USERNAME_MAX_LENGTH
+            ]
+
+        if len(
+            raw
+        ) < AUTH_USERNAME_MIN_LENGTH:
+            continue
+
+        try:
+            key = auth_username_key(
+                raw
+            )
+        except ValueError:
+            continue
+
+        if key not in existing_keys:
+            return raw
+
+    base = "google-user"
+
+    for index in range(
+        1,
+        1000,
+    ):
+        candidate = (
+            f"{base}-{index}"
+        )
+        key = auth_username_key(
+            candidate
+        )
+
+        if key not in existing_keys:
+            return candidate
+
+    raise RuntimeError(
+        "Não foi possível criar um identificador local para a conta Google."
+    )
+
+
+def create_google_user(
+    account,
+):
+    account = (
+        dict(account)
+        if isinstance(
+            account,
+            dict,
+        )
+        else {}
+    )
+
+    permission_id, email = (
+        google_account_key(
+            account
+        )
+    )
+
+    if not (
+        permission_id
+        or email
+    ):
+        raise ValueError(
+            "O Google não retornou uma identidade de usuário válida."
+        )
+
+    existing = (
+        find_auth_user_by_google_account(
+            account
+        )
+    )
+
+    if existing:
+        return (
+            existing,
+            False,
+        )
+
+    registry = load_auth_registry()
+
+    username = (
+        google_profile_username(
+            account,
+            registry,
+        )
+    )
+
+    # Mantemos um hash aleatório somente para preservar compatibilidade com o
+    # formato antigo do registro. A senha fica DESABILITADA até o usuário
+    # decidir criar uma senha adicional.
+    auth = build_auth_config(
+        username,
+        secrets.token_urlsafe(
+            48
+        ),
+    )
+
+    profile_id = new_profile_id()
+
+    user = {
+        **auth,
+        "profileId": profile_id,
+        "usernameKey": (
+            auth_username_key(
+                username
+            )
+        ),
+        "authMode": "google",
+        "localPasswordEnabled": False,
+        "googleAccount": {
+            "displayName": str(
+                account.get(
+                    "displayName"
+                )
+                or ""
+            ),
+            "emailAddress": str(
+                account.get(
+                    "emailAddress"
+                )
+                or ""
+            ),
+            "permissionId": str(
+                account.get(
+                    "permissionId"
+                )
+                or ""
+            ),
+            "photoLink": str(
+                account.get(
+                    "photoLink"
+                )
+                or ""
+            ),
+            "connectedAt": (
+                utc_iso_now()
+            ),
+        },
+    }
+
+    ensure_profile_directories(
+        profile_id
+    )
+
+    registry[
+        "users"
+    ].append(
+        user
+    )
+
+    save_auth_registry(
+        registry
+    )
+
+    return (
+        find_auth_user_by_profile(
+            profile_id
+        ),
+        True,
+    )
+
+
+def set_user_local_password(
+    profile_id,
+    new_password,
+):
+    profile_id = validate_profile_id(
+        profile_id
+    )
+
+    new_password = (
+        validate_auth_password(
+            new_password
+        )
+    )
+
+    registry = load_auth_registry()
+
+    changed = False
+
+    for index, user in enumerate(
+        registry[
+            "users"
+        ]
+    ):
+        if user[
+            "profileId"
+        ] != profile_id:
+            continue
+
+        fresh = build_auth_config(
+            user[
+                "username"
+            ],
+            new_password,
+        )
+
+        registry[
+            "users"
+        ][
+            index
+        ] = {
+            **user,
+            "password": (
+                fresh[
+                    "password"
+                ]
+            ),
+            "localPasswordEnabled": (
+                True
+            ),
+            "passwordUpdatedAt": (
+                utc_iso_now()
+            ),
+        }
+
+        changed = True
+        break
+
+    if not changed:
+        raise ValueError(
+            "Perfil não encontrado."
+        )
+
+    save_auth_registry(
+        registry
+    )
+
+    return find_auth_user_by_profile(
+        profile_id
+    )
+
+
+def disable_user_local_password(
+    profile_id,
+):
+    profile_id = validate_profile_id(
+        profile_id
+    )
+
+    registry = load_auth_registry()
+
+    changed = False
+
+    for index, user in enumerate(
+        registry[
+            "users"
+        ]
+    ):
+        if user[
+            "profileId"
+        ] != profile_id:
+            continue
+
+        registry[
+            "users"
+        ][
+            index
+        ] = {
+            **user,
+            "localPasswordEnabled": (
+                False
+            ),
+            "passwordUpdatedAt": (
+                utc_iso_now()
+            ),
+        }
+
+        changed = True
+        break
+
+    if not changed:
+        raise ValueError(
+            "Perfil não encontrado."
+        )
+
+    save_auth_registry(
+        registry
+    )
+
+    return find_auth_user_by_profile(
+        profile_id
+    )
+
+
+def update_user_google_account(
+    profile_id,
+    account,
+):
+    profile_id = validate_profile_id(
+        profile_id
+    )
+
+    account = (
+        dict(account)
+        if isinstance(
+            account,
+            dict,
+        )
+        else None
+    )
+
+    registry = load_auth_registry()
+
+    permission_id = str(
+        (
+            account
+            or {}
+        ).get(
+            "permissionId"
+        )
+        or ""
+    ).strip()
+
+    email = str(
+        (
+            account
+            or {}
+        ).get(
+            "emailAddress"
+        )
+        or ""
+    ).strip().casefold()
+
+    if account and not (
+        permission_id
+        or email
+    ):
+        raise ValueError(
+            "Não foi possível identificar a conta Google conectada."
+        )
+
+    if account:
+        for user in registry[
+            "users"
+        ]:
+            if user[
+                "profileId"
+            ] == profile_id:
+                continue
+
+            other = user.get(
+                "googleAccount"
+            )
+
+            if not isinstance(
+                other,
+                dict,
+            ):
+                continue
+
+            other_permission = str(
+                other.get(
+                    "permissionId"
+                )
+                or ""
+            ).strip()
+
+            other_email = str(
+                other.get(
+                    "emailAddress"
+                )
+                or ""
+            ).strip().casefold()
+
+            same_permission = bool(
+                permission_id
+                and other_permission
+                and hmac.compare_digest(
+                    permission_id,
+                    other_permission,
+                )
+            )
+
+            same_email = bool(
+                email
+                and other_email
+                and hmac.compare_digest(
+                    email,
+                    other_email,
+                )
+            )
+
+            if (
+                same_permission
+                or same_email
+            ):
+                raise ValueError(
+                    "Esta conta Google já está associada ao usuário local "
+                    f"“{user['username']}”. Use outra conta Google para manter "
+                    "os dois usuários separados."
+                )
+
+    changed = False
+
+    for index, user in enumerate(
+        registry[
+            "users"
+        ]
+    ):
+        if user[
+            "profileId"
+        ] != profile_id:
+            continue
+
+        registry[
+            "users"
+        ][
+            index
+        ] = {
+            **user,
+            "authMode": (
+                "google"
+                if account
+                else user.get(
+                    "authMode"
+                )
+            ),
+            "googleAccount": (
+                {
+                    "displayName": str(
+                        account.get(
+                            "displayName"
+                        )
+                        or ""
+                    ),
+                    "emailAddress": str(
+                        account.get(
+                            "emailAddress"
+                        )
+                        or ""
+                    ),
+                    "permissionId": str(
+                        account.get(
+                            "permissionId"
+                        )
+                        or ""
+                    ),
+                    "photoLink": str(
+                        account.get(
+                            "photoLink"
+                        )
+                        or ""
+                    ),
+                    "connectedAt": (
+                        utc_iso_now()
+                    ),
+                }
+                if account
+                else None
+            ),
+        }
+        changed = True
+        break
+
+    if not changed:
+        raise ValueError(
+            "Usuário local não encontrado."
+        )
+
+    save_auth_registry(
+        registry
+    )
+
+    return find_auth_user_by_profile(
+        profile_id
+    )
+
+
+def current_active_profile():
+    with ACTIVE_PROFILE_LOCK:
+        if not ACTIVE_PROFILE_ID:
+            return None
+
+        return {
+            "profileId": (
+                ACTIVE_PROFILE_ID
+            ),
+            "username": (
+                ACTIVE_PROFILE_USERNAME
+            ),
+        }
+
+
+def rebuild_google_drive_manager():
+    global GOOGLE_DRIVE
+
+    GOOGLE_DRIVE = GoogleDriveManager(
+        client_config_file=(
+            GOOGLE_OAUTH_CLIENT_FILE
+        ),
+        token_file=(
+            GOOGLE_DRIVE_TOKEN_FILE
+        ),
+        protect_secret=(
+            protect_local_secret
+        ),
+        unprotect_secret=(
+            unprotect_local_secret
+        ),
+        atomic_write_json=(
+            atomic_write_json
+        ),
+    )
+
+
+def rebuild_cloud_sync_manager():
+    global CLOUD_SYNC
+
+    if (
+        "CloudSyncManager"
+        not in globals()
+        or "load_settings"
+        not in globals()
+    ):
+        return
+
+    CLOUD_SYNC = CloudSyncManager(
+        google_drive=GOOGLE_DRIVE,
+        db_file=DB_FILE,
+        settings_file=SETTINGS_FILE,
+        pluggy_config_file=(
+            PLUGGY_CONFIG_FILE
+        ),
+        key_file=(
+            CLOUD_SYNC_KEY_FILE
+        ),
+        state_file=(
+            CLOUD_SYNC_STATE_FILE
+        ),
+        protect_secret=(
+            protect_local_secret
+        ),
+        unprotect_secret=(
+            unprotect_local_secret
+        ),
+        atomic_write_json=(
+            atomic_write_json
+        ),
+        load_settings=(
+            load_settings
+        ),
+        normalize_settings=(
+            normalize_settings
+        ),
+        save_settings=(
+            save_settings
+        ),
+        load_pluggy_config=(
+            load_pluggy_config
+        ),
+        save_pluggy_config=(
+            save_pluggy_config
+        ),
+    )
+
+
+def activate_profile(
+    profile_id,
+    username,
+):
+    global ACTIVE_PROFILE_ID
+    global ACTIVE_PROFILE_USERNAME
+    global DATA_DIR
+    global USER_DATA_DIR
+    global CONFIG_DIR
+    global SETTINGS_FILE
+    global PLUGGY_CONFIG_FILE
+    global GOOGLE_DRIVE_TOKEN_FILE
+    global CLOUD_SYNC_KEY_FILE
+    global CLOUD_SYNC_STATE_FILE
+    global DB_FILE
+    global CLOUD_BACKGROUND_TIMER
+
+    profile_id = validate_profile_id(
+        profile_id
+    )
+    username = normalize_auth_username(
+        username
+    )
+
+    with ACTIVE_PROFILE_LOCK:
+        if (
+            ACTIVE_PROFILE_ID
+            == profile_id
+        ):
+            return
+
+        sync_lock_acquired = (
+            SYNC_LOCK.acquire(
+                timeout=15
+            )
+        )
+
+        if not sync_lock_acquired:
+            raise RuntimeError(
+                "Aguarde a sincronização atual terminar antes de trocar de usuário."
+            )
+
+        try:
+            if (
+                "CLOUD_BACKGROUND_TIMER"
+                in globals()
+                and CLOUD_BACKGROUND_TIMER
+            ):
+                try:
+                    CLOUD_BACKGROUND_TIMER.cancel()
+                except Exception:
+                    pass
+                CLOUD_BACKGROUND_TIMER = None
+
+            paths = (
+                ensure_profile_directories(
+                    profile_id
+                )
+            )
+
+            DATA_DIR = paths[
+                "data"
+            ]
+            USER_DATA_DIR = paths[
+                "user_data"
+            ]
+            CONFIG_DIR = paths[
+                "config"
+            ]
+
+            SETTINGS_FILE = (
+                USER_DATA_DIR
+                / "ajustes.json"
+            )
+            PLUGGY_CONFIG_FILE = (
+                CONFIG_DIR
+                / "pluggy.json"
+            )
+            GOOGLE_DRIVE_TOKEN_FILE = (
+                CONFIG_DIR
+                / "google_drive_token.json"
+            )
+            CLOUD_SYNC_KEY_FILE = (
+                CONFIG_DIR
+                / "cloud_sync_key.json"
+            )
+            CLOUD_SYNC_STATE_FILE = (
+                CONFIG_DIR
+                / "cloud_sync_state.json"
+            )
+            DB_FILE = (
+                DATA_DIR
+                / SQLITE_DATABASE_NAME
+            )
+
+            ACTIVE_PROFILE_ID = (
+                profile_id
+            )
+            ACTIVE_PROFILE_USERNAME = (
+                username
+            )
+
+            rebuild_google_drive_manager()
+            rebuild_cloud_sync_manager()
+
+        finally:
+            SYNC_LOCK.release()
+
+
+def deactivate_profile():
+    global ACTIVE_PROFILE_ID
+    global ACTIVE_PROFILE_USERNAME
+    global DATA_DIR
+    global USER_DATA_DIR
+    global CONFIG_DIR
+    global SETTINGS_FILE
+    global PLUGGY_CONFIG_FILE
+    global GOOGLE_DRIVE_TOKEN_FILE
+    global CLOUD_SYNC_KEY_FILE
+    global CLOUD_SYNC_STATE_FILE
+    global DB_FILE
+    global CLOUD_BACKGROUND_TIMER
+
+    with ACTIVE_PROFILE_LOCK:
+        if (
+            "CLOUD_BACKGROUND_TIMER"
+            in globals()
+            and CLOUD_BACKGROUND_TIMER
+        ):
+            try:
+                CLOUD_BACKGROUND_TIMER.cancel()
+            except Exception:
+                pass
+            CLOUD_BACKGROUND_TIMER = None
+
+        DATA_DIR = (
+            ROOT_DATA_DIR
+        )
+        USER_DATA_DIR = (
+            ROOT_USER_DATA_DIR
+        )
+        CONFIG_DIR = (
+            ROOT_CONFIG_DIR
+        )
+        SETTINGS_FILE = (
+            USER_DATA_DIR
+            / "ajustes.json"
+        )
+        PLUGGY_CONFIG_FILE = (
+            CONFIG_DIR
+            / "pluggy.json"
+        )
+        GOOGLE_DRIVE_TOKEN_FILE = (
+            CONFIG_DIR
+            / "google_drive_token.json"
+        )
+        CLOUD_SYNC_KEY_FILE = (
+            CONFIG_DIR
+            / "cloud_sync_key.json"
+        )
+        CLOUD_SYNC_STATE_FILE = (
+            CONFIG_DIR
+            / "cloud_sync_state.json"
+        )
+        DB_FILE = (
+            DATA_DIR
+            / SQLITE_DATABASE_NAME
+        )
+
+        ACTIVE_PROFILE_ID = None
+        ACTIVE_PROFILE_USERNAME = None
+
+        rebuild_google_drive_manager()
+        rebuild_cloud_sync_manager()
+
+
 def load_auth_config():
     if not AUTH_FILE.exists():
         return None
@@ -1105,15 +2654,70 @@ def purge_expired_auth_sessions():
             )
 
 
-def create_auth_session(username):
+def revoke_other_auth_sessions(
+    profile_id,
+):
+    profile_id = validate_profile_id(
+        profile_id
+    )
+
+    with AUTH_SESSIONS_LOCK:
+        tokens = [
+            token
+            for token, session
+            in AUTH_SESSIONS.items()
+            if str(
+                session.get(
+                    "profileId"
+                )
+                or ""
+            )
+            != profile_id
+        ]
+
+        for token in tokens:
+            AUTH_SESSIONS.pop(
+                token,
+                None,
+            )
+
+
+def create_auth_session(
+    username,
+    profile_id=None,
+):
     purge_expired_auth_sessions()
+
+    user = (
+        find_auth_user(
+            username
+        )
+        if profile_id is None
+        else find_auth_user_by_profile(
+            profile_id
+        )
+    )
+
+    if not user:
+        raise ValueError(
+            "Usuário local não encontrado."
+        )
 
     token = secrets.token_urlsafe(32)
     now = time.time()
 
     with AUTH_SESSIONS_LOCK:
         AUTH_SESSIONS[token] = {
-            "username": username,
+            "username": (
+                user[
+                    "username"
+                ]
+            ),
+            "profileId": (
+                user[
+                    "profileId"
+                ]
+            ),
             "createdAt": now,
             "expiresAt": (
                 now
@@ -1124,7 +2728,9 @@ def create_auth_session(username):
     return token
 
 
-def auth_session_username(token):
+def auth_session_identity(
+    token,
+):
     if not token:
         return None
 
@@ -1138,17 +2744,65 @@ def auth_session_username(token):
         if not session:
             return None
 
-        return str(
-            session.get("username")
+        username = str(
+            session.get(
+                "username"
+            )
             or ""
-        ) or None
+        )
+
+        profile_id = str(
+            session.get(
+                "profileId"
+            )
+            or ""
+        )
+
+        if (
+            not username
+            or not profile_id
+        ):
+            return None
+
+        return {
+            "username": username,
+            "profileId": profile_id,
+        }
 
 
-def auth_request_username(request):
-    return auth_session_username(
+def auth_session_username(token):
+    identity = auth_session_identity(
+        token
+    )
+
+    return (
+        identity[
+            "username"
+        ]
+        if identity
+        else None
+    )
+
+
+def auth_request_identity(request):
+    return auth_session_identity(
         request.cookies.get(
             AUTH_COOKIE_NAME
         )
+    )
+
+
+def auth_request_username(request):
+    identity = auth_request_identity(
+        request
+    )
+
+    return (
+        identity[
+            "username"
+        ]
+        if identity
+        else None
     )
 
 
@@ -1161,6 +2815,186 @@ def revoke_auth_session(token):
             token,
             None,
         )
+
+
+def purge_expired_google_pending_auth():
+    now = time.time()
+
+    with GOOGLE_PENDING_AUTH_LOCK:
+        expired = [
+            token
+            for token, record
+            in GOOGLE_PENDING_AUTH.items()
+            if float(
+                record.get(
+                    "expiresAt"
+                )
+                or 0
+            )
+            <= now
+        ]
+
+        for token in expired:
+            GOOGLE_PENDING_AUTH.pop(
+                token,
+                None,
+            )
+
+
+def create_google_pending_auth(
+    user,
+    *,
+    new_profile=False,
+):
+    purge_expired_google_pending_auth()
+
+    token = secrets.token_urlsafe(
+        32
+    )
+
+    now = time.time()
+
+    with GOOGLE_PENDING_AUTH_LOCK:
+        GOOGLE_PENDING_AUTH[
+            token
+        ] = {
+            "profileId": (
+                user[
+                    "profileId"
+                ]
+            ),
+            "username": (
+                user[
+                    "username"
+                ]
+            ),
+            "newProfile": bool(
+                new_profile
+            ),
+            "createdAt": now,
+            "expiresAt": (
+                now
+                + AUTH_GOOGLE_PENDING_TTL_SECONDS
+            ),
+        }
+
+    return token
+
+
+def google_pending_identity(
+    token,
+):
+    if not token:
+        return None
+
+    purge_expired_google_pending_auth()
+
+    with GOOGLE_PENDING_AUTH_LOCK:
+        record = (
+            GOOGLE_PENDING_AUTH.get(
+                token
+            )
+        )
+
+        if not record:
+            return None
+
+        return dict(
+            record
+        )
+
+
+def consume_google_pending_auth(
+    token,
+):
+    if not token:
+        return None
+
+    purge_expired_google_pending_auth()
+
+    with GOOGLE_PENDING_AUTH_LOCK:
+        record = (
+            GOOGLE_PENDING_AUTH.pop(
+                token,
+                None,
+            )
+        )
+
+    return (
+        dict(record)
+        if record
+        else None
+    )
+
+
+def set_google_pending_cookie(
+    response,
+    token,
+):
+    response.set_cookie(
+        key=(
+            AUTH_GOOGLE_PENDING_COOKIE_NAME
+        ),
+        value=token,
+        max_age=(
+            AUTH_GOOGLE_PENDING_TTL_SECONDS
+        ),
+        httponly=True,
+        samesite="strict",
+        secure=False,
+        path="/",
+    )
+
+
+def clear_google_pending_cookie(
+    response,
+):
+    response.delete_cookie(
+        key=(
+            AUTH_GOOGLE_PENDING_COOKIE_NAME
+        ),
+        path="/",
+        httponly=True,
+        samesite="strict",
+    )
+
+
+def require_auth_api_identity(
+    request,
+):
+    identity = auth_request_identity(
+        request
+    )
+
+    if not identity:
+        raise HTTPException(
+            status_code=401,
+            detail=(
+                "Autenticação Google necessária."
+            ),
+        )
+
+    active = current_active_profile()
+
+    if (
+        not active
+        or active[
+            "profileId"
+        ]
+        != identity[
+            "profileId"
+        ]
+    ):
+        activate_profile(
+            identity[
+                "profileId"
+            ],
+            identity[
+                "username"
+            ],
+        )
+
+    return identity
 
 
 def set_auth_cookie(
@@ -1299,6 +3133,69 @@ async def auth_json_payload(request):
     return payload
 
 
+def merge_google_token_json(
+    existing_json,
+    incoming_json,
+):
+    """
+    Preserva refresh_token já existente quando uma nova autorização Google
+    retorna somente access_token. Isso evita perder sincronização persistente
+    em logins subsequentes.
+    """
+    try:
+        incoming = json.loads(
+            incoming_json
+            or "{}"
+        )
+    except Exception as exc:
+        raise ValueError(
+            "Token Google recebido é inválido."
+        ) from exc
+
+    if not isinstance(
+        incoming,
+        dict,
+    ):
+        raise ValueError(
+            "Token Google recebido é inválido."
+        )
+
+    existing = {}
+
+    if existing_json:
+        try:
+            parsed = json.loads(
+                existing_json
+            )
+
+            if isinstance(
+                parsed,
+                dict,
+            ):
+                existing = parsed
+        except Exception:
+            existing = {}
+
+    if (
+        not incoming.get(
+            "refresh_token"
+        )
+        and existing.get(
+            "refresh_token"
+        )
+    ):
+        incoming[
+            "refresh_token"
+        ] = existing[
+            "refresh_token"
+        ]
+
+    return json.dumps(
+        incoming,
+        ensure_ascii=False,
+    )
+
+
 @app.middleware("http")
 async def local_authentication_middleware(
     request,
@@ -1314,11 +3211,11 @@ async def local_authentication_middleware(
             "/api/auth/"
         )
     ):
-        username = auth_request_username(
+        identity = auth_request_identity(
             request
         )
 
-        if not username:
+        if not identity:
             return JSONResponse(
                 status_code=401,
                 content={
@@ -1327,6 +3224,36 @@ async def local_authentication_middleware(
                     )
                 },
             )
+
+        active = current_active_profile()
+
+        if (
+            not active
+            or active[
+                "profileId"
+            ]
+            != identity[
+                "profileId"
+            ]
+        ):
+            try:
+                activate_profile(
+                    identity[
+                        "profileId"
+                    ],
+                    identity[
+                        "username"
+                    ],
+                )
+            except Exception as exc:
+                return JSONResponse(
+                    status_code=409,
+                    content={
+                        "detail": str(
+                            exc
+                        )
+                    },
+                )
 
     response = await call_next(
         request
@@ -1342,112 +3269,453 @@ async def local_authentication_middleware(
 
 @app.get("/api/auth/status")
 def auth_status(request: Request):
-    configured = AUTH_FILE.exists()
+    registry = load_auth_registry()
 
-    if configured:
-        # Não transforma arquivo corrompido em "primeiro acesso".
-        load_auth_config()
-
-    username = auth_request_username(
+    identity = auth_request_identity(
         request
+    )
+
+    if identity:
+        try:
+            activate_profile(
+                identity[
+                    "profileId"
+                ],
+                identity[
+                    "username"
+                ],
+            )
+        except Exception:
+            identity = None
+
+    pending = None
+
+    if not identity:
+        pending = google_pending_identity(
+            request.cookies.get(
+                AUTH_GOOGLE_PENDING_COOKIE_NAME
+            )
+        )
+
+    google_login_status = (
+        GOOGLE_LOGIN.status()
+    )
+
+    user = (
+        find_auth_user_by_profile(
+            identity[
+                "profileId"
+            ]
+        )
+        if identity
+        else None
+    )
+
+    google_account = (
+        user.get(
+            "googleAccount"
+        )
+        if user
+        and isinstance(
+            user.get(
+                "googleAccount"
+            ),
+            dict,
+        )
+        else None
     )
 
     return {
-        "configured": configured,
-        "authenticated": bool(username),
-        "username": username,
-        "passwordMinLength": AUTH_PASSWORD_MIN_LENGTH,
-        "sessionTtlSeconds": AUTH_SESSION_TTL_SECONDS,
+        "configured": bool(
+            google_login_status.get(
+                "clientConfigured"
+            )
+        ),
+        "googleClientConfigured": bool(
+            google_login_status.get(
+                "clientConfigured"
+            )
+        ),
+        "userCount": len(
+            registry[
+                "users"
+            ]
+        ),
+        "authenticated": bool(
+            identity
+        ),
+        "username": (
+            identity[
+                "username"
+            ]
+            if identity
+            else None
+        ),
+        "profileId": (
+            identity[
+                "profileId"
+            ]
+            if identity
+            else None
+        ),
+        "googleAccount": (
+            google_account
+        ),
+        "passwordEnabled": bool(
+            user_local_password_enabled(
+                user
+            )
+            if user
+            else False
+        ),
+        "passwordRequired": bool(
+            pending
+        ),
+        "pendingUsername": (
+            pending.get(
+                "username"
+            )
+            if pending
+            else None
+        ),
+        "pendingProfileId": (
+            pending.get(
+                "profileId"
+            )
+            if pending
+            else None
+        ),
+        "passwordMinLength": (
+            AUTH_PASSWORD_MIN_LENGTH
+        ),
+        "sessionTtlSeconds": (
+            AUTH_SESSION_TTL_SECONDS
+        ),
+        "authMode": "google",
     }
 
 
-@app.post("/api/auth/setup")
-async def auth_setup(request: Request):
-    payload = await auth_json_payload(
-        request
-    )
-
-    with AUTH_LOCK:
-        if AUTH_FILE.exists():
-            raise HTTPException(
-                status_code=409,
-                detail=(
-                    "O primeiro usuário já foi criado."
-                ),
-            )
-
-        password = str(
-            payload.get("password")
-            or ""
-        )
-        confirm_password = str(
-            payload.get(
-                "confirmPassword"
-            )
-            or ""
-        )
-
-        if (
-            password
-            != confirm_password
-        ):
-            raise HTTPException(
-                status_code=400,
-                detail=(
-                    "As senhas não coincidem."
-                ),
-            )
-
-        try:
-            config = build_auth_config(
-                payload.get("username"),
-                password,
-            )
-        except ValueError as exc:
-            raise HTTPException(
-                status_code=400,
-                detail=str(exc),
-            ) from exc
-
-        save_auth_config(
-            config
-        )
-
-    token = create_auth_session(
-        config["username"]
-    )
-
-    response = JSONResponse(
-        {
-            "ok": True,
-            "authenticated": True,
-            "username": config["username"],
-        }
-    )
-    set_auth_cookie(
-        response,
-        token,
-    )
-    return response
-
-
-@app.post("/api/auth/login")
-async def auth_login(request: Request):
-    payload = await auth_json_payload(
-        request
-    )
-
-    if not AUTH_FILE.exists():
+@app.put("/api/auth/google/client-config")
+async def auth_google_client_config(
+    request: Request,
+):
+    """
+    Fallback administrativo para desenvolvimento quando o build não traz
+    google_oauth_client.bundled.json.
+    """
+    if GOOGLE_LOGIN.has_client_config():
         raise HTTPException(
             status_code=409,
             detail=(
-                "Nenhum usuário foi criado ainda."
+                "O OAuth Client já está configurado. Alterações posteriores "
+                "exigem uma sessão autenticada no ControleFin."
+            ),
+        )
+
+    payload = await auth_json_payload(
+        request
+    )
+
+    try:
+        result = (
+            GOOGLE_LOGIN
+            .save_client_config(
+                payload,
+                clear_token=True,
+            )
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "ok": True,
+        **result,
+    }
+
+
+@app.post("/api/auth/google/start")
+def auth_google_start():
+    if not GOOGLE_LOGIN.has_client_config():
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "OAuth Client do Google não está configurado neste build."
+            ),
+        )
+
+    try:
+        GOOGLE_LOGIN.cancel_connect()
+        GOOGLE_LOGIN.clear_token()
+
+        result = (
+            GOOGLE_LOGIN
+            .begin_connect(
+                timeout_seconds=180,
+                return_query=(
+                    "google_auth=return"
+                ),
+                # Em computador compartilhado queremos sempre mostrar o seletor
+                # de conta. consent garante refresh_token para um novo PC.
+                prompt=(
+                    "select_account consent"
+                ),
+            )
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=str(exc),
+        ) from exc
+
+    return result
+
+
+@app.post("/api/auth/google/complete")
+def auth_google_complete(
+    request: Request,
+):
+    login_status = (
+        GOOGLE_LOGIN.status()
+    )
+
+    if login_status.get(
+        "oauthPending"
+    ):
+        return JSONResponse(
+            status_code=202,
+            content={
+                "ok": False,
+                "pending": True,
+                "message": (
+                    "A autorização Google ainda está sendo concluída."
+                ),
+            },
+        )
+
+    if not login_status.get(
+        "connected"
+    ):
+        detail = (
+            login_status.get(
+                "oauthError"
+            )
+            or "A autorização Google não foi concluída."
+        )
+
+        raise HTTPException(
+            status_code=409,
+            detail=str(
+                detail
+            ),
+        )
+
+    try:
+        account = (
+            GOOGLE_LOGIN
+            .account_identity()
+        )
+
+        incoming_token = (
+            GOOGLE_LOGIN
+            .load_token_json()
+        )
+
+        if not incoming_token:
+            raise RuntimeError(
+                "O Google não retornou um token utilizável."
+            )
+
+        user = (
+            find_auth_user_by_google_account(
+                account
+            )
+        )
+
+        new_profile = False
+
+        if not user:
+            user, new_profile = (
+                create_google_user(
+                    account
+                )
+            )
+
+        # Uma instância local opera um perfil por vez.
+        with AUTH_SESSIONS_LOCK:
+            AUTH_SESSIONS.clear()
+
+        with GOOGLE_PENDING_AUTH_LOCK:
+            GOOGLE_PENDING_AUTH.clear()
+
+        activate_profile(
+            user[
+                "profileId"
+            ],
+            user[
+                "username"
+            ],
+        )
+
+        existing_token = (
+            GOOGLE_DRIVE
+            .load_token_json()
+        )
+
+        GOOGLE_DRIVE.save_token_json(
+            merge_google_token_json(
+                existing_token,
+                incoming_token,
+            )
+        )
+
+        user = (
+            update_user_google_account(
+                user[
+                    "profileId"
+                ],
+                account,
+            )
+        )
+
+        GOOGLE_LOGIN.clear_token()
+
+        account_payload = (
+            user.get(
+                "googleAccount"
+            )
+            or {}
+        )
+
+        if user_local_password_enabled(
+            user
+        ):
+            pending_token = (
+                create_google_pending_auth(
+                    user,
+                    new_profile=(
+                        new_profile
+                    ),
+                )
+            )
+
+            response = JSONResponse(
+                {
+                    "ok": True,
+                    "authenticated": False,
+                    "passwordRequired": True,
+                    "newProfile": bool(
+                        new_profile
+                    ),
+                    "username": (
+                        user[
+                            "username"
+                        ]
+                    ),
+                    "profileId": (
+                        user[
+                            "profileId"
+                        ]
+                    ),
+                    "googleAccount": (
+                        account_payload
+                    ),
+                }
+            )
+
+            clear_auth_cookie(
+                response
+            )
+
+            set_google_pending_cookie(
+                response,
+                pending_token,
+            )
+
+            return response
+
+        token = create_auth_session(
+            user[
+                "username"
+            ],
+            user[
+                "profileId"
+            ],
+        )
+
+        response = JSONResponse(
+            {
+                "ok": True,
+                "authenticated": True,
+                "passwordRequired": False,
+                "newProfile": bool(
+                    new_profile
+                ),
+                "username": (
+                    user[
+                        "username"
+                    ]
+                ),
+                "profileId": (
+                    user[
+                        "profileId"
+                    ]
+                ),
+                "googleAccount": (
+                    account_payload
+                ),
+            }
+        )
+
+        set_auth_cookie(
+            response,
+            token,
+        )
+
+        clear_google_pending_cookie(
+            response
+        )
+
+        return response
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Não foi possível concluir o login Google: "
+                f"{exc}"
+            ),
+        ) from exc
+
+
+@app.post("/api/auth/password/verify")
+async def auth_password_verify(
+    request: Request,
+):
+    pending_token = request.cookies.get(
+        AUTH_GOOGLE_PENDING_COOKIE_NAME
+    )
+
+    pending = google_pending_identity(
+        pending_token
+    )
+
+    if not pending:
+        raise HTTPException(
+            status_code=401,
+            detail=(
+                "A autenticação Google expirou. Entre com o Google novamente."
             ),
         )
 
     client_key = auth_client_key(
         request
     )
+
     retry_after = auth_login_retry_after(
         client_key
     )
@@ -1456,7 +3724,7 @@ async def auth_login(request: Request):
         raise HTTPException(
             status_code=429,
             detail=(
-                "Muitas tentativas de login. "
+                "Muitas tentativas de senha. "
                 f"Tente novamente em {retry_after}s."
             ),
             headers={
@@ -1466,33 +3734,36 @@ async def auth_login(request: Request):
             },
         )
 
-    config = load_auth_config()
-
-    username = str(
-        payload.get("username")
-        or ""
-    ).strip()
-
-    password_ok = verify_auth_password(
-        config,
-        payload.get("password"),
-    )
-    username_ok = hmac.compare_digest(
-        username,
-        str(config["username"]),
+    payload = await auth_json_payload(
+        request
     )
 
-    if not (
-        username_ok
-        and password_ok
+    user = find_auth_user_by_profile(
+        pending[
+            "profileId"
+        ]
+    )
+
+    if (
+        not user
+        or not user_local_password_enabled(
+            user
+        )
+        or not verify_auth_password(
+            user,
+            payload.get(
+                "password"
+            ),
+        )
     ):
         register_auth_login_failure(
             client_key
         )
+
         raise HTTPException(
             status_code=401,
             detail=(
-                "Usuário ou senha inválidos."
+                "Senha adicional inválida."
             ),
         )
 
@@ -1500,22 +3771,281 @@ async def auth_login(request: Request):
         client_key
     )
 
+    consume_google_pending_auth(
+        pending_token
+    )
+
+    activate_profile(
+        user[
+            "profileId"
+        ],
+        user[
+            "username"
+        ],
+    )
+
     token = create_auth_session(
-        config["username"]
+        user[
+            "username"
+        ],
+        user[
+            "profileId"
+        ],
     )
 
     response = JSONResponse(
         {
             "ok": True,
             "authenticated": True,
-            "username": config["username"],
+            "newProfile": bool(
+                pending.get(
+                    "newProfile"
+                )
+            ),
+            "username": (
+                user[
+                    "username"
+                ]
+            ),
+            "profileId": (
+                user[
+                    "profileId"
+                ]
+            ),
+            "googleAccount": (
+                user.get(
+                    "googleAccount"
+                )
+            ),
         }
     )
+
     set_auth_cookie(
         response,
         token,
     )
+
+    clear_google_pending_cookie(
+        response
+    )
+
     return response
+
+
+@app.get("/api/auth/security")
+def auth_security_status(
+    request: Request,
+):
+    identity = (
+        require_auth_api_identity(
+            request
+        )
+    )
+
+    user = find_auth_user_by_profile(
+        identity[
+            "profileId"
+        ]
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "Perfil local não encontrado."
+            ),
+        )
+
+    return {
+        "ok": True,
+        "authMode": "google",
+        "passwordEnabled": (
+            user_local_password_enabled(
+                user
+            )
+        ),
+        "passwordMinLength": (
+            AUTH_PASSWORD_MIN_LENGTH
+        ),
+        "googleAccount": (
+            user.get(
+                "googleAccount"
+            )
+        ),
+    }
+
+
+@app.put("/api/auth/security/password")
+async def auth_security_set_password(
+    request: Request,
+):
+    identity = (
+        require_auth_api_identity(
+            request
+        )
+    )
+
+    payload = await auth_json_payload(
+        request
+    )
+
+    new_password = str(
+        payload.get(
+            "newPassword"
+        )
+        or ""
+    )
+
+    confirm_password = str(
+        payload.get(
+            "confirmPassword"
+        )
+        or ""
+    )
+
+    if new_password != confirm_password:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "As novas senhas não coincidem."
+            ),
+        )
+
+    user = find_auth_user_by_profile(
+        identity[
+            "profileId"
+        ]
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "Perfil local não encontrado."
+            ),
+        )
+
+    if user_local_password_enabled(
+        user
+    ):
+        current_password = str(
+            payload.get(
+                "currentPassword"
+            )
+            or ""
+        )
+
+        if not verify_auth_password(
+            user,
+            current_password,
+        ):
+            raise HTTPException(
+                status_code=401,
+                detail=(
+                    "Senha adicional atual inválida."
+                ),
+            )
+
+    try:
+        updated = set_user_local_password(
+            user[
+                "profileId"
+            ],
+            new_password,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "ok": True,
+        "passwordEnabled": True,
+        "googleAccount": (
+            updated.get(
+                "googleAccount"
+            )
+        ),
+    }
+
+
+@app.delete("/api/auth/security/password")
+async def auth_security_disable_password(
+    request: Request,
+):
+    identity = (
+        require_auth_api_identity(
+            request
+        )
+    )
+
+    payload = await auth_json_payload(
+        request
+    )
+
+    user = find_auth_user_by_profile(
+        identity[
+            "profileId"
+        ]
+    )
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "Perfil local não encontrado."
+            ),
+        )
+
+    if user_local_password_enabled(
+        user
+    ):
+        if not verify_auth_password(
+            user,
+            payload.get(
+                "currentPassword"
+            ),
+        ):
+            raise HTTPException(
+                status_code=401,
+                detail=(
+                    "Senha adicional atual inválida."
+                ),
+            )
+
+    disable_user_local_password(
+        user[
+            "profileId"
+        ]
+    )
+
+    return {
+        "ok": True,
+        "passwordEnabled": False,
+    }
+
+
+# Endpoints antigos preservados apenas para indicar claramente a mudança de
+# arquitetura. Login local não concede mais acesso ao dashboard.
+@app.post("/api/auth/setup")
+async def auth_setup(request: Request):
+    raise HTTPException(
+        status_code=410,
+        detail=(
+            "Cadastro local desativado. Use 'Continuar com Google'."
+        ),
+    )
+
+
+@app.post("/api/auth/login")
+async def auth_login(request: Request):
+    raise HTTPException(
+        status_code=410,
+        detail=(
+            "Login local desativado. Use 'Continuar com Google'."
+        ),
+    )
 
 
 @app.post("/api/auth/logout")
@@ -1526,14 +4056,42 @@ def auth_logout(request: Request):
         )
     )
 
+    pending_token = request.cookies.get(
+        AUTH_GOOGLE_PENDING_COOKIE_NAME
+    )
+
+    consume_google_pending_auth(
+        pending_token
+    )
+
+    try:
+        GOOGLE_LOGIN.cancel_connect()
+        GOOGLE_LOGIN.clear_token()
+    except Exception:
+        pass
+
+    with AUTH_SESSIONS_LOCK:
+        has_sessions = bool(
+            AUTH_SESSIONS
+        )
+
+    if not has_sessions:
+        deactivate_profile()
+
     response = JSONResponse(
         {
             "ok": True,
         }
     )
+
     clear_auth_cookie(
         response
     )
+
+    clear_google_pending_cookie(
+        response
+    )
+
     return response
 
 
@@ -1621,6 +4179,10 @@ async def api_pluggy_config(
                 item_ids=item_ids,
             )
 
+        schedule_cloud_sync(
+            "pluggy_config"
+        )
+
         return {
             "ok": True,
             **saved,
@@ -1683,6 +4245,10 @@ def api_sync():
             ),
         ) from exc
 
+    schedule_cloud_sync(
+        "pluggy_sync"
+    )
+
     return {
         "ok": True,
         "errorCount": len(
@@ -1690,6 +4256,555 @@ def api_sync():
         ),
         "database": database_status(),
     }
+
+
+def active_user_record():
+    active = current_active_profile()
+
+    if not active:
+        return None
+
+    return find_auth_user_by_profile(
+        active[
+            "profileId"
+        ]
+    )
+
+
+def google_status_for_active_user():
+    status = GOOGLE_DRIVE.status()
+    user = active_user_record()
+
+    associated = (
+        user.get(
+            "googleAccount"
+        )
+        if user
+        and isinstance(
+            user.get(
+                "googleAccount"
+            ),
+            dict,
+        )
+        else None
+    )
+
+    if status.get(
+        "connected"
+    ):
+        try:
+            account = (
+                GOOGLE_DRIVE
+                .account_identity()
+            )
+
+            if user:
+                try:
+                    current_account = (
+                        user.get(
+                            "googleAccount"
+                        )
+                        if isinstance(
+                            user.get(
+                                "googleAccount"
+                            ),
+                            dict,
+                        )
+                        else None
+                    )
+
+                    same_permission = bool(
+                        current_account
+                        and account.get(
+                            "permissionId"
+                        )
+                        and current_account.get(
+                            "permissionId"
+                        )
+                        == account.get(
+                            "permissionId"
+                        )
+                    )
+
+                    same_email = bool(
+                        current_account
+                        and account.get(
+                            "emailAddress"
+                        )
+                        and str(
+                            current_account.get(
+                                "emailAddress"
+                            )
+                            or ""
+                        ).casefold()
+                        == str(
+                            account.get(
+                                "emailAddress"
+                            )
+                            or ""
+                        ).casefold()
+                    )
+
+                    if not (
+                        same_permission
+                        or same_email
+                    ):
+                        updated = (
+                            update_user_google_account(
+                                user[
+                                    "profileId"
+                                ],
+                                account,
+                            )
+                        )
+
+                        associated = (
+                            updated.get(
+                                "googleAccount"
+                            )
+                        )
+
+                except ValueError as exc:
+                    # Não revogamos o OAuth inteiro, pois isso poderia afetar
+                    # outro perfil que usa a mesma conta. Removemos só o token
+                    # deste perfil.
+                    GOOGLE_DRIVE.clear_token()
+                    status = (
+                        GOOGLE_DRIVE.status()
+                    )
+                    status[
+                        "associationError"
+                    ] = str(
+                        exc
+                    )
+
+        except Exception as exc:
+            status[
+                "accountLookupError"
+            ] = str(
+                exc
+            )
+
+    status[
+        "account"
+    ] = associated
+
+    if status.get("connected"):
+        try:
+            status["storage"] = (
+                GOOGLE_DRIVE.cloud_storage_info(
+                    create=True
+                )
+            )
+        except Exception as exc:
+            status["storageError"] = str(exc)
+
+    return status
+
+
+@app.get("/api/google/status")
+def api_google_status():
+    return google_status_for_active_user()
+
+
+@app.put("/api/google/client-config")
+async def api_google_client_config(
+    request: Request,
+):
+    payload = await auth_json_payload(
+        request
+    )
+
+    try:
+        saved = GOOGLE_DRIVE.save_client_config(
+            payload.get(
+                "clientConfig"
+            ),
+            clear_token=True,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "ok": True,
+        **saved,
+        "status": google_status_for_active_user(),
+    }
+
+
+@app.delete("/api/google/client-config")
+def api_google_remove_client_config():
+    GOOGLE_DRIVE.clear_client_config()
+
+    return {
+        "ok": True,
+        "status": google_status_for_active_user(),
+    }
+
+
+@app.post("/api/google/connect/start")
+def api_google_connect_start():
+    if not GOOGLE_DRIVE.has_client_config():
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "A configuração OAuth do aplicativo não está disponível. "
+                "Inclua o OAuth Client compartilhado do ControleFin no build."
+            ),
+        )
+
+    try:
+        return GOOGLE_DRIVE.begin_connect()
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=str(exc),
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Não foi possível iniciar o OAuth do Google: "
+                f"{exc}"
+            ),
+        ) from exc
+
+
+@app.post("/api/google/connect")
+def api_google_connect_compat():
+    # Compatibilidade com versões anteriores do frontend.
+    return api_google_connect_start()
+
+
+@app.post("/api/google/connect/cancel")
+def api_google_connect_cancel():
+    GOOGLE_DRIVE.cancel_connect()
+
+    return {
+        "ok": True,
+        "status": google_status_for_active_user(),
+    }
+
+
+@app.post("/api/google/test")
+def api_google_test():
+    if not GOOGLE_DRIVE.status().get(
+        "connected"
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Google Drive ainda não conectado."
+            ),
+        )
+
+    try:
+        result = GOOGLE_DRIVE.test_access()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "Não foi possível acessar a pasta ControleFin "
+                f"no Google Drive: {exc}"
+            ),
+        ) from exc
+
+    return {
+        "ok": True,
+        **result,
+    }
+
+
+@app.get("/api/google/drive/files")
+def api_google_drive_files():
+    if not GOOGLE_DRIVE.status().get(
+        "connected"
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Google Drive ainda não conectado."
+            ),
+        )
+
+    try:
+        files = GOOGLE_DRIVE.list_files()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "Falha ao listar a pasta ControleFin/Snapshots: "
+                f"{exc}"
+            ),
+        ) from exc
+
+    return {
+        "ok": True,
+        "space": "drive",
+        "folder": GOOGLE_DRIVE.cloud_storage_info(create=True),
+        "files": files,
+        "count": len(files),
+    }
+
+
+@app.post("/api/google/disconnect")
+def api_google_disconnect():
+    user = active_user_record()
+
+    result = GOOGLE_DRIVE.disconnect(
+        revoke=True
+    )
+
+    if user:
+        update_user_google_account(
+            user[
+                "profileId"
+            ],
+            None,
+        )
+
+    return {
+        **result,
+        "status": google_status_for_active_user(),
+    }
+
+
+@app.get("/api/google/cloud/status")
+def api_google_cloud_status():
+    google_status = google_status_for_active_user()
+    include_remote = bool(
+        google_status.get(
+            "connected"
+        )
+    )
+
+    return {
+        "google": google_status,
+        "cloud": CLOUD_SYNC.status(
+            include_remote=include_remote
+        ),
+    }
+
+
+@app.put("/api/google/cloud/passphrase")
+async def api_google_cloud_passphrase(
+    request: Request,
+):
+    payload = await auth_json_payload(request)
+    passphrase = payload.get("passphrase")
+
+    if not GOOGLE_DRIVE.status().get("connected"):
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Conecte o Google Drive antes de configurar a senha da nuvem."
+            ),
+        )
+
+    try:
+        saved = CLOUD_SYNC.save_passphrase(
+            passphrase,
+            verify_remote=True,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=str(exc),
+        ) from exc
+
+    return {
+        "ok": True,
+        **saved,
+        "cloud": CLOUD_SYNC.status(
+            include_remote=True
+        ),
+    }
+
+
+@app.post("/api/google/cloud/restore")
+async def api_google_cloud_restore(
+    request: Request,
+):
+    """
+    Fluxo seguro de primeiro acesso / novo computador.
+
+    Este endpoint é somente de RESTAURAÇÃO:
+    - exige Google conectado;
+    - exige que já exista snapshot remoto;
+    - valida a senha da nuvem;
+    - baixa e aplica o snapshot mais recente;
+    - nunca cria/upload um snapshot vazio quando não há backup remoto.
+    """
+    payload = await auth_json_payload(
+        request
+    )
+
+    passphrase = payload.get(
+        "passphrase"
+    )
+
+    if not GOOGLE_DRIVE.status().get(
+        "connected"
+    ):
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Conecte sua conta Google antes de restaurar os dados."
+            ),
+        )
+
+    try:
+        remote = (
+            CLOUD_SYNC.remote_status()
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "Não foi possível verificar os backups no Google Drive: "
+                f"{exc}"
+            ),
+        ) from exc
+
+    if not remote.get(
+        "available"
+    ):
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                "Nenhum backup do ControleFin foi encontrado nesta conta Google."
+            ),
+        )
+
+    try:
+        # Verifica a senha contra o snapshot remoto ANTES de persistir.
+        CLOUD_SYNC.save_passphrase(
+            passphrase,
+            verify_remote=True,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=str(exc),
+        ) from exc
+
+    result = run_cloud_operation(
+        lambda: CLOUD_SYNC.download(
+            force=True
+        )
+    )
+
+    return {
+        "ok": True,
+        **result,
+        "remote": remote,
+        "pluggy": pluggy_public_status(),
+        "database": database_status(),
+    }
+
+
+@app.delete("/api/google/cloud/passphrase")
+def api_google_cloud_clear_passphrase():
+    CLOUD_SYNC.clear_passphrase()
+    return {
+        "ok": True,
+        "cloud": CLOUD_SYNC.status(
+            include_remote=False
+        ),
+    }
+
+
+def run_cloud_operation(operation):
+    if not GOOGLE_DRIVE.status().get("connected"):
+        raise HTTPException(
+            status_code=409,
+            detail="Google Drive não conectado.",
+        )
+
+    if not CLOUD_SYNC.key_configured():
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Configure a senha da nuvem antes de sincronizar."
+            ),
+        )
+
+    if not SYNC_LOCK.acquire(blocking=False):
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Aguarde a sincronização Pluggy em andamento terminar."
+            ),
+        )
+
+    try:
+        return operation()
+    except RuntimeError as exc:
+        raise HTTPException(
+            status_code=409,
+            detail=str(exc),
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Falha na sincronização com o Google Drive: "
+                f"{exc}"
+            ),
+        ) from exc
+    finally:
+        SYNC_LOCK.release()
+
+
+@app.post("/api/google/cloud/sync")
+def api_google_cloud_sync():
+    return run_cloud_operation(
+        CLOUD_SYNC.smart_sync
+    )
+
+
+@app.post("/api/google/cloud/upload")
+async def api_google_cloud_upload(
+    request: Request,
+):
+    payload = await auth_json_payload(request)
+    force = bool(payload.get("force"))
+    return run_cloud_operation(
+        lambda: CLOUD_SYNC.upload(
+            force=force
+        )
+    )
+
+
+@app.post("/api/google/cloud/download")
+async def api_google_cloud_download(
+    request: Request,
+):
+    payload = await auth_json_payload(request)
+    force = bool(payload.get("force"))
+    return run_cloud_operation(
+        lambda: CLOUD_SYNC.download(
+            force=force
+        )
+    )
 
 
 @app.get("/")
@@ -2361,10 +5476,102 @@ async def update_settings(request: Request):
 
     save_settings(settings)
 
+    schedule_cloud_sync(
+        "settings"
+    )
+
     return {
         "ok": True,
         "settingsFile": str(SETTINGS_FILE),
     }
+
+
+# Bootstrap manager. Após o login ele é reconstruído apontando para o perfil
+# autenticado.
+CLOUD_SYNC = CloudSyncManager(
+    google_drive=GOOGLE_DRIVE,
+    db_file=DB_FILE,
+    settings_file=SETTINGS_FILE,
+    pluggy_config_file=PLUGGY_CONFIG_FILE,
+    key_file=CLOUD_SYNC_KEY_FILE,
+    state_file=CLOUD_SYNC_STATE_FILE,
+    protect_secret=protect_local_secret,
+    unprotect_secret=unprotect_local_secret,
+    atomic_write_json=atomic_write_json,
+    load_settings=load_settings,
+    normalize_settings=normalize_settings,
+    save_settings=save_settings,
+    load_pluggy_config=load_pluggy_config,
+    save_pluggy_config=save_pluggy_config,
+)
+
+CLOUD_BACKGROUND_LOCK = threading.RLock()
+CLOUD_BACKGROUND_TIMER = None
+
+
+def _cloud_operation_available():
+    google_status = GOOGLE_DRIVE.status()
+    return bool(
+        google_status.get("connected")
+        and CLOUD_SYNC.key_configured()
+    )
+
+
+def _run_cloud_smart_sync_background():
+    global CLOUD_BACKGROUND_TIMER
+
+    with CLOUD_BACKGROUND_LOCK:
+        CLOUD_BACKGROUND_TIMER = None
+
+    if not _cloud_operation_available():
+        return
+
+    if not SYNC_LOCK.acquire(blocking=False):
+        schedule_cloud_sync(
+            "retry_after_pluggy",
+            mark_dirty=False,
+            delay_seconds=5.0,
+        )
+        return
+
+    try:
+        CLOUD_SYNC.smart_sync()
+    except Exception:
+        # CloudSyncManager already records the failure in local sync state.
+        return
+    finally:
+        SYNC_LOCK.release()
+
+
+def schedule_cloud_sync(
+    reason,
+    *,
+    mark_dirty=True,
+    delay_seconds=2.0,
+):
+    global CLOUD_BACKGROUND_TIMER
+
+    if mark_dirty:
+        CLOUD_SYNC.mark_dirty(str(reason))
+
+    if not _cloud_operation_available():
+        return
+
+    with CLOUD_BACKGROUND_LOCK:
+        if CLOUD_BACKGROUND_TIMER:
+            try:
+                CLOUD_BACKGROUND_TIMER.cancel()
+            except Exception:
+                pass
+
+        timer = threading.Timer(
+            float(delay_seconds),
+            _run_cloud_smart_sync_background,
+        )
+        timer.daemon = True
+        CLOUD_BACKGROUND_TIMER = timer
+        timer.start()
+
 
 
 
@@ -2572,6 +5779,38 @@ if __name__ == "__main__":
 
     migrated_files = migrate_legacy_storage()
 
+    # Em instalações antigas, o .env pertencia ao único usuário existente.
+    # Migre-o para o layout legado ANTES de criar o primeiro perfil; a etapa
+    # seguinte copiará pluggy.json para o perfil correto.
+    legacy_env_migrated = False
+
+    if os.name == "nt":
+        try:
+            legacy_env_migrated = bool(
+                migrate_legacy_env()
+            )
+        except Exception as exc:
+            print(
+                "Aviso: não foi possível migrar automaticamente "
+                f"o .env legado: {exc}",
+                file=sys.stderr,
+                flush=True,
+            )
+
+    migrated_profile = False
+
+    try:
+        migrated_profile = (
+            migrate_single_user_auth_to_registry()
+        )
+    except Exception as exc:
+        print(
+            "Aviso: não foi possível migrar o usuário legado para perfis: "
+            f"{exc}",
+            file=sys.stderr,
+            flush=True,
+        )
+
     print(
         f"Pasta do aplicativo: {BASE_DIR}",
         flush=True,
@@ -2581,7 +5820,8 @@ if __name__ == "__main__":
         flush=True,
     )
     print(
-        f"Banco SQLite: {DB_FILE}",
+        "Bancos SQLite: isolados por usuário em "
+        f"{PROFILES_DIR}",
         flush=True,
     )
 
@@ -2592,23 +5832,20 @@ if __name__ == "__main__":
             flush=True,
         )
 
-    if os.name == "nt":
-        try:
-            if migrate_legacy_env():
-                print(
-                    "Credenciais Pluggy do .env foram migradas "
-                    "para Windows DPAPI; o .env legado foi removido.",
-                    flush=True,
-                )
-        except Exception as exc:
-            print(
-                "Aviso: não foi possível migrar automaticamente "
-                f"o .env legado: {exc}",
-                file=sys.stderr,
-                flush=True,
-            )
+    if migrated_profile:
+        print(
+            "Instalação single-user migrada para perfil isolado.",
+            flush=True,
+        )
 
-    if DB_FILE.exists():
+    if legacy_env_migrated:
+        print(
+            "Credenciais Pluggy do .env foram migradas para o perfil legado "
+            "com proteção Windows DPAPI; o .env foi removido.",
+            flush=True,
+        )
+
+    if ACTIVE_PROFILE_ID and DB_FILE.exists():
         removed_csv = purge_legacy_csv_files(
             DATA_DIR
         )

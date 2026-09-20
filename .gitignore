@@ -1,115 +1,17 @@
-# =========================================================
-# CONTROLEFIN - DADOS SENSÍVEIS
-# =========================================================
-
-# Credenciais / variáveis de ambiente
 .env
-.env.*
-!.env.example
-
-# Dados financeiros gerados pela Pluggy
 data/
-data/**
-
-# Categorias, reclassificações e preferências pessoais
 user_data/
-user_data/**
-
-# Backups locais que possam conter dados pessoais
-backups/
-backup/
-*.backup
-*.bak
-
-# Exportações potencialmente sensíveis
-*.xlsx
-*.xls
-
-# Caso sejam criados exports manuais fora de data/
-exports/
-export/
-
-# =========================================================
-# PYTHON
-# =========================================================
-
-__pycache__/
-*.py[cod]
-*$py.class
-
-# Ambientes virtuais
-.venv/
-venv/
-env/
-ENV/
-
-# Cache de ferramentas
-.pytest_cache/
-.mypy_cache/
-.ruff_cache/
-.coverage
-.coverage.*
-htmlcov/
-
-# =========================================================
-# PYINSTALLER
-# =========================================================
-
+config/
 build/
 dist/
 *.spec
+__pycache__/
+*.pyc
+.venv/
+venv/
+google_oauth_client.json
+google_drive_token.json
+auth/
+profiles/
 
-# =========================================================
-# IDE / EDITORES
-# =========================================================
-
-.vscode/
-.idea/
-
-# =========================================================
-# SISTEMA OPERACIONAL
-# =========================================================
-
-# Windows
-Thumbs.db
-Thumbs.db:encryptable
-Desktop.ini
-$RECYCLE.BIN/
-
-# macOS
-.DS_Store
-.AppleDouble
-.LSOverride
-
-# =========================================================
-# LOGS / TEMPORÁRIOS
-# =========================================================
-
-*.log
-logs/
-tmp/
-temp/
-*.tmp
-*.swp
-*.swo
-
-# =========================================================
-# JUPYTER
-# =========================================================
-
-.ipynb_checkpoints/
-
-# =========================================================
-# OUTROS ARQUIVOS LOCAIS
-# =========================================================
-
-# Arquivos locais de configuração que não devem ser públicos
-*.local
-*.local.json
-*.local.yaml
-*.local.yml
-
-# Bancos locais, caso o projeto evolua para SQLite
-*.db
-*.sqlite
-*.sqlite3
+google_oauth_client.bundled.json

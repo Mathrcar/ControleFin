@@ -13,7 +13,7 @@
   --good:#1ed760;--warn:#f5c451;--bad:#ff5a67;--blue:#4ea7ff;--purple:#b49bff;
   --shadow:0 24px 64px rgba(0,0,0,.35);--r:18px;--r2:12px;
 }
-*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}button,select,input{font:inherit}button,.button{border:0;background:var(--surface3);color:var(--text);border-radius:999px;padding:.68rem 1rem;cursor:pointer;font-weight:700;transition:.18s ease}button:hover,.button:hover{background:#313131;transform:translateY(-1px)}button.primary,.button.primary{background:var(--green);color:#000}button.primary:hover,.button.primary:hover{background:var(--green2);transform:scale(1.01)}button.ghost{background:transparent;border:1px solid var(--line)}input[type=file]{display:none}select,input[type=text],input[type=search],input[type=number],input[type=password]{border:1px solid var(--line);background:var(--surface2);color:var(--text);border-radius:10px;padding:.58rem .72rem;outline:none}select:focus,input:focus{border-color:var(--green)}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}button,select,input{font:inherit}button,.button{border:0;background:var(--surface3);color:var(--text);border-radius:999px;padding:.68rem 1rem;cursor:pointer;font-weight:700;transition:.18s ease}button:hover,.button:hover{background:#313131;transform:translateY(-1px)}button.primary,.button.primary{background:var(--green);color:#000}button.primary:hover,.button.primary:hover{background:var(--green2);transform:scale(1.01)}button.ghost{background:transparent;border:1px solid var(--line)}input[type=file]{display:none}select,input[type=text],input[type=search],input[type=number],input[type=password],textarea{border:1px solid var(--line);background:var(--surface2);color:var(--text);border-radius:10px;padding:.58rem .72rem;outline:none}select:focus,input:focus{border-color:var(--green)}
 .shell{width:min(1540px,calc(100% - 32px));margin:0 auto;padding:18px 0 60px}.topbar{position:sticky;top:0;z-index:50;margin:0 -16px 16px;padding:10px 16px;background:rgba(0,0,0,.86);backdrop-filter:blur(20px);border-bottom:1px solid #151515}.topbar-inner{display:flex;gap:14px;align-items:center;justify-content:space-between;max-width:1540px;margin:auto}.brand{display:flex;align-items:center;gap:11px;min-width:0}.mark{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--green);color:#000;font-weight:950;letter-spacing:-.04em}.brand h1{margin:0;font-size:1rem}.brand small{display:block;color:var(--muted);font-size:.72rem;max-width:48vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.toolbar{display:flex;gap:8px;align-items:center;justify-content:flex-end;flex-wrap:wrap}.desktop-only{}.language-toggle{display:inline-flex;align-items:center;gap:2px;padding:3px;border:1px solid var(--line);border-radius:999px;background:var(--surface2);flex:0 0 auto}.language-option{display:inline-flex;align-items:center;gap:6px;padding:.42rem .62rem;border-radius:999px;background:transparent;color:var(--muted);font-size:.69rem;line-height:1;white-space:nowrap}.language-option:hover{transform:none;background:var(--surface3)}.language-option.active{background:var(--green);color:#000}.language-option span[aria-hidden="true"]{font-size:1rem}.language-label{font-weight:850;letter-spacing:.02em}
 
 .access-gate{position:fixed;inset:0;z-index:2000;display:grid;place-items:center;padding:24px;background:radial-gradient(circle at 50% 15%,rgba(30,215,96,.15),transparent 32rem),#000}
@@ -23,7 +23,53 @@
 .loading-view{text-align:center;padding:20px 4px 10px}.loading-view .spinner{width:48px;height:48px;margin:0 auto 20px;border:4px solid #2a2a2a;border-top-color:var(--green);border-radius:50%;animation:cf-spin .78s linear infinite}.loading-view h2{font-size:1.2rem}.loading-view p{margin:8px 0 0}
 @keyframes cf-spin{to{transform:rotate(360deg)}}
 .auth-form{display:grid;gap:13px}.auth-form label{display:grid;gap:6px;color:var(--muted);font-size:.72rem}.auth-form input{width:100%;border:1px solid var(--line);background:#0e0e0e;color:var(--text);border-radius:11px;padding:.72rem .82rem;outline:none}.auth-form input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(30,215,96,.1)}
-.auth-form button{margin-top:4px}.auth-message{min-height:1.25rem;margin-top:12px;color:var(--bad);font-size:.75rem;line-height:1.4}.auth-hint{margin-top:14px!important;font-size:.7rem!important;color:#8f8f8f!important}.access-error-actions{display:flex;gap:8px;flex-wrap:wrap}.auth-user-chip{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.auth-form button{margin-top:4px}.auth-message{min-height:1.25rem;margin-top:12px;color:var(--bad);font-size:.75rem;line-height:1.4}.auth-hint{margin-top:14px!important;font-size:.7rem!important;color:#8f8f8f!important}.access-error-actions{display:flex;gap:8px;flex-wrap:wrap}
+.auth-secondary-action{display:flex;justify-content:center;margin-top:10px}.auth-link-btn{border:0!important;background:transparent!important;color:var(--muted)!important;padding:.35rem .55rem!important;font-size:.7rem!important;text-decoration:none;box-shadow:none!important}.auth-link-btn:hover{color:var(--text)!important;text-decoration:underline}.auth-inline-actions{display:flex;justify-content:center;margin-top:8px}
+.google-login-account{display:flex;align-items:center;gap:10px;justify-content:center;margin:10px 0;color:var(--muted);font-size:.72rem}
+.security-status{display:grid;gap:8px;margin:10px 0 16px;padding:12px;border:1px solid var(--line);border-radius:12px;background:#101010}
+.security-status-line{display:flex;justify-content:space-between;gap:12px;font-size:.73rem}
+.security-status-line span:first-child{color:var(--muted)}
+.security-form-grid{display:grid;gap:10px}
+.security-form-grid label{display:grid;gap:5px;color:var(--muted);font-size:.7rem}
+.security-form-grid input{width:100%;min-width:0}
+.security-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.onboarding-choice-grid{display:grid;gap:10px;margin-top:6px}
+.onboarding-choice-card{display:grid;gap:4px;text-align:left;border:1px solid var(--line)!important;border-radius:14px!important;padding:14px!important;background:#111!important;color:var(--text)!important}
+.onboarding-choice-card:hover{border-color:#3a3a3a!important;background:#171717!important;transform:none!important}
+.onboarding-choice-card.primary-choice{border-color:rgba(30,215,96,.45)!important;background:rgba(30,215,96,.07)!important}
+.onboarding-choice-card strong{font-size:.82rem}
+.onboarding-choice-card span{font-size:.69rem;line-height:1.42;color:var(--muted);font-weight:500}
+.onboarding-restore-status{display:grid;gap:8px;margin:12px 0;padding:12px;border:1px solid var(--line);border-radius:12px;background:#101010}
+.onboarding-restore-line{display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:.72rem}
+.onboarding-restore-line span:first-child{color:var(--muted)}
+.onboarding-restore-actions{display:grid;gap:9px;margin-top:12px}
+.onboarding-restore-actions .secondary-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap}
+.onboarding-restore-actions .secondary-row button{font-size:.7rem}
+.onboarding-cloud-password{display:grid;gap:6px;margin-top:12px;color:var(--muted);font-size:.72rem}
+.onboarding-cloud-password input{width:100%;border:1px solid var(--line);background:#0e0e0e;color:var(--text);border-radius:11px;padding:.72rem .82rem;outline:none}
+.onboarding-cloud-password input:focus{border-color:var(--green);box-shadow:0 0 0 3px rgba(30,215,96,.1)}
+.pluggy-help{margin-top:10px!important;font-size:.7rem!important;color:#8f8f8f!important;line-height:1.45!important}
+.pluggy-items-input{min-height:96px;resize:vertical;font-family:var(--mono)}
+.modal-backdrop{position:fixed;inset:0;z-index:1600;display:grid;place-items:center;padding:22px;background:rgba(0,0,0,.78);backdrop-filter:blur(4px)}
+.modal-card{width:min(560px,100%);max-height:min(760px,calc(100vh - 44px));overflow:auto;padding:24px;border:1px solid var(--line);border-radius:20px;background:#151515;box-shadow:0 30px 90px rgba(0,0,0,.72)}
+.modal-head{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;margin-bottom:18px}.modal-head h2{margin:0;font-size:1.25rem}.modal-head p{margin:5px 0 0;color:var(--muted);font-size:.76rem;line-height:1.45}
+.modal-actions{display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;margin-top:16px}
+.form-status{min-height:1.2rem;margin-top:12px;color:var(--muted);font-size:.74rem;line-height:1.45}.form-status.good{color:var(--good)}.form-status.bad{color:var(--bad)}
+.cloud-status-box{display:grid;gap:8px;padding:13px;border:1px solid var(--line);border-radius:12px;background:#101010;margin-bottom:14px}
+.cloud-status-line{display:flex;justify-content:space-between;gap:14px;align-items:center;font-size:.76rem}.cloud-status-line span:first-child{color:var(--muted)}
+.cloud-note{font-size:.7rem;color:#8f8f8f;line-height:1.5;margin:12px 0 0}
+.cloud-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.cloud-sync-section{margin-top:16px;padding-top:16px;border-top:1px solid var(--line)}
+.cloud-sync-title{font-size:.8rem;font-weight:800;margin-bottom:8px}
+.cloud-password-row{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:8px;align-items:end}
+.cloud-password-row label{display:grid;gap:5px;color:var(--muted);font-size:.69rem}
+.cloud-conflict{margin-top:12px;padding:12px;border:1px solid #6a4b1d;border-radius:12px;background:#1b140a}
+.cloud-conflict strong{display:block;margin-bottom:6px}
+.cloud-conflict-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.cloud-danger{border-color:#673232!important}
+@media(max-width:700px){.cloud-password-row{grid-template-columns:1fr}.cloud-actions>*{flex:1 1 auto}}
+
+.auth-user-chip{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .panel{background:linear-gradient(180deg,var(--surface2),var(--surface));border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}.panel-pad{padding:20px}.hero{display:grid;grid-template-columns:1.4fr .7fr;gap:14px;margin-bottom:16px}.hero-main{padding:30px;display:flex;flex-direction:column;justify-content:space-between;min-height:250px;background:radial-gradient(circle at 85% 20%,rgba(30,215,96,.18),transparent 28rem),linear-gradient(145deg,#1b1b1b,#101010)}.eyebrow{text-transform:uppercase;letter-spacing:.14em;color:var(--green);font-size:.7rem;font-weight:900}.hero h2{font-size:clamp(2rem,4vw,4rem);line-height:.98;letter-spacing:-.055em;margin:10px 0 12px;max-width:850px}.hero p{margin:0;color:var(--muted);max-width:760px;line-height:1.55}.privacy{display:flex;gap:10px;align-items:center;color:var(--muted);font-size:.82rem;margin-top:24px}.dot{width:8px;height:8px;background:var(--green);border-radius:50%;box-shadow:0 0 0 5px rgba(30,215,96,.12)}.load-card{padding:24px;display:flex;flex-direction:column;justify-content:center;gap:10px}.load-card h3{margin:0}.load-card p{color:var(--muted);line-height:1.5;margin:0}.load-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}.statusline{min-height:1.2em;color:var(--muted);font-size:.78rem}.mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
 .nav-tabs{display:flex;gap:7px;padding:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;width:max-content;max-width:100%;overflow:auto;margin:12px 0 14px}.nav-tab{background:transparent;color:var(--muted);padding:.62rem 1rem;white-space:nowrap}.nav-tab.active{background:var(--text);color:#000}.view-panel{display:none}.view-panel.active{display:block}.filters{position:relative;top:auto;z-index:10;background:rgba(18,18,18,.96);backdrop-filter:blur(18px);padding:12px 14px;margin-bottom:14px;display:flex;align-items:center;gap:9px;flex-wrap:wrap}.filters label{display:flex;align-items:center;gap:6px;color:var(--muted);font-size:.73rem}.filters .spacer{flex:1}.chip{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--line);background:var(--surface2);border-radius:999px;padding:.42rem .7rem;font-size:.73rem;color:var(--muted)}
 .section-head{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;margin:22px 2px 12px}.section-head h2{font-size:1.35rem;letter-spacing:-.025em;margin:0}.section-head p{color:var(--muted);font-size:.8rem;margin:4px 0 0}.section-kicker{font-size:.72rem;color:var(--green);font-weight:800;text-transform:uppercase;letter-spacing:.12em}.grid{display:grid;gap:14px}.two{grid-template-columns:1fr 1fr}.three{grid-template-columns:repeat(3,1fr)}.four{grid-template-columns:repeat(4,1fr)}.kpis{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px}.overview-account-kpis{grid-template-columns:repeat(auto-fit,minmax(210px,1fr))}.overview-account-kpis .kpi{min-height:132px}.overview-account-kpis .kpi .sub+.sub{margin-top:3px}.kpi{padding:16px;background:var(--surface);border:1px solid var(--line);border-radius:14px;min-height:110px}.kpi .label{color:var(--muted);font-size:.72rem;margin-bottom:10px}.kpi .value{font-size:clamp(1.3rem,2.2vw,2rem);font-weight:900;letter-spacing:-.04em}.kpi .sub{color:var(--muted);font-size:.7rem;margin-top:6px}.good{color:var(--good)!important}.bad{color:var(--bad)!important}.warn{color:var(--warn)!important}.info{color:var(--blue)!important}.muted{color:var(--muted)}
@@ -59,38 +105,122 @@
       <p id="loadStatus">Verificando acesso e banco local.</p>
     </div>
 
-    <div class="access-view hidden" id="accessSetup">
-      <h2>Crie seu acesso</h2>
-      <p>Este é o primeiro acesso. Crie um usuário e uma senha para proteger o dashboard nas próximas vezes.</p>
-      <form class="auth-form" id="setupForm">
-        <label>Usuário
-          <input id="setupUsername" type="text" autocomplete="username" minlength="3" maxlength="80" required autofocus>
-        </label>
-        <label>Senha
-          <input id="setupPassword" type="password" autocomplete="new-password" minlength="8" maxlength="256" required>
-        </label>
-        <label>Confirmar senha
-          <input id="setupPasswordConfirm" type="password" autocomplete="new-password" minlength="8" maxlength="256" required>
-        </label>
-        <button class="primary" type="submit">Criar acesso</button>
-      </form>
-      <div class="auth-message" id="setupMessage"></div>
-      <p class="auth-hint">A senha não é salva em texto. O ControleFin armazena somente um hash local em user_data/auth.json.</p>
+    <div class="access-view hidden" id="accessGoogleLogin">
+      <h2>Entrar com Google</h2>
+      <p>Use sua conta Google para abrir o perfil correto neste computador e acessar o seu próprio Google Drive.</p>
+
+      <button id="googleLoginBtn" class="primary" type="button">Continuar com Google</button>
+
+      <div class="auth-message" id="googleLoginMessage"></div>
+
+      <div class="auth-secondary-action hidden" id="googleLoginAdminSetup">
+        <label class="auth-link-btn" for="googleLoginOAuthClientFile">Configurar OAuth do aplicativo</label>
+        <input id="googleLoginOAuthClientFile" class="hidden" type="file" accept=".json,application/json">
+      </div>
+
+      <p class="auth-hint">Em computadores compartilhados, escolha sua própria conta Google. Cada conta abre um perfil local separado com SQLite, Pluggy, ajustes e token Google próprios.</p>
     </div>
 
-    <div class="access-view hidden" id="accessLogin">
-      <h2>Entrar</h2>
-      <p>Informe o usuário e a senha criados neste computador.</p>
-      <form class="auth-form" id="loginForm">
-        <label>Usuário
-          <input id="loginUsername" type="text" autocomplete="username" maxlength="80" required>
+    <div class="access-view hidden" id="accessAdditionalPassword">
+      <h2>Senha adicional</h2>
+      <p id="additionalPasswordSubtitle">Sua conta Google foi autenticada. Este perfil também exige a senha adicional configurada neste computador.</p>
+
+      <form class="auth-form" id="additionalPasswordForm">
+        <label>Senha adicional
+          <input id="additionalPasswordInput" type="password" autocomplete="current-password" maxlength="256" required>
         </label>
-        <label>Senha
-          <input id="loginPassword" type="password" autocomplete="current-password" maxlength="256" required>
-        </label>
-        <button class="primary" type="submit">Entrar no dashboard</button>
+        <button class="primary" type="submit">Continuar</button>
       </form>
-      <div class="auth-message" id="loginMessage"></div>
+
+      <div class="auth-message" id="additionalPasswordMessage"></div>
+
+      <div class="auth-secondary-action">
+        <button id="additionalPasswordOtherGoogleBtn" class="auth-link-btn" type="button">Usar outra conta Google</button>
+      </div>
+    </div>
+
+    <div class="access-view hidden" id="accessOnboardingChoice">
+      <h2>Como deseja começar?</h2>
+      <p>Se você já usa o ControleFin em outro computador, restaure seus dados do Google Drive. Se esta é uma conta nova, configure sua Pluggy.</p>
+
+      <div class="onboarding-choice-grid">
+        <button id="restoreFromDriveChoiceBtn" class="onboarding-choice-card primary-choice" type="button">
+          <strong>Restaurar meus dados do Google Drive</strong>
+          <span>Recupera banco, ajustes, transações manuais e a configuração Pluggy já salva no seu backup.</span>
+        </button>
+
+        <button id="configurePluggyChoiceBtn" class="onboarding-choice-card" type="button">
+          <strong>Configurar Pluggy manualmente</strong>
+          <span>Use esta opção se este usuário nunca teve um backup do ControleFin no Google Drive.</span>
+        </button>
+      </div>
+
+      <div class="auth-message" id="onboardingChoiceMessage"></div>
+
+      <div class="auth-inline-actions">
+        <button id="onboardingChoiceLogoutBtn" class="auth-link-btn" type="button">Usar outro usuário</button>
+      </div>
+    </div>
+
+    <div class="access-view hidden" id="accessDriveRestore">
+      <h2>Restaurar do Google Drive</h2>
+      <p>Conecte a mesma conta Google usada no outro computador e informe a mesma senha da nuvem.</p>
+
+      <div class="onboarding-restore-status">
+        <div class="onboarding-restore-line">
+          <span>Google Drive</span>
+          <strong id="onboardingGoogleStatus">Verificando…</strong>
+        </div>
+        <div class="onboarding-restore-line">
+          <span>Conta</span>
+          <strong id="onboardingGoogleAccount">—</strong>
+        </div>
+        <div class="onboarding-restore-line">
+          <span>Backup encontrado</span>
+          <strong id="onboardingRemoteBackupStatus">—</strong>
+        </div>
+        <div class="onboarding-restore-line">
+          <span>Última versão</span>
+          <strong id="onboardingRemoteRevision">—</strong>
+        </div>
+      </div>
+
+      <label class="onboarding-cloud-password">
+        Senha da nuvem
+        <input id="onboardingCloudPassphrase" type="password" autocomplete="current-password" minlength="12" maxlength="256" placeholder="A mesma senha usada no outro computador">
+      </label>
+
+      <div class="onboarding-restore-actions">
+        <button id="onboardingConnectGoogleBtn" class="primary" type="button">Conectar minha conta Google</button>
+        <button id="onboardingRestoreNowBtn" class="primary" type="button" disabled>Restaurar dados deste Drive</button>
+
+        <div class="secondary-row">
+          <button id="onboardingRefreshDriveBtn" class="ghost" type="button">Verificar novamente</button>
+          <button id="onboardingRestoreBackBtn" class="ghost" type="button">Voltar</button>
+        </div>
+      </div>
+
+      <div class="auth-message" id="onboardingRestoreMessage"></div>
+      <p class="auth-hint">A restauração só baixa um backup existente. Se nenhum backup for encontrado, o ControleFin não enviará um estado vazio para o Drive.</p>
+    </div>
+
+    <div class="access-view hidden" id="accessPluggy">
+      <h2>Conecte sua Pluggy</h2>
+      <p>Use as credenciais da sua própria conta Pluggy. Elas ficam somente neste computador.</p>
+      <form class="auth-form" id="pluggySetupForm">
+        <label>Client ID
+          <input id="pluggySetupClientId" type="text" autocomplete="off" maxlength="200" required>
+        </label>
+        <label>Client Secret
+          <input id="pluggySetupClientSecret" type="password" autocomplete="off" maxlength="500" required>
+        </label>
+        <label>Item IDs
+          <textarea id="pluggySetupItemIds" class="pluggy-items-input" placeholder="Um Item ID por linha" required></textarea>
+        </label>
+        <button class="primary" type="submit">Testar, salvar e sincronizar</button>
+      </form>
+      <div class="auth-message" id="pluggySetupMessage"></div>
+      <p class="pluggy-help">Os Item IDs identificam suas conexões bancárias na Pluggy. Você pode informar vários, um por linha. O Client Secret é protegido pelo Windows DPAPI e não fica salvo em texto.</p>
     </div>
 
     <div class="access-view hidden" id="accessError">
@@ -104,6 +234,162 @@
   </div>
 </section>
 
+<section class="modal-backdrop hidden" id="pluggySettingsModal" aria-modal="true" role="dialog">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div>
+        <h2>Configuração Pluggy</h2>
+        <p>Estas credenciais pertencem somente a esta instalação do ControleFin.</p>
+      </div>
+      <button id="closePluggySettingsBtn" class="ghost" type="button">Fechar</button>
+    </div>
+    <form class="auth-form" id="pluggySettingsForm">
+      <label>Client ID
+        <input id="pluggySettingsClientId" type="text" autocomplete="off" maxlength="200" required>
+      </label>
+      <label>Client Secret
+        <input id="pluggySettingsClientSecret" type="password" autocomplete="off" maxlength="500" placeholder="Deixe vazio para manter o atual">
+      </label>
+      <label>Item IDs
+        <textarea id="pluggySettingsItemIds" class="pluggy-items-input" placeholder="Um Item ID por linha" required></textarea>
+      </label>
+      <div class="modal-actions">
+        <button id="testPluggySettingsBtn" type="button">Testar conexão</button>
+        <button class="primary" type="submit">Salvar e sincronizar</button>
+      </div>
+    </form>
+    <div class="form-status" id="pluggySettingsMessage"></div>
+    <p class="pluggy-help">O Client Secret atual nunca é devolvido ao navegador. Se o campo ficar vazio, o segredo já salvo é mantido.</p>
+  </div>
+</section>
+
+<section class="modal-backdrop hidden" id="googleDriveModal" aria-modal="true" role="dialog">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div>
+        <h2>Google Drive</h2>
+        <p>Conecte sua própria conta Google. O ControleFin cria uma pasta visível <span class="mono">Meu Drive / ControleFin</span>.</p>
+      </div>
+      <button id="closeGoogleDriveBtn" class="ghost" type="button">Fechar</button>
+    </div>
+
+    <div class="cloud-status-box">
+      <div class="cloud-status-line"><span>OAuth Client</span><strong id="googleClientStatus">—</strong></div>
+      <div class="cloud-status-line"><span>Google Drive</span><strong id="googleConnectionStatus">—</strong></div>
+      <div class="cloud-status-line"><span>Conta associada</span><strong id="googleAccountStatus">—</strong></div>
+      <div class="cloud-status-line"><span>Escopo</span><strong id="googleScopeStatus">drive.file</strong></div>
+      <div class="cloud-status-line"><span>Pasta</span><strong id="googleFolderStatus">—</strong></div>
+    </div>
+
+    <input id="googleOAuthClientFile" type="file" accept=".json,application/json">
+    <div class="cloud-actions">
+      <span id="googleOAuthAdminSetup">
+        <label class="button" for="googleOAuthClientFile">Configurar OAuth do aplicativo</label>
+      </span>
+      <button id="connectGoogleDriveBtn" class="primary" type="button">Conectar / sincronizar Google Drive</button>
+      <button id="testGoogleDriveBtn" type="button">Testar acesso</button>
+      <button id="disconnectGoogleDriveBtn" class="ghost" type="button">Desconectar</button>
+    </div>
+
+    <div class="form-status" id="googleDriveMessage"></div>
+    <div class="cloud-actions">
+      <a id="googleDriveFolderLink" class="button hidden" href="#" target="_blank" rel="noopener noreferrer">Abrir pasta ControleFin no Drive</a>
+      <a id="googleDriveAuthLink" class="button hidden" href="#" target="_blank" rel="noopener noreferrer">Abrir autorização Google</a>
+    </div>
+
+    <div class="cloud-sync-section">
+      <div class="cloud-sync-title">Sincronização entre computadores</div>
+
+      <div class="cloud-status-box">
+        <div class="cloud-status-line"><span>Criptografia</span><strong id="cloudKeyStatus">—</strong></div>
+        <div class="cloud-status-line"><span>Revisão local</span><strong id="cloudLocalRevision">—</strong></div>
+        <div class="cloud-status-line"><span>Revisão na nuvem</span><strong id="cloudRemoteRevision">—</strong></div>
+        <div class="cloud-status-line"><span>Estado local</span><strong id="cloudDirtyStatus">—</strong></div>
+        <div class="cloud-status-line"><span>Última alteração local</span><strong id="cloudLocalModifiedTime">—</strong></div>
+        <div class="cloud-status-line"><span>Arquivo mais recente no Drive</span><strong id="cloudRemoteModifiedTime">—</strong></div>
+      </div>
+
+      <div class="cloud-password-row">
+        <label>Senha da nuvem
+          <input id="cloudPassphraseInput" type="password" autocomplete="new-password" minlength="12" maxlength="256" placeholder="Mínimo de 12 caracteres">
+        </label>
+        <button id="saveCloudPassphraseBtn" type="button">Salvar senha</button>
+      </div>
+
+      <div class="cloud-actions">
+        <button id="clearCloudPassphraseBtn" class="ghost" type="button">Esquecer senha neste PC</button>
+      </div>
+
+      <div class="cloud-conflict hidden" id="cloudConflictBox">
+        <strong>Conflito entre computadores</strong>
+        <div id="cloudConflictMessage">A nuvem e este computador possuem alterações diferentes.</div>
+        <div class="cloud-conflict-actions">
+          <button id="useCloudStateBtn" class="cloud-danger" type="button">Usar versão da nuvem</button>
+          <button id="useLocalStateBtn" class="cloud-danger" type="button">Substituir nuvem por este PC</button>
+        </div>
+      </div>
+    </div>
+
+    <p class="cloud-note">
+      A senha da nuvem não é sua senha Google. Ela criptografa o banco, os ajustes e a configuração Pluggy antes do upload e deve ser a mesma nos outros computadores. Na sincronização, a versão mais recente vence: Drive mais novo é baixado; caso contrário, o estado local é enviado.
+      Cada usuário local conecta a própria conta Google e recebe sua própria pasta Meu Drive / ControleFin. O OAuth Client do aplicativo é compartilhado, mas o token Google e os dados continuam isolados por usuário.
+    </p>
+  </div>
+</section>
+
+<section class="modal-backdrop hidden" id="securityModal" aria-modal="true" role="dialog">
+  <div class="modal-card">
+    <div class="modal-head">
+      <div>
+        <h2>Segurança do acesso</h2>
+        <p>O Google é o login principal. A senha adicional é opcional e vale somente para este perfil neste computador.</p>
+      </div>
+      <button id="closeSecurityBtn" class="ghost" type="button">Fechar</button>
+    </div>
+
+    <div class="security-status">
+      <div class="security-status-line">
+        <span>Login principal</span>
+        <strong>Google</strong>
+      </div>
+      <div class="security-status-line">
+        <span>Conta Google</span>
+        <strong id="securityGoogleAccount">—</strong>
+      </div>
+      <div class="security-status-line">
+        <span>Senha adicional</span>
+        <strong id="securityPasswordStatus">—</strong>
+      </div>
+    </div>
+
+    <div class="security-form-grid">
+      <label id="securityCurrentPasswordLabel" class="hidden">
+        Senha adicional atual
+        <input id="securityCurrentPassword" type="password" autocomplete="current-password" maxlength="256">
+      </label>
+
+      <label>
+        Nova senha adicional
+        <input id="securityNewPassword" type="password" autocomplete="new-password" minlength="8" maxlength="256" placeholder="Mínimo de 8 caracteres">
+      </label>
+
+      <label>
+        Confirmar nova senha
+        <input id="securityConfirmPassword" type="password" autocomplete="new-password" minlength="8" maxlength="256">
+      </label>
+    </div>
+
+    <div class="security-actions">
+      <button id="saveSecurityPasswordBtn" class="primary" type="button">Ativar / alterar senha</button>
+      <button id="disableSecurityPasswordBtn" class="ghost hidden" type="button">Remover senha adicional</button>
+    </div>
+
+    <div class="form-status" id="securityMessage"></div>
+
+    <p class="cloud-note">Se ativada, o próximo acesso será: Google → senha adicional → dashboard. A senha não substitui o Google e não é enviada ao Drive.</p>
+  </div>
+</section>
+
 <div class="shell hidden" id="appShell">
   <header class="topbar" id="dashboard-topbar"><div class="topbar-inner" id="dashboard-topbar-content">
     <div class="brand" id="dashboard-brand"><div class="mark">CF</div><div><h1>ControleFin</h1><small id="runMeta">Dashboard local — nenhum dado carregado</small></div></div>
@@ -112,7 +398,7 @@
         <button type="button" class="language-option" data-ui-language="pt-BR" aria-pressed="true" title="Português (Brasil)"><span aria-hidden="true">🇧🇷</span><span class="language-label">PT-BR</span></button>
         <button type="button" class="language-option" data-ui-language="en-US" aria-pressed="false" title="English (United States)"><span aria-hidden="true">🇺🇸</span><span class="language-label">EN-US</span></button>
       </div>
-      <span class="chip auth-user-chip" id="authUserChip">—</span><button id="autoLoadBtn" class="primary desktop-only" type="button">Recarregar SQLite</button><button id="toggleBlockIdsBtn" class="ghost" type="button" title="Exibir identificadores dos blocos">Mostrar IDs</button><button id="logoutBtn" class="ghost" type="button">Sair</button>
+      <span class="chip auth-user-chip" id="authUserChip">—</span><button id="pluggySettingsBtn" class="ghost" type="button">Pluggy</button><button id="googleDriveBtn" class="ghost" type="button">Google Drive</button><button id="securityBtn" class="ghost" type="button">Segurança</button><button id="autoLoadBtn" class="primary desktop-only" type="button">Sincronizar</button><button id="toggleBlockIdsBtn" class="ghost" type="button" title="Exibir identificadores dos blocos">Mostrar IDs</button><button id="logoutBtn" class="ghost" type="button">Sair</button>
     </div>
   </div></header>
 
@@ -708,6 +994,15 @@
     authConfigured: false,
     authAuthenticated: false,
     authUsername: '',
+    pluggyConfigured: false,
+    pluggyStatus: null,
+    syncInFlight: false,
+    googleDriveStatus: null,
+    googleDriveBusy: false,
+    googleCloudStatus: null,
+    googleCloudBusy: false,
+    onboardingRestoreStatus: null,
+    onboardingRestoreBusy: false,
     uiLanguageStorageKey: 'controlefin.uiLanguage.v1',
     uiLanguage: (() => {
       try {
@@ -732,7 +1027,7 @@
   const safeText = (v) => v == null || v === '' ? '—' : String(v);
   const esc = (v) => String(v ?? '').replace(/[&<>'"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
 
-  const UI_EN_EXACT = {"ControleFin — Saúde Financeira":"ControleFin — Financial Health","Dashboard local — nenhum dado carregado":"Local dashboard — no data loaded","Sair":"Sign out","Recarregar SQLite":"Reload SQLite","Banco local":"Local database","Os dados financeiros são carregados exclusivamente de data/controlefin.db pelo backend local.":"Financial data is loaded exclusively from data/controlefin.db by the local backend.","Tentar novamente":"Try again","Aguardando SQLite.":"Waiting for SQLite.","Banco SQLite indisponível. Inicie o ControleFin pelo backend local e tente novamente.":"SQLite database unavailable. Start ControleFin through the local backend and try again.","Mostrar IDs":"Show IDs","Ocultar IDs":"Hide IDs","Exibir identificadores dos blocos":"Show block identifiers","Controle financeiro pessoal":"Personal finance control","Veja onde seu dinheiro está indo.":"See where your money is going.","Um painel local, focado em gastos de cartão, PIX e boletos. Filtre, investigue e reclassifique cada transação sem enviar seus dados para fora do computador.":"A local dashboard focused on card, PIX, and boleto spending. Filter, investigate, and reclassify each transaction without sending your data outside your computer.","100% local no navegador. Sem APIs ou bibliotecas externas.":"100% local in your browser. No external APIs or libraries.","Como executar":"How to run","Aguardando dados.":"Waiting for data.","Gastos":"Expenses","Entradas":"Income","Contas e cartões":"Accounts and cards","Visão geral":"Overview","Saldos atuais, faturas dos cartões e fluxo efetivo com as mesmas regras de Gastos e Entradas.":"Current balances, card bills, and effective cash flow using the same rules as Expenses and Income.","Entradas e gastos mensais após exclusões, resarcimentos, reclassificações e transações manuais.":"Monthly income and expenses after exclusions, reimbursements, reclassifications, and manual transactions.","Detalhes operacionais das contas bancárias e cartões de crédito na moeda selecionada.":"Operational details for bank accounts and credit cards in the selected currency.","Saldo atual":"Current balance","Os gráficos usam a janela selecionada e os filtros ativos; cada compra parcelada considera no máximo uma única parcela por mês, distribuída pelo número da parcela, e os valores exibidos já descontam resarcimentos previstos e mostram somente a parcela efetivamente atribuída a você. O filtro de mês não corta a tendência.":"Charts use the selected window and active filters; each installment purchase contributes at most one installment per month, distributed by installment number, and displayed values already deduct expected reimbursements and show only the share effectively attributed to you. The month filter does not truncate the trend.","Fatura atual":"Current bill","Mês da fatura":"Bill month","projetada":"projected","Parcela":"Installment","Entradas e gastos mensais após exclusões, resarcimentos, reclassificações, transações manuais e distribuição das compras parceladas.":"Monthly income and expenses after exclusions, reimbursements, reclassifications, manual transactions, and installment distribution.","Os gráficos usam a janela selecionada e os filtros ativos; compras parceladas são distribuídas pelo número da parcela ao longo dos meses, e os valores exibidos já descontam resarcimentos previstos e mostram somente a parcela efetivamente atribuída a você. O filtro de mês não corta a tendência.":"Charts use the selected window and active filters; installment purchases are distributed across months by installment number, and displayed values already deduct expected reimbursements and show only the share effectively attributed to you. The month filter does not truncate the trend.","Limite disponível":"Available credit","Limite total":"Credit limit","Vence":"Due","Fonte do saldo":"Balance source","Saldo informado pela conta":"Balance reported by the account","Conta bancária":"Bank account","Cartão de crédito":"Credit card","Sem contas bancárias ou cartões para esta moeda.":"No bank accounts or credit cards for this currency.","Nenhuma conta bancária ou cartão encontrado nesta moeda.":"No bank account or credit card found in this currency.","Sem entradas ou gastos considerados para a moeda/janela selecionada.":"No considered income or expenses for the selected currency/window.","Entradas de salário":"Salary income","Gastos futuros":"Future expenses","Entrada líquida projetada":"Projected net income","Salários − gastos futuros":"Salary income − future expenses","Entradas, gastos e líquido projetados":"Projected income, expenses, and net","Salários usam a última ocorrência por origem; gastos somam custos fixos e parcelas restantes. A linha líquida é a diferença entre os dois.":"Salary uses the latest occurrence for each source; expenses combine fixed costs and remaining installments. The net line is the difference between them.","Salário projetado":"Projected salary","Entrada líquida":"Net income","Referências de salário":"Salary references","Cada origem usa o valor da última entrada efetivamente classificada como Salário.":"Each source uses the latest income effectively classified as Salary.","Nenhuma entrada de salário identificada para esta moeda.":"No salary income identified for this currency.","Salários":"Salaries","Salário":"Salary","Projeções futuras":"Future projections","Planejamento":"Planning","Visão mês a mês dos gastos já comprometidos por parcelas restantes e custos fixos recorrentes.":"Month-by-month view of expenses already committed through remaining installments and recurring fixed costs.","Horizonte":"Horizon","18 meses":"18 months","24 meses":"24 months","A janela global não altera esta projeção. O horizonte começa no próximo mês.":"The global window does not change this projection. The horizon starts next month.","Total projetado":"Projected total","Custos fixos + parcelas restantes":"Fixed costs + remaining installments","Média mensal projetada":"Projected monthly average","Custos fixos":"Fixed costs","Parcelas restantes":"Remaining installments","Compromissos futuros por mês":"Future commitments by month","Custos fixos usam o valor líquido da última ocorrência; parcelas usam a agenda já distribuída por mês.":"Fixed costs use the net amount of the latest occurrence; installments use the schedule already distributed by month.","Projeção mês a mês":"Month-by-month projection","Os detalhes mostram quais custos fixos e parcelas compõem cada mês.":"Details show which fixed costs and installments make up each month.","Composição":"Composition","Referências de custos fixos":"Fixed-cost references","O valor de cada custo fixo é a última ocorrência efetivamente observada.":"Each fixed cost uses the latest effectively observed occurrence.","Parcelamentos em aberto":"Open installment plans","Somente parcelas posteriores ao mês atual entram na projeção.":"Only installments after the current month are included in the projection.","Sem projeções futuras para esta moeda.":"No future projections for this currency.","Sem compromissos projetados.":"No projected commitments.","Nenhum custo fixo identificado para esta moeda.":"No fixed cost identified for this currency.","Nenhuma parcela futura identificada neste horizonte.":"No future installment identified in this horizon.","Parcelado":"Installment plan","Transações":"Transactions","Navegação do dashboard":"Dashboard navigation","Moeda":"Currency","Janela":"Window","3 meses":"3 months","6 meses":"6 months","12 meses":"12 months","Tudo":"All","Contas: aguardando":"Accounts: waiting","Gastos consolidados":"Consolidated expenses","Gasto médio mensal da janela":"Average monthly expense in the window","Total na janela:":"Total in window:","transações consideradas":"transactions considered","Média mensal · Cartão":"Monthly average · Card","Média mensal · PIX":"Monthly average · PIX","Média mensal · Boleto":"Monthly average · Boleto","Movimentações patrimoniais excluídas: —":"Excluded asset movements: —","Movimentações / faturas consolidadas excluídas: —":"Excluded movements / consolidated card bills: —","Resarcimentos previstos: —":"Expected reimbursements: —","Mês":"Month","Todos":"All","Conta / cartão":"Account / card","Todas":"All","Meio":"Method","Fixo / variável":"Fixed / variable","Fixos":"Fixed","Variáveis":"Variable","Categoria":"Category","Merchant":"Merchant","Buscar":"Search","Valor mín.":"Min. amount","Valor máx.":"Max. amount","Limpar filtros":"Clear filters","Gerenciar categorias personalizadas e salvamento":"Manage custom categories and saving","Nova categoria":"New category","Criar categoria":"Create category","Salvamento automático ativo.":"Automatic saving is active.","Categorias, reclassificações, regras automáticas e padrões de gastos fixos são gravados pelo backend em":"Categories, reclassifications, automatic rules, and fixed-expense patterns are saved by the backend in",". O navegador apenas envia e lê os ajustes; o arquivo permanente fica na pasta local do ControleFin.":". The browser only sends and reads the settings; the permanent file stays in the local ControleFin folder.","Baixar backup dos ajustes":"Download settings backup","Restaurar backup":"Restore backup","Nenhuma alteração nesta sessão":"No changes in this session","Regras automáticas de categorização":"Automatic categorization rules","Campo":"Field","Descrição":"Description","Banco":"Bank","Tipo de gasto":"Expense type","Condição":"Condition","contém":"contains","é igual a":"equals","começa com":"starts with","Valor a procurar":"Value to match","Classificar como":"Classify as","Criar regra":"Create rule","A primeira regra ativa que combinar com a transação é aplicada. Ajustes manuais de uma transação sempre têm prioridade sobre as regras. Use ↑ e ↓ para alterar a prioridade.":"The first active rule that matches the transaction is applied. Manual transaction adjustments always take priority over rules. Use ↑ and ↓ to change priority.","Padrões automáticos de gastos fixos":"Automatic fixed-expense patterns","Ao marcar uma transação como":"When you mark a transaction as","Fixo":"Fixed",", o ControleFin aprende um padrão pela descrição/merchant e usa valor, conta e meio de pagamento como sinais de proximidade. Transações semelhantes passam a ser classificadas como fixas automaticamente. Excluir um padrão faz com que essas transações voltem ao padrão":", ControleFin learns a pattern from the description/merchant and uses amount, account, and payment method as similarity signals. Similar transactions are then automatically classified as fixed. Deleting a pattern makes those transactions return to the default","Variável":"Variable",", salvo quando houver um ajuste manual específico.":", unless there is a specific manual adjustment.","Mês a mês":"Month by month","Quanto gasto e onde gasto?":"How much do I spend and where?","Os gráficos usam a janela selecionada e os filtros ativos; valores exibidos já descontam resarcimentos previstos e mostram somente a parcela efetivamente atribuída a você. O filtro de mês não corta a tendência.":"Charts use the selected window and active filters; displayed amounts already deduct expected reimbursements and show only the share actually attributed to you. The month filter does not truncate the trend.","gastos visíveis":"visible expenses","Gastos mensais em reais":"Monthly expenses in reais","Barras lado a lado por mês. O total do mês aparece acima do grupo.":"Side-by-side bars by month. The monthly total appears above the group.","Agrupar por":"Group by","Fixo x variável":"Fixed vs variable","Clique nas legendas para ocultar ou exibir séries sem perder o contexto mensal.":"Click legend items to hide or show series without losing monthly context.","Composição percentual do mês":"Monthly percentage composition","Cada coluna representa 100% do gasto do mês; os segmentos mostram onde o dinheiro foi gasto.":"Each column represents 100% of the month's spending; segments show where the money was spent.","Compor por":"Break down by","Passe o mouse para ver valor e percentual. As legendas continuam clicáveis.":"Hover to see amount and percentage. Legend items remain clickable.","Onde":"Where","Principais destinos do gasto":"Top spending destinations","Clique em uma categoria ou merchant para aplicar o filtro imediatamente.":"Click a category or merchant to apply the filter immediately.","Categorias":"Categories","Ranking da seleção atual.":"Ranking for the current selection.","Merchants":"Merchants","Estabelecimentos e beneficiários com maior gasto.":"Merchants and recipients with the highest spending.","Transações de gastos":"Expense transactions","Detalhe completo dos gastos considerados nesta aba. Edite a categoria e marque cada gasto como fixo ou variável. Variável é o padrão; ao marcar Fixo, transações semelhantes também serão reconhecidas automaticamente.":"Full detail of the expenses considered on this tab. Edit the category and mark each expense as fixed or variable. Variable is the default; when you mark Fixed, similar transactions will also be recognized automatically.","Data":"Date","Banco / conta":"Bank / account","Resarcimento":"Reimbursement","Seu gasto":"Your expense","Detalhes":"Details","Ação":"Action","Entradas consolidadas":"Consolidated income","Entradas identificadas como RENDIMENTO ou RESGATE RDB são ignoradas nesta aba.":"Entries identified as RENDIMENTO or RESGATE RDB are ignored on this tab.","Entrada média mensal da janela":"Average monthly income in the window","Média mensal · Transferências":"Monthly average · Transfers","Média mensal · Outros":"Monthly average · Other","Resarcimentos excluídos: —":"Excluded reimbursements: —","Conta":"Account","Fixas":"Fixed","Origem":"Source","Padrões automáticos de entradas fixas":"Automatic fixed-income patterns","Toda entrada é":"Every income transaction is","por padrão. Ao marcar uma entrada como":"by default. When you mark an income transaction as","Fixa":"Fixed",", o ControleFin aprende um padrão por descrição/origem e usa valor, conta e meio de pagamento como sinais de proximidade para reconhecer entradas semelhantes antigas e futuras. Categorias personalizadas e regras automáticas de categoria são compartilhadas com a aba Gastos.":", ControleFin learns a pattern from description/source and uses amount, account, and payment method as similarity signals to recognize similar past and future income transactions. Custom categories and automatic category rules are shared with the Expenses tab.","Regras automáticas de salário por origem":"Automatic salary rules by source","Ao salvar uma entrada como":"When you save an income transaction as","Salário":"Salary","ou":"or",", o ControleFin cria uma regra persistente para a mesma origem. O":", ControleFin creates a persistent rule for the same source. The","tem prioridade; quando ele não existe, merchant/descrição são usados de forma mais conservadora.":"takes priority; when it is unavailable, merchant/description are used more conservatively.","Quanto entra e de onde vem?":"How much comes in and where does it come from?","Os gráficos usam a janela selecionada e os filtros de conta, meio, fixo/variável, categoria, origem, busca e valor. O filtro de mês não corta a tendência.":"Charts use the selected window and account, method, fixed/variable, category, source, search, and amount filters. The month filter does not truncate the trend.","entradas visíveis":"visible income transactions","Entradas mensais em reais":"Monthly income in reais","Tipo de entrada":"Income type","Clique nas legendas para ocultar ou exibir séries.":"Click legend items to hide or show series.","Cada coluna representa 100% das entradas do mês e mostra sua origem.":"Each column represents 100% of the month's income and shows its source.","Passe o mouse para ver valor e percentual. As legendas são clicáveis.":"Hover to see amount and percentage. Legend items are clickable.","Principais fontes das entradas":"Top income sources","Clique em uma categoria ou origem para aplicar o filtro imediatamente.":"Click a category or source to apply the filter immediately.","Origens":"Sources","Pagadores/origens com maior entrada.":"Payers/sources with the highest income.","Transações de entradas":"Income transactions","Edite a categoria e marque cada entrada como fixa ou variável. Alterações recalculam os visuais imediatamente e são persistidas.":"Edit the category and mark each income transaction as fixed or variable. Changes immediately recalculate the visuals and are persisted.","Pagador":"Payer","Resarcimento / vínculo":"Reimbursement / link","Valor":"Amount","Posição financeira":"Financial position","Resumo patrimonial sem competir com a leitura de gastos.":"Net-worth summary without competing with the spending view.","Patrimônio líquido":"Net worth","Estimado":"Estimated","Saldo bancário":"Bank balance","Investimentos":"Investments","Cartões em aberto":"Open card balances","Caixa médio mensal":"Average monthly cash flow","Fluxo de caixa":"Cash flow","Entradas e saídas bancárias mensais.":"Monthly bank inflows and outflows.","Saúde financeira":"Financial health","Heurística explicável sobre os dados disponíveis.":"Explainable heuristic based on the available data.","Leitura automática":"Automatic insights","Sinais relevantes do fluxo, gastos, patrimônio e qualidade dos dados.":"Relevant signals from cash flow, expenses, net worth, and data quality.","Contas":"Accounts","BTG Banking, BTG Investimentos e Nubank tratados separadamente.":"BTG Banking, BTG Investments, and Nubank are handled separately.","Investimentos e detalhes técnicos":"Investments and technical details","Alocação de investimentos":"Investment allocation","Posições por instituição":"Positions by institution","Ajustes":"Settings","Transações e reclassificação":"Transactions and reclassification","Adicionar transação manual":"Add manual transaction","Use quando uma movimentação legítima não chegar pela integração. Campos com * são obrigatórios e o registro fica salvo permanentemente nos ajustes locais.":"Use this when a legitimate transaction is missing from the integration. Fields marked * are required and the record is permanently saved in local settings.","+ Gasto manual":"+ Manual expense","+ Entrada manual":"+ Manual income","Natureza *":"Type *","Data *":"Date *","Valor *":"Amount *","Conta / cartão *":"Account / card *","Meio *":"Method *","Descrição *":"Description *","Categoria *":"Category *","Merchant / pagador":"Merchant / payer","Moeda *":"Currency *","Outra conta / cartão manual":"Other manual account / card","Instituição *":"Institution *","Nome da conta / cartão *":"Account / card name *","Tipo da conta *":"Account type *","Conta bancária":"Bank account","Salvar transação manual":"Save manual transaction","Atualizar transação manual":"Update manual transaction","Cancelar edição":"Cancel editing","Preencha os campos obrigatórios.":"Fill in the required fields.","Nenhuma transação manual cadastrada.":"No manual transactions added.","Manual":"Manual","Editar":"Edit","Excluir":"Delete","Dinheiro":"Cash","Auditoria local de inclusão em Gastos":"Local expense inclusion audit","Pesquise merchant, descrição ou ID. A auditoria examina inclusive transações pendentes ou normalmente excluídas e mostra por que entram ou não na aba Gastos.":"Search merchant, description, or ID. The audit also examines pending or normally excluded transactions and shows why they are or are not included in Expenses.","Pesquisar transação":"Search transaction","Auditar":"Audit","Em Gastos?":"In Expenses?","Diagnóstico":"Diagnosis","Digite um termo e clique em Auditar.":"Enter a term and click Audit.","Nenhuma transação bruta encontrada. Nesse caso, o registro não chegou ao dataset transactions da Pluggy/exportador.":"No raw transaction found. In that case, the record did not reach the Pluggy/exporter transactions dataset.","Corrija categoria, merchant, meio ou natureza. Todos os gráficos são atualizados imediatamente.":"Correct category, merchant, method, or nature. All charts update immediately.","Exportar ajustes":"Export settings","Limpar ajustes":"Clear adjustments","Natureza":"Nature","Transferências próprias":"Own-account transfers","Aportes / transferências para investimentos":"Contributions / transfers to investments","Pagamento de fatura":"Card bill payment","CardBankslip · ":"CardBankslip · ","Estornos":"Refunds","Ignoradas":"Ignored","Os dados financeiros permanecem locais. Categorias, reclassificações, regras automáticas, padrões de gastos/entradas fixos, resarcimentos, vínculos e regras de salário por origem são salvos em user_data/ajustes.json pelo backend; pagamentos de fatura, transferências próprias e aportes/resgates ficam fora de Gastos e Entradas para evitar dupla contagem patrimonial.":"Financial data remains local. Categories, reclassifications, automatic rules, fixed expense/income patterns, reimbursements, links, and salary-by-source rules are saved by the backend in user_data/ajustes.json; card bill payments, own-account transfers, and investment contributions/redemptions are excluded from Expenses and Income to avoid double-counting.","Sem saída média suficiente":"Not enough average outflow data","Geração de caixa":"Cash generation","Sem entrada média suficiente":"Not enough average inflow data","Dívida sem ativos líquidos identificados":"Debt without identified liquid assets","Uso de crédito":"Credit utilization","Sem limite comparável":"No comparable limit","Sem carteira comparável":"No comparable portfolio","Diversificação":"Diversification","Sem dados de conexão":"No connection data","Atualização dos dados":"Data freshness","Dados insuficientes":"Insufficient data","Não foi possível calcular uma leitura consolidada.":"A consolidated assessment could not be calculated.","Saúde forte":"Strong health","Liquidez, caixa e obrigações estão relativamente equilibrados dentro das métricas disponíveis.":"Liquidity, cash flow, and obligations are relatively balanced within the available metrics.","Saúde razoável":"Fair health","A estrutura geral é funcional, mas há pontos que merecem acompanhamento.":"The overall structure is functional, but some areas deserve monitoring.","Atenção":"Attention","Existem pressões relevantes de caixa, dívida, crédito ou qualidade dos dados.":"There are meaningful pressures in cash flow, debt, credit, or data quality.","Pressão elevada":"High pressure","Os dados disponíveis indicam fragilidade em mais de uma dimensão financeira.":"Available data indicates weakness in more than one financial dimension.","Score indisponível":"Score unavailable","Sem dados":"No data","Saídas de caixa":"Cash outflows","Líquido":"Net","Obrigações financeiras":"Financial obligations","Não há saldo de cartão ou empréstimo identificado nessa moeda nos KPIs atuais.":"No card balance or loan is identified in this currency in the current KPIs.","Sem categoria":"Uncategorized","Maior categoria de consumo":"Largest consumption category","Qualidade dos dados":"Data quality","As conexões carregadas não exibem erro e não há atraso superior a 7 dias nas datas disponíveis.":"Loaded connections show no errors and no available timestamp is more than 7 days stale.","Faturas próximas":"Upcoming bills","Cartões":"Cards","Empréstimos":"Loans","Não identificado":"Not identified","Cartão":"Card","Conta bancária":"Bank account","Empréstimo":"Loan","Outra conta":"Other account","Não identificada":"Not identified","Conta não identificada":"Unidentified account","Não":"No","Sim":"Yes","Cartão de crédito":"Credit card","Transferência":"Transfer","Débito / compra em conta":"Debit / account purchase","Backend indisponível — usando armazenamento local temporariamente":"Backend unavailable — temporarily using browser storage","Erro ao salvar ajustes":"Error saving settings","Alteração pendente de salvamento…":"Change pending save…","Ativar regra":"Enable rule","Desativar regra":"Disable rule","Informe o valor que a regra deve procurar.":"Enter the value the rule should match.","Informe a categoria que será aplicada.":"Enter the category to apply.","Use um valor de regra com até 120 caracteres.":"Use a rule value of up to 120 characters.","Use uma categoria com até 80 caracteres.":"Use a category of up to 80 characters.","Essa regra já existe.":"This rule already exists.","Regra automática criada e salva.":"Automatic rule created and saved.","Regra ativada.":"Rule enabled.","Regra desativada.":"Rule disabled.","Regra excluída.":"Rule deleted.","Sem resarcimento":"No reimbursement","100% resarcido — não fiz parte":"100% reimbursed — I was not part of the expense","Compartilhado — fiz parte":"Shared — I was part of the expense","Aplicado pelo padrão do gasto fixo":"Applied by fixed-expense pattern","Ajuste desta transação":"Adjustment for this transaction","Somente para gastos":"Expenses only","Pessoas":"People","Gasto fixo":"Fixed expense","valor não disponível":"amount unavailable","sem resarcimento":"no reimbursement","Padrão":"Pattern","padrão por similaridade":"similarity pattern","gasto fixo":"fixed expense","Entrada fixa":"Fixed income","entrada fixa":"fixed income","Digite um nome para a nova categoria.":"Enter a name for the new category.","Formato de reclassificações inválido":"Invalid reclassification format","Backup de categorias, reclassificações, resarcimentos, vínculos e regras automáticas restaurado.":"Backup of categories, reclassifications, reimbursements, links, and automatic rules restored.","Não foi possível restaurar esse backup JSON.":"Could not restore this JSON backup.","Todos da janela":"All in window","Todas as contas":"All accounts","Todos os meios":"All methods","Todas as categorias":"All categories","Todos os merchants":"All merchants","Automático por similaridade":"Automatic by similarity","Padrão: Variável":"Default: Variable","Entrada normal":"Normal income","Gasto não encontrado":"Expense not found","Gasto":"Expense","Selecionar gasto…":"Select expense…","Sem vínculo específico":"No specific link","Remover vínculo":"Remove link","Todas as origens":"All sources","Pagador não informado pela transação":"Payer not provided by the transaction","Excluído dos gráficos de entradas.":"Excluded from income charts.","Considerado normalmente nos gráficos.":"Included normally in charts.","Entrada marcada como resarcimento e excluída dos gráficos.":"Income marked as reimbursement and excluded from charts.","Entrada marcada como Fixa.":"Income marked as Fixed.","Entrada atualizada e salva.":"Income updated and saved.","Sem entradas na janela":"No income in the window","Sem entradas identificadas na janela.":"No income identified in the window.","Entrada":"Income","Transferência própria":"Own-account transfer","Aporte / transferência de investimento":"Investment contribution / transfer","Estorno/crédito cartão":"Refund/card credit","Automático":"Automatic","automático por similaridade":"automatic by similarity","padrão":"default","Somente para gastos e entradas":"Expenses and income only","Classificação atualizada e salva.":"Classification updated and saved.","Não há ajustes salvos.":"There are no saved adjustments.","Remover todas as reclassificações locais? As categorias personalizadas serão mantidas.":"Remove all local reclassifications? Custom categories will be kept.","Reclassificações removidas; categorias personalizadas mantidas.":"Reclassifications removed; custom categories kept.","Estornos/créditos":"Refunds/credits","Maior categoria de gasto":"Largest expense category","Principal meio de gasto":"Main spending method","Movimentações patrimoniais separadas":"Separated asset movements","Cobertura: sem fluxo":"Coverage: no cash flow","Sincronização: —":"Sync: —","Dados carregados.":"Data loaded.","Dados financeiros e ajustes carregados localmente.":"Financial data and settings loaded locally.","tradução(ões) semântica(s)":"semantic translation(s)","Carregando dados do SQLite…":"Loading data from SQLite…","Classificação restaurada para automático.":"Classification restored to automatic.","Excluir regra":"Delete rule","Excluir padrão automático":"Delete automatic pattern","Remover categoria personalizada":"Remove custom category","Ver dados":"View data","Salvar":"Save","Resetar":"Reset","Anterior":"Previous","Próxima":"Next","Sem limite":"No limit","Descrição, merchant…":"Description, merchant…","Descrição, origem, pagador, categoria…":"Description, source, payer, category…","Ex.: IFOOD, UBER, SPOTIFY…":"e.g. IFOOD, UBER, SPOTIFY…","Ex.: Alimentação":"e.g. Food","Nenhuma regra automática criada. Crie uma regra acima para categorizar novas transações automaticamente.":"No automatic rule created. Create a rule above to categorize new transactions automatically.","Nenhum padrão aprendido ainda. Marque um gasto recorrente como Fixo para criar o primeiro padrão.":"No learned pattern yet. Mark a recurring expense as Fixed to create the first pattern.","Nenhum padrão aprendido ainda. Marque uma entrada recorrente como Fixa para criar o primeiro padrão.":"No learned pattern yet. Mark recurring income as Fixed to create the first pattern.","Nenhuma regra de salário por origem criada ainda.":"No salary-by-source rule created yet.","Sem dados para esta seleção.":"No data for this selection.","Sem gastos mensais para esta seleção.":"No monthly expenses for this selection.","Sem gastos para esta seleção.":"No expenses for this selection.","Nenhum gasto encontrado para os filtros atuais.":"No expenses found for the current filters.","Sem gastos mensais para os filtros atuais.":"No monthly expenses for the current filters.","Sem gastos na janela":"No expenses in the window","Nenhuma conta ou posição encontrada nesta moeda.":"No account or position found in this currency.","Sem entradas para esta seleção.":"No income for this selection.","Nenhuma entrada encontrada para os filtros atuais.":"No income found for the current filters.","Nenhuma transação encontrada.":"No transaction found.","Nenhum cartão encontrado nesta moeda.":"No card found in this currency.","Sem contas para esta moeda.":"No accounts for this currency.","Nenhum cartão nessa moeda.":"No card in this currency.","Sem posições financeiras nessa moeda.":"No financial positions in this currency.","Sem dados de conexão.":"No connection_health.csv.","Nenhum erro ou aviso registrado.":"No errors or warnings recorded.","Sem entradas ou gastos considerados para a moeda/janela selecionada.":"No bank cash flow for the selected currency/window.","Sem atividade de cartões para a seleção.":"No card activity for this selection.","Sem posições nessa moeda.":"No positions in this currency.","Sem sinais suficientes.":"Not enough signals."};
+  const UI_EN_EXACT = {"Entrar com Google":"Sign in with Google","Continuar com Google":"Continue with Google","Senha adicional":"Additional password","Continuar":"Continue","Usar outra conta Google":"Use another Google account","Segurança":"Security","Segurança do acesso":"Access security","Login principal":"Primary sign-in","Conta Google":"Google account","Ativada":"Enabled","Não ativada":"Not enabled","Senha adicional atual":"Current additional password","Nova senha adicional":"New additional password","Confirmar nova senha":"Confirm new password","Ativar / alterar senha":"Enable / change password","Remover senha adicional":"Remove additional password","Configurar OAuth do aplicativo":"Configure app OAuth","Como deseja começar?":"How would you like to start?","Restaurar meus dados do Google Drive":"Restore my data from Google Drive","Configurar Pluggy manualmente":"Configure Pluggy manually","Restaurar do Google Drive":"Restore from Google Drive","Conectar minha conta Google":"Connect my Google account","Restaurar dados deste Drive":"Restore data from this Drive","Verificar novamente":"Check again","Usar outro usuário":"Use another user","Backup encontrado":"Backup found","Última versão":"Latest version","Última alteração local":"Latest local change","Arquivo mais recente no Drive":"Latest Drive file","Conectar / sincronizar Google Drive":"Connect / sync Google Drive","Sincronizar Google Drive":"Sync Google Drive","Sincronização entre computadores":"Cross-device synchronization","Criptografia":"Encryption","Configurada":"Configured","Não configurada":"Not configured","Revisão local":"Local revision","Revisão na nuvem":"Cloud revision","Estado local":"Local state","Alterações pendentes":"Pending changes","Sincronizado":"Synchronized","Sem snapshot":"No snapshot","Senha da nuvem":"Cloud password","Salvar senha":"Save password","Sincronizar agora":"Sync now","Esquecer senha neste PC":"Forget password on this PC","Conflito entre computadores":"Conflict between computers","Usar versão da nuvem":"Use cloud version","Substituir nuvem por este PC":"Replace cloud with this PC","Mínimo de 12 caracteres":"At least 12 characters","ControleFin — Saúde Financeira":"ControleFin — Financial Health","Dashboard local — nenhum dado carregado":"Local dashboard — no data loaded","Pluggy":"Pluggy","Sincronizar":"Sync","Sair":"Sign out","Recarregar SQLite":"Reload SQLite","Banco local":"Local database","Os dados financeiros são carregados exclusivamente de data/controlefin.db pelo backend local.":"Financial data is loaded exclusively from data/controlefin.db by the local backend.","Tentar novamente":"Try again","Aguardando SQLite.":"Waiting for SQLite.","Banco SQLite indisponível. Inicie o ControleFin pelo backend local e tente novamente.":"SQLite database unavailable. Start ControleFin through the local backend and try again.","Mostrar IDs":"Show IDs","Ocultar IDs":"Hide IDs","Exibir identificadores dos blocos":"Show block identifiers","Controle financeiro pessoal":"Personal finance control","Veja onde seu dinheiro está indo.":"See where your money is going.","Um painel local, focado em gastos de cartão, PIX e boletos. Filtre, investigue e reclassifique cada transação sem enviar seus dados para fora do computador.":"A local dashboard focused on card, PIX, and boleto spending. Filter, investigate, and reclassify each transaction without sending your data outside your computer.","100% local no navegador. Sem APIs ou bibliotecas externas.":"100% local in your browser. No external APIs or libraries.","Como executar":"How to run","Aguardando dados.":"Waiting for data.","Gastos":"Expenses","Entradas":"Income","Contas e cartões":"Accounts and cards","Visão geral":"Overview","Saldos atuais, faturas dos cartões e fluxo efetivo com as mesmas regras de Gastos e Entradas.":"Current balances, card bills, and effective cash flow using the same rules as Expenses and Income.","Entradas e gastos mensais após exclusões, resarcimentos, reclassificações e transações manuais.":"Monthly income and expenses after exclusions, reimbursements, reclassifications, and manual transactions.","Detalhes operacionais das contas bancárias e cartões de crédito na moeda selecionada.":"Operational details for bank accounts and credit cards in the selected currency.","Saldo atual":"Current balance","Os gráficos usam a janela selecionada e os filtros ativos; cada compra parcelada considera no máximo uma única parcela por mês, distribuída pelo número da parcela, e os valores exibidos já descontam resarcimentos previstos e mostram somente a parcela efetivamente atribuída a você. O filtro de mês não corta a tendência.":"Charts use the selected window and active filters; each installment purchase contributes at most one installment per month, distributed by installment number, and displayed values already deduct expected reimbursements and show only the share effectively attributed to you. The month filter does not truncate the trend.","Fatura atual":"Current bill","Mês da fatura":"Bill month","projetada":"projected","Parcela":"Installment","Entradas e gastos mensais após exclusões, resarcimentos, reclassificações, transações manuais e distribuição das compras parceladas.":"Monthly income and expenses after exclusions, reimbursements, reclassifications, manual transactions, and installment distribution.","Os gráficos usam a janela selecionada e os filtros ativos; compras parceladas são distribuídas pelo número da parcela ao longo dos meses, e os valores exibidos já descontam resarcimentos previstos e mostram somente a parcela efetivamente atribuída a você. O filtro de mês não corta a tendência.":"Charts use the selected window and active filters; installment purchases are distributed across months by installment number, and displayed values already deduct expected reimbursements and show only the share effectively attributed to you. The month filter does not truncate the trend.","Limite disponível":"Available credit","Limite total":"Credit limit","Vence":"Due","Fonte do saldo":"Balance source","Saldo informado pela conta":"Balance reported by the account","Conta bancária":"Bank account","Cartão de crédito":"Credit card","Sem contas bancárias ou cartões para esta moeda.":"No bank accounts or credit cards for this currency.","Nenhuma conta bancária ou cartão encontrado nesta moeda.":"No bank account or credit card found in this currency.","Sem entradas ou gastos considerados para a moeda/janela selecionada.":"No considered income or expenses for the selected currency/window.","Entradas de salário":"Salary income","Gastos futuros":"Future expenses","Entrada líquida projetada":"Projected net income","Salários − gastos futuros":"Salary income − future expenses","Entradas, gastos e líquido projetados":"Projected income, expenses, and net","Salários usam a última ocorrência por origem; gastos somam custos fixos e parcelas restantes. A linha líquida é a diferença entre os dois.":"Salary uses the latest occurrence for each source; expenses combine fixed costs and remaining installments. The net line is the difference between them.","Salário projetado":"Projected salary","Entrada líquida":"Net income","Referências de salário":"Salary references","Cada origem usa o valor da última entrada efetivamente classificada como Salário.":"Each source uses the latest income effectively classified as Salary.","Nenhuma entrada de salário identificada para esta moeda.":"No salary income identified for this currency.","Salários":"Salaries","Salário":"Salary","Projeções futuras":"Future projections","Planejamento":"Planning","Visão mês a mês dos gastos já comprometidos por parcelas restantes e custos fixos recorrentes.":"Month-by-month view of expenses already committed through remaining installments and recurring fixed costs.","Horizonte":"Horizon","18 meses":"18 months","24 meses":"24 months","A janela global não altera esta projeção. O horizonte começa no próximo mês.":"The global window does not change this projection. The horizon starts next month.","Total projetado":"Projected total","Custos fixos + parcelas restantes":"Fixed costs + remaining installments","Média mensal projetada":"Projected monthly average","Custos fixos":"Fixed costs","Parcelas restantes":"Remaining installments","Compromissos futuros por mês":"Future commitments by month","Custos fixos usam o valor líquido da última ocorrência; parcelas usam a agenda já distribuída por mês.":"Fixed costs use the net amount of the latest occurrence; installments use the schedule already distributed by month.","Projeção mês a mês":"Month-by-month projection","Os detalhes mostram quais custos fixos e parcelas compõem cada mês.":"Details show which fixed costs and installments make up each month.","Composição":"Composition","Referências de custos fixos":"Fixed-cost references","O valor de cada custo fixo é a última ocorrência efetivamente observada.":"Each fixed cost uses the latest effectively observed occurrence.","Parcelamentos em aberto":"Open installment plans","Somente parcelas posteriores ao mês atual entram na projeção.":"Only installments after the current month are included in the projection.","Sem projeções futuras para esta moeda.":"No future projections for this currency.","Sem compromissos projetados.":"No projected commitments.","Nenhum custo fixo identificado para esta moeda.":"No fixed cost identified for this currency.","Nenhuma parcela futura identificada neste horizonte.":"No future installment identified in this horizon.","Parcelado":"Installment plan","Transações":"Transactions","Navegação do dashboard":"Dashboard navigation","Moeda":"Currency","Janela":"Window","3 meses":"3 months","6 meses":"6 months","12 meses":"12 months","Tudo":"All","Contas: aguardando":"Accounts: waiting","Gastos consolidados":"Consolidated expenses","Gasto médio mensal da janela":"Average monthly expense in the window","Total na janela:":"Total in window:","transações consideradas":"transactions considered","Média mensal · Cartão":"Monthly average · Card","Média mensal · PIX":"Monthly average · PIX","Média mensal · Boleto":"Monthly average · Boleto","Movimentações patrimoniais excluídas: —":"Excluded asset movements: —","Movimentações / faturas consolidadas excluídas: —":"Excluded movements / consolidated card bills: —","Resarcimentos previstos: —":"Expected reimbursements: —","Mês":"Month","Todos":"All","Conta / cartão":"Account / card","Todas":"All","Meio":"Method","Fixo / variável":"Fixed / variable","Fixos":"Fixed","Variáveis":"Variable","Categoria":"Category","Merchant":"Merchant","Buscar":"Search","Valor mín.":"Min. amount","Valor máx.":"Max. amount","Limpar filtros":"Clear filters","Gerenciar categorias personalizadas e salvamento":"Manage custom categories and saving","Nova categoria":"New category","Criar categoria":"Create category","Salvamento automático ativo.":"Automatic saving is active.","Categorias, reclassificações, regras automáticas e padrões de gastos fixos são gravados pelo backend em":"Categories, reclassifications, automatic rules, and fixed-expense patterns are saved by the backend in",". O navegador apenas envia e lê os ajustes; o arquivo permanente fica na pasta local do ControleFin.":". The browser only sends and reads the settings; the permanent file stays in the local ControleFin folder.","Baixar backup dos ajustes":"Download settings backup","Restaurar backup":"Restore backup","Nenhuma alteração nesta sessão":"No changes in this session","Regras automáticas de categorização":"Automatic categorization rules","Campo":"Field","Descrição":"Description","Banco":"Bank","Tipo de gasto":"Expense type","Condição":"Condition","contém":"contains","é igual a":"equals","começa com":"starts with","Valor a procurar":"Value to match","Classificar como":"Classify as","Criar regra":"Create rule","A primeira regra ativa que combinar com a transação é aplicada. Ajustes manuais de uma transação sempre têm prioridade sobre as regras. Use ↑ e ↓ para alterar a prioridade.":"The first active rule that matches the transaction is applied. Manual transaction adjustments always take priority over rules. Use ↑ and ↓ to change priority.","Padrões automáticos de gastos fixos":"Automatic fixed-expense patterns","Ao marcar uma transação como":"When you mark a transaction as","Fixo":"Fixed",", o ControleFin aprende um padrão pela descrição/merchant e usa valor, conta e meio de pagamento como sinais de proximidade. Transações semelhantes passam a ser classificadas como fixas automaticamente. Excluir um padrão faz com que essas transações voltem ao padrão":", ControleFin learns a pattern from the description/merchant and uses amount, account, and payment method as similarity signals. Similar transactions are then automatically classified as fixed. Deleting a pattern makes those transactions return to the default","Variável":"Variable",", salvo quando houver um ajuste manual específico.":", unless there is a specific manual adjustment.","Mês a mês":"Month by month","Quanto gasto e onde gasto?":"How much do I spend and where?","Os gráficos usam a janela selecionada e os filtros ativos; valores exibidos já descontam resarcimentos previstos e mostram somente a parcela efetivamente atribuída a você. O filtro de mês não corta a tendência.":"Charts use the selected window and active filters; displayed amounts already deduct expected reimbursements and show only the share actually attributed to you. The month filter does not truncate the trend.","gastos visíveis":"visible expenses","Gastos mensais em reais":"Monthly expenses in reais","Barras lado a lado por mês. O total do mês aparece acima do grupo.":"Side-by-side bars by month. The monthly total appears above the group.","Agrupar por":"Group by","Fixo x variável":"Fixed vs variable","Clique nas legendas para ocultar ou exibir séries sem perder o contexto mensal.":"Click legend items to hide or show series without losing monthly context.","Composição percentual do mês":"Monthly percentage composition","Cada coluna representa 100% do gasto do mês; os segmentos mostram onde o dinheiro foi gasto.":"Each column represents 100% of the month's spending; segments show where the money was spent.","Compor por":"Break down by","Passe o mouse para ver valor e percentual. As legendas continuam clicáveis.":"Hover to see amount and percentage. Legend items remain clickable.","Onde":"Where","Principais destinos do gasto":"Top spending destinations","Clique em uma categoria ou merchant para aplicar o filtro imediatamente.":"Click a category or merchant to apply the filter immediately.","Categorias":"Categories","Ranking da seleção atual.":"Ranking for the current selection.","Merchants":"Merchants","Estabelecimentos e beneficiários com maior gasto.":"Merchants and recipients with the highest spending.","Transações de gastos":"Expense transactions","Detalhe completo dos gastos considerados nesta aba. Edite a categoria e marque cada gasto como fixo ou variável. Variável é o padrão; ao marcar Fixo, transações semelhantes também serão reconhecidas automaticamente.":"Full detail of the expenses considered on this tab. Edit the category and mark each expense as fixed or variable. Variable is the default; when you mark Fixed, similar transactions will also be recognized automatically.","Data":"Date","Banco / conta":"Bank / account","Resarcimento":"Reimbursement","Seu gasto":"Your expense","Detalhes":"Details","Ação":"Action","Entradas consolidadas":"Consolidated income","Entradas identificadas como RENDIMENTO ou RESGATE RDB são ignoradas nesta aba.":"Entries identified as RENDIMENTO or RESGATE RDB are ignored on this tab.","Entrada média mensal da janela":"Average monthly income in the window","Média mensal · Transferências":"Monthly average · Transfers","Média mensal · Outros":"Monthly average · Other","Resarcimentos excluídos: —":"Excluded reimbursements: —","Conta":"Account","Fixas":"Fixed","Origem":"Source","Padrões automáticos de entradas fixas":"Automatic fixed-income patterns","Toda entrada é":"Every income transaction is","por padrão. Ao marcar uma entrada como":"by default. When you mark an income transaction as","Fixa":"Fixed",", o ControleFin aprende um padrão por descrição/origem e usa valor, conta e meio de pagamento como sinais de proximidade para reconhecer entradas semelhantes antigas e futuras. Categorias personalizadas e regras automáticas de categoria são compartilhadas com a aba Gastos.":", ControleFin learns a pattern from description/source and uses amount, account, and payment method as similarity signals to recognize similar past and future income transactions. Custom categories and automatic category rules are shared with the Expenses tab.","Regras automáticas de salário por origem":"Automatic salary rules by source","Ao salvar uma entrada como":"When you save an income transaction as","Salário":"Salary","ou":"or",", o ControleFin cria uma regra persistente para a mesma origem. O":", ControleFin creates a persistent rule for the same source. The","tem prioridade; quando ele não existe, merchant/descrição são usados de forma mais conservadora.":"takes priority; when it is unavailable, merchant/description are used more conservatively.","Quanto entra e de onde vem?":"How much comes in and where does it come from?","Os gráficos usam a janela selecionada e os filtros de conta, meio, fixo/variável, categoria, origem, busca e valor. O filtro de mês não corta a tendência.":"Charts use the selected window and account, method, fixed/variable, category, source, search, and amount filters. The month filter does not truncate the trend.","entradas visíveis":"visible income transactions","Entradas mensais em reais":"Monthly income in reais","Tipo de entrada":"Income type","Clique nas legendas para ocultar ou exibir séries.":"Click legend items to hide or show series.","Cada coluna representa 100% das entradas do mês e mostra sua origem.":"Each column represents 100% of the month's income and shows its source.","Passe o mouse para ver valor e percentual. As legendas são clicáveis.":"Hover to see amount and percentage. Legend items are clickable.","Principais fontes das entradas":"Top income sources","Clique em uma categoria ou origem para aplicar o filtro imediatamente.":"Click a category or source to apply the filter immediately.","Origens":"Sources","Pagadores/origens com maior entrada.":"Payers/sources with the highest income.","Transações de entradas":"Income transactions","Edite a categoria e marque cada entrada como fixa ou variável. Alterações recalculam os visuais imediatamente e são persistidas.":"Edit the category and mark each income transaction as fixed or variable. Changes immediately recalculate the visuals and are persisted.","Pagador":"Payer","Resarcimento / vínculo":"Reimbursement / link","Valor":"Amount","Posição financeira":"Financial position","Resumo patrimonial sem competir com a leitura de gastos.":"Net-worth summary without competing with the spending view.","Patrimônio líquido":"Net worth","Estimado":"Estimated","Saldo bancário":"Bank balance","Investimentos":"Investments","Cartões em aberto":"Open card balances","Caixa médio mensal":"Average monthly cash flow","Fluxo de caixa":"Cash flow","Entradas e saídas bancárias mensais.":"Monthly bank inflows and outflows.","Saúde financeira":"Financial health","Heurística explicável sobre os dados disponíveis.":"Explainable heuristic based on the available data.","Leitura automática":"Automatic insights","Sinais relevantes do fluxo, gastos, patrimônio e qualidade dos dados.":"Relevant signals from cash flow, expenses, net worth, and data quality.","Contas":"Accounts","BTG Banking, BTG Investimentos e Nubank tratados separadamente.":"BTG Banking, BTG Investments, and Nubank are handled separately.","Investimentos e detalhes técnicos":"Investments and technical details","Alocação de investimentos":"Investment allocation","Posições por instituição":"Positions by institution","Ajustes":"Settings","Transações e reclassificação":"Transactions and reclassification","Adicionar transação manual":"Add manual transaction","Use quando uma movimentação legítima não chegar pela integração. Campos com * são obrigatórios e o registro fica salvo permanentemente nos ajustes locais.":"Use this when a legitimate transaction is missing from the integration. Fields marked * are required and the record is permanently saved in local settings.","+ Gasto manual":"+ Manual expense","+ Entrada manual":"+ Manual income","Natureza *":"Type *","Data *":"Date *","Valor *":"Amount *","Conta / cartão *":"Account / card *","Meio *":"Method *","Descrição *":"Description *","Categoria *":"Category *","Merchant / pagador":"Merchant / payer","Moeda *":"Currency *","Outra conta / cartão manual":"Other manual account / card","Instituição *":"Institution *","Nome da conta / cartão *":"Account / card name *","Tipo da conta *":"Account type *","Conta bancária":"Bank account","Salvar transação manual":"Save manual transaction","Atualizar transação manual":"Update manual transaction","Cancelar edição":"Cancel editing","Preencha os campos obrigatórios.":"Fill in the required fields.","Nenhuma transação manual cadastrada.":"No manual transactions added.","Manual":"Manual","Editar":"Edit","Excluir":"Delete","Dinheiro":"Cash","Auditoria local de inclusão em Gastos":"Local expense inclusion audit","Pesquise merchant, descrição ou ID. A auditoria examina inclusive transações pendentes ou normalmente excluídas e mostra por que entram ou não na aba Gastos.":"Search merchant, description, or ID. The audit also examines pending or normally excluded transactions and shows why they are or are not included in Expenses.","Pesquisar transação":"Search transaction","Auditar":"Audit","Em Gastos?":"In Expenses?","Diagnóstico":"Diagnosis","Digite um termo e clique em Auditar.":"Enter a term and click Audit.","Nenhuma transação bruta encontrada. Nesse caso, o registro não chegou ao dataset transactions da Pluggy/exportador.":"No raw transaction found. In that case, the record did not reach the Pluggy/exporter transactions dataset.","Corrija categoria, merchant, meio ou natureza. Todos os gráficos são atualizados imediatamente.":"Correct category, merchant, method, or nature. All charts update immediately.","Exportar ajustes":"Export settings","Limpar ajustes":"Clear adjustments","Natureza":"Nature","Transferências próprias":"Own-account transfers","Aportes / transferências para investimentos":"Contributions / transfers to investments","Pagamento de fatura":"Card bill payment","CardBankslip · ":"CardBankslip · ","Estornos":"Refunds","Ignoradas":"Ignored","Os dados financeiros permanecem locais. Categorias, reclassificações, regras automáticas, padrões de gastos/entradas fixos, resarcimentos, vínculos e regras de salário por origem são salvos em user_data/ajustes.json pelo backend; pagamentos de fatura, transferências próprias e aportes/resgates ficam fora de Gastos e Entradas para evitar dupla contagem patrimonial.":"Financial data remains local. Categories, reclassifications, automatic rules, fixed expense/income patterns, reimbursements, links, and salary-by-source rules are saved by the backend in user_data/ajustes.json; card bill payments, own-account transfers, and investment contributions/redemptions are excluded from Expenses and Income to avoid double-counting.","Sem saída média suficiente":"Not enough average outflow data","Geração de caixa":"Cash generation","Sem entrada média suficiente":"Not enough average inflow data","Dívida sem ativos líquidos identificados":"Debt without identified liquid assets","Uso de crédito":"Credit utilization","Sem limite comparável":"No comparable limit","Sem carteira comparável":"No comparable portfolio","Diversificação":"Diversification","Sem dados de conexão":"No connection data","Atualização dos dados":"Data freshness","Dados insuficientes":"Insufficient data","Não foi possível calcular uma leitura consolidada.":"A consolidated assessment could not be calculated.","Saúde forte":"Strong health","Liquidez, caixa e obrigações estão relativamente equilibrados dentro das métricas disponíveis.":"Liquidity, cash flow, and obligations are relatively balanced within the available metrics.","Saúde razoável":"Fair health","A estrutura geral é funcional, mas há pontos que merecem acompanhamento.":"The overall structure is functional, but some areas deserve monitoring.","Atenção":"Attention","Existem pressões relevantes de caixa, dívida, crédito ou qualidade dos dados.":"There are meaningful pressures in cash flow, debt, credit, or data quality.","Pressão elevada":"High pressure","Os dados disponíveis indicam fragilidade em mais de uma dimensão financeira.":"Available data indicates weakness in more than one financial dimension.","Score indisponível":"Score unavailable","Sem dados":"No data","Saídas de caixa":"Cash outflows","Líquido":"Net","Obrigações financeiras":"Financial obligations","Não há saldo de cartão ou empréstimo identificado nessa moeda nos KPIs atuais.":"No card balance or loan is identified in this currency in the current KPIs.","Sem categoria":"Uncategorized","Maior categoria de consumo":"Largest consumption category","Qualidade dos dados":"Data quality","As conexões carregadas não exibem erro e não há atraso superior a 7 dias nas datas disponíveis.":"Loaded connections show no errors and no available timestamp is more than 7 days stale.","Faturas próximas":"Upcoming bills","Cartões":"Cards","Empréstimos":"Loans","Não identificado":"Not identified","Cartão":"Card","Conta bancária":"Bank account","Empréstimo":"Loan","Outra conta":"Other account","Não identificada":"Not identified","Conta não identificada":"Unidentified account","Não":"No","Sim":"Yes","Cartão de crédito":"Credit card","Transferência":"Transfer","Débito / compra em conta":"Debit / account purchase","Backend indisponível — usando armazenamento local temporariamente":"Backend unavailable — temporarily using browser storage","Erro ao salvar ajustes":"Error saving settings","Alteração pendente de salvamento…":"Change pending save…","Ativar regra":"Enable rule","Desativar regra":"Disable rule","Informe o valor que a regra deve procurar.":"Enter the value the rule should match.","Informe a categoria que será aplicada.":"Enter the category to apply.","Use um valor de regra com até 120 caracteres.":"Use a rule value of up to 120 characters.","Use uma categoria com até 80 caracteres.":"Use a category of up to 80 characters.","Essa regra já existe.":"This rule already exists.","Regra automática criada e salva.":"Automatic rule created and saved.","Regra ativada.":"Rule enabled.","Regra desativada.":"Rule disabled.","Regra excluída.":"Rule deleted.","Sem resarcimento":"No reimbursement","100% resarcido — não fiz parte":"100% reimbursed — I was not part of the expense","Compartilhado — fiz parte":"Shared — I was part of the expense","Aplicado pelo padrão do gasto fixo":"Applied by fixed-expense pattern","Ajuste desta transação":"Adjustment for this transaction","Somente para gastos":"Expenses only","Pessoas":"People","Gasto fixo":"Fixed expense","valor não disponível":"amount unavailable","sem resarcimento":"no reimbursement","Padrão":"Pattern","padrão por similaridade":"similarity pattern","gasto fixo":"fixed expense","Entrada fixa":"Fixed income","entrada fixa":"fixed income","Digite um nome para a nova categoria.":"Enter a name for the new category.","Formato de reclassificações inválido":"Invalid reclassification format","Backup de categorias, reclassificações, resarcimentos, vínculos e regras automáticas restaurado.":"Backup of categories, reclassifications, reimbursements, links, and automatic rules restored.","Não foi possível restaurar esse backup JSON.":"Could not restore this JSON backup.","Todos da janela":"All in window","Todas as contas":"All accounts","Todos os meios":"All methods","Todas as categorias":"All categories","Todos os merchants":"All merchants","Automático por similaridade":"Automatic by similarity","Padrão: Variável":"Default: Variable","Entrada normal":"Normal income","Gasto não encontrado":"Expense not found","Gasto":"Expense","Selecionar gasto…":"Select expense…","Sem vínculo específico":"No specific link","Remover vínculo":"Remove link","Todas as origens":"All sources","Pagador não informado pela transação":"Payer not provided by the transaction","Excluído dos gráficos de entradas.":"Excluded from income charts.","Considerado normalmente nos gráficos.":"Included normally in charts.","Entrada marcada como resarcimento e excluída dos gráficos.":"Income marked as reimbursement and excluded from charts.","Entrada marcada como Fixa.":"Income marked as Fixed.","Entrada atualizada e salva.":"Income updated and saved.","Sem entradas na janela":"No income in the window","Sem entradas identificadas na janela.":"No income identified in the window.","Entrada":"Income","Transferência própria":"Own-account transfer","Aporte / transferência de investimento":"Investment contribution / transfer","Estorno/crédito cartão":"Refund/card credit","Automático":"Automatic","automático por similaridade":"automatic by similarity","padrão":"default","Somente para gastos e entradas":"Expenses and income only","Classificação atualizada e salva.":"Classification updated and saved.","Não há ajustes salvos.":"There are no saved adjustments.","Remover todas as reclassificações locais? As categorias personalizadas serão mantidas.":"Remove all local reclassifications? Custom categories will be kept.","Reclassificações removidas; categorias personalizadas mantidas.":"Reclassifications removed; custom categories kept.","Estornos/créditos":"Refunds/credits","Maior categoria de gasto":"Largest expense category","Principal meio de gasto":"Main spending method","Movimentações patrimoniais separadas":"Separated asset movements","Cobertura: sem fluxo":"Coverage: no cash flow","Sincronização: —":"Sync: —","Dados carregados.":"Data loaded.","Dados financeiros e ajustes carregados localmente.":"Financial data and settings loaded locally.","tradução(ões) semântica(s)":"semantic translation(s)","Carregando dados do SQLite…":"Loading data from SQLite…","Classificação restaurada para automático.":"Classification restored to automatic.","Excluir regra":"Delete rule","Excluir padrão automático":"Delete automatic pattern","Remover categoria personalizada":"Remove custom category","Ver dados":"View data","Salvar":"Save","Resetar":"Reset","Anterior":"Previous","Próxima":"Next","Sem limite":"No limit","Descrição, merchant…":"Description, merchant…","Descrição, origem, pagador, categoria…":"Description, source, payer, category…","Ex.: IFOOD, UBER, SPOTIFY…":"e.g. IFOOD, UBER, SPOTIFY…","Ex.: Alimentação":"e.g. Food","Nenhuma regra automática criada. Crie uma regra acima para categorizar novas transações automaticamente.":"No automatic rule created. Create a rule above to categorize new transactions automatically.","Nenhum padrão aprendido ainda. Marque um gasto recorrente como Fixo para criar o primeiro padrão.":"No learned pattern yet. Mark a recurring expense as Fixed to create the first pattern.","Nenhum padrão aprendido ainda. Marque uma entrada recorrente como Fixa para criar o primeiro padrão.":"No learned pattern yet. Mark recurring income as Fixed to create the first pattern.","Nenhuma regra de salário por origem criada ainda.":"No salary-by-source rule created yet.","Sem dados para esta seleção.":"No data for this selection.","Sem gastos mensais para esta seleção.":"No monthly expenses for this selection.","Sem gastos para esta seleção.":"No expenses for this selection.","Nenhum gasto encontrado para os filtros atuais.":"No expenses found for the current filters.","Sem gastos mensais para os filtros atuais.":"No monthly expenses for the current filters.","Sem gastos na janela":"No expenses in the window","Nenhuma conta ou posição encontrada nesta moeda.":"No account or position found in this currency.","Sem entradas para esta seleção.":"No income for this selection.","Nenhuma entrada encontrada para os filtros atuais.":"No income found for the current filters.","Nenhuma transação encontrada.":"No transaction found.","Nenhum cartão encontrado nesta moeda.":"No card found in this currency.","Sem contas para esta moeda.":"No accounts for this currency.","Nenhum cartão nessa moeda.":"No card in this currency.","Sem posições financeiras nessa moeda.":"No financial positions in this currency.","Sem dados de conexão.":"No connection_health.csv.","Nenhum erro ou aviso registrado.":"No errors or warnings recorded.","Sem entradas ou gastos considerados para a moeda/janela selecionada.":"No bank cash flow for the selected currency/window.","Sem atividade de cartões para a seleção.":"No card activity for this selection.","Sem posições nessa moeda.":"No positions in this currency.","Sem sinais suficientes.":"Not enough signals."};
   const i18nOriginalText = new WeakMap();
   const i18nOriginalAttrs = new WeakMap();
   let i18nApplying = false;
@@ -9510,8 +9805,11 @@
   function showAccessView(name) {
     const views = {
       loading: $('accessLoading'),
-      setup: $('accessSetup'),
-      login: $('accessLogin'),
+      googleLogin: $('accessGoogleLogin'),
+      password: $('accessAdditionalPassword'),
+      onboarding: $('accessOnboardingChoice'),
+      restore: $('accessDriveRestore'),
+      pluggy: $('accessPluggy'),
       error: $('accessError'),
     };
 
@@ -9541,19 +9839,62 @@
     }
   }
 
-  function showLogin(message = '') {
+  function showGoogleLogin(message = '') {
     state.authAuthenticated = false;
     setAuthenticatedUser('');
-    showAccessView('login');
-    if ($('loginMessage')) $('loginMessage').textContent = message;
-    if ($('loginPassword')) $('loginPassword').value = '';
-    queueMicrotask(() => $('loginUsername')?.focus());
+    showAccessView('googleLogin');
+
+    if($('googleLoginMessage')) {
+      $('googleLoginMessage').textContent =
+        message;
+    }
+
+    queueMicrotask(
+      ()=>$('googleLoginBtn')?.focus()
+    );
+  }
+
+  function showAdditionalPassword({
+    username='',
+    email='',
+    message='',
+  }={}) {
+    state.authAuthenticated = false;
+    showAccessView('password');
+
+    const label =
+      email
+      || username
+      || 'esta conta Google';
+
+    if($('additionalPasswordSubtitle')) {
+      $('additionalPasswordSubtitle').textContent =
+        `A conta ${label} foi autenticada pelo Google. Digite a senha adicional deste perfil.`;
+    }
+
+    if($('additionalPasswordMessage')) {
+      $('additionalPasswordMessage').textContent =
+        message;
+    }
+
+    if($('additionalPasswordInput')) {
+      $('additionalPasswordInput').value =
+        '';
+    }
+
+    queueMicrotask(
+      ()=>$('additionalPasswordInput')?.focus()
+    );
+  }
+
+  // Aliases mantidos apenas para trechos legados do dashboard que ainda podem
+  // chamar estas funções em mensagens de erro.
+  function showLogin(message = '') {
+    showGoogleLogin(message);
   }
 
   function showSetup(message = '') {
-    showAccessView('setup');
-    if ($('setupMessage')) $('setupMessage').textContent = message;
-    queueMicrotask(() => $('setupUsername')?.focus());
+    showGoogleLogin(message);
   }
 
   function showAccessError(message) {
@@ -9600,201 +9941,2709 @@
     }
   }
 
+  function itemIdsFromText(text) {
+    return [...new Set(
+      String(text || '')
+        .split(/[\s,;]+/)
+        .map(value=>value.trim())
+        .filter(Boolean)
+    )];
+  }
+
+  function itemIdsToText(itemIds) {
+    return Array.isArray(itemIds)
+      ? itemIds.join('\n')
+      : '';
+  }
+
+  const ONBOARDING_NEW_USER_KEY =
+    'controlefin.onboarding.newUser.v1';
+
+  const ONBOARDING_RESTORE_KEY =
+    'controlefin.onboarding.restore.v1';
+
+  function setSessionFlag(
+    key,
+    enabled
+  ) {
+    try {
+      if(enabled) {
+        sessionStorage.setItem(
+          key,
+          '1'
+        );
+      } else {
+        sessionStorage.removeItem(
+          key
+        );
+      }
+    } catch {}
+  }
+
+  function sessionFlag(
+    key
+  ) {
+    try {
+      return (
+        sessionStorage.getItem(
+          key
+        )
+        === '1'
+      );
+    } catch {
+      return false;
+    }
+  }
+
+  function clearOnboardingFlags() {
+    setSessionFlag(
+      ONBOARDING_NEW_USER_KEY,
+      false
+    );
+    setSessionFlag(
+      ONBOARDING_RESTORE_KEY,
+      false
+    );
+  }
+
+  function showOnboardingChoice(
+    message=''
+  ) {
+    setSessionFlag(
+      ONBOARDING_NEW_USER_KEY,
+      true
+    );
+    setSessionFlag(
+      ONBOARDING_RESTORE_KEY,
+      false
+    );
+
+    showAccessView(
+      'onboarding'
+    );
+
+    if(
+      $('onboardingChoiceMessage')
+    ) {
+      $('onboardingChoiceMessage').textContent =
+        message;
+    }
+  }
+
+  function setOnboardingRestoreMessage(
+    message='',
+    kind=''
+  ) {
+    const element =
+      $('onboardingRestoreMessage');
+
+    if(!element) return;
+
+    element.textContent =
+      message;
+
+    element.className =
+      'auth-message'
+      + (
+        kind
+          ? ` ${kind}`
+          : ''
+      );
+  }
+
+  function formatOnboardingRemoteTime(
+    value
+  ) {
+    if(!value) return '—';
+
+    const parsed =
+      new Date(value);
+
+    if(
+      Number.isNaN(
+        parsed.getTime()
+      )
+    ) {
+      return String(value);
+    }
+
+    return parsed.toLocaleString(
+      state.uiLanguage
+      || 'pt-BR'
+    );
+  }
+
+  function renderOnboardingRestoreStatus(
+    payload
+  ) {
+    state.onboardingRestoreStatus =
+      payload
+      || null;
+
+    const google =
+      payload?.google
+      || {};
+
+    const cloud =
+      payload?.cloud
+      || {};
+
+    const remote =
+      cloud?.remote
+      || null;
+
+    const connected =
+      Boolean(
+        google?.connected
+      );
+
+    const account =
+      google?.account
+      || null;
+
+    const accountLabel =
+      account?.emailAddress
+      || account?.displayName
+      || '';
+
+    if(
+      $('onboardingGoogleStatus')
+    ) {
+      $('onboardingGoogleStatus').textContent =
+        connected
+          ? 'Conectado'
+          : 'Desconectado';
+
+      $('onboardingGoogleStatus').className =
+        connected
+          ? 'good'
+          : 'warn';
+    }
+
+    if(
+      $('onboardingGoogleAccount')
+    ) {
+      $('onboardingGoogleAccount').textContent =
+        accountLabel
+        || (
+          connected
+            ? 'Conta conectada'
+            : '—'
+        );
+    }
+
+    if(
+      $('onboardingRemoteBackupStatus')
+    ) {
+      if(
+        cloud?.remoteError
+      ) {
+        $('onboardingRemoteBackupStatus').textContent =
+          'Erro ao consultar';
+        $('onboardingRemoteBackupStatus').className =
+          'bad';
+      } else if(
+        remote?.available
+      ) {
+        $('onboardingRemoteBackupStatus').textContent =
+          `${remote?.snapshotCount || 1} snapshot(s)`;
+        $('onboardingRemoteBackupStatus').className =
+          'good';
+      } else {
+        $('onboardingRemoteBackupStatus').textContent =
+          connected
+            ? 'Nenhum backup'
+            : '—';
+        $('onboardingRemoteBackupStatus').className =
+          connected
+            ? 'warn'
+            : '';
+      }
+    }
+
+    if(
+      $('onboardingRemoteRevision')
+    ) {
+      $('onboardingRemoteRevision').textContent =
+        remote?.available
+          ? `r${remote?.revision ?? '—'} · ${formatOnboardingRemoteTime(remote?.modifiedTime)}`
+          : '—';
+    }
+
+    $('onboardingConnectGoogleBtn')
+      ?.classList.toggle(
+        'hidden',
+        connected
+      );
+
+    $('onboardingRestoreNowBtn')
+      ?.toggleAttribute(
+        'disabled',
+        state.onboardingRestoreBusy
+        || !connected
+        || !remote?.available
+      );
+
+    $('onboardingRefreshDriveBtn')
+      ?.toggleAttribute(
+        'disabled',
+        state.onboardingRestoreBusy
+      );
+  }
+
+  async function refreshOnboardingRestoreStatus({
+    message=''
+  }={}) {
+    showAccessView(
+      'restore'
+    );
+
+    if(message) {
+      setOnboardingRestoreMessage(
+        message
+      );
+    }
+
+    try {
+      const google =
+        await loadGoogleDriveStatus();
+
+      let payload = {
+        google,
+        cloud:null,
+      };
+
+      if(
+        google?.connected
+      ) {
+        payload =
+          await loadGoogleCloudStatus();
+      }
+
+      renderOnboardingRestoreStatus(
+        payload
+      );
+
+      if(
+        google?.associationError
+      ) {
+        setOnboardingRestoreMessage(
+          google.associationError,
+          'bad'
+        );
+      } else if(
+        google?.connected
+        && payload?.cloud?.remote?.available
+      ) {
+        setOnboardingRestoreMessage(
+          'Backup encontrado. Informe a senha da nuvem e restaure os dados.',
+          'good'
+        );
+      } else if(
+        google?.connected
+        && !payload?.cloud?.remote?.available
+      ) {
+        setOnboardingRestoreMessage(
+          'Esta conta Google não possui backup do ControleFin. Volte e configure a Pluggy manualmente.',
+          'bad'
+        );
+      }
+
+      return payload;
+
+    } catch(error) {
+      setOnboardingRestoreMessage(
+        error?.message
+        || String(error),
+        'bad'
+      );
+
+      renderOnboardingRestoreStatus(
+        {
+          google:
+            state.googleDriveStatus
+            || {},
+          cloud:null,
+        }
+      );
+
+      return null;
+    }
+  }
+
+  async function beginOnboardingRestore() {
+    setSessionFlag(
+      ONBOARDING_NEW_USER_KEY,
+      true
+    );
+    setSessionFlag(
+      ONBOARDING_RESTORE_KEY,
+      true
+    );
+
+    showAccessView(
+      'restore'
+    );
+
+    setOnboardingRestoreMessage(
+      'Verificando sua conta Google e procurando backups…'
+    );
+
+    await refreshOnboardingRestoreStatus();
+  }
+
+  function chooseManualPluggySetup() {
+    clearOnboardingFlags();
+
+    showPluggySetup(
+      'Informe as credenciais da Pluggy deste usuário.'
+    );
+  }
+
+  async function connectGoogleDriveFromOnboarding() {
+    if(
+      state.onboardingRestoreBusy
+      || state.googleDriveBusy
+    ) {
+      return;
+    }
+
+    setSessionFlag(
+      ONBOARDING_RESTORE_KEY,
+      true
+    );
+
+    state.onboardingRestoreBusy = true;
+
+    setAccessLoading(
+      'Conectando ao Google Drive…',
+      'Você será levado ao Google para escolher a sua conta.'
+    );
+
+    try {
+      const status =
+        await loadGoogleDriveStatus();
+
+      if(
+        !status?.clientConfigured
+      ) {
+        throw new Error(
+          'OAuth Client do ControleFin não está configurado neste build.'
+        );
+      }
+
+      const response =
+        await authenticatedFetch(
+          './api/google/connect/start',
+          {
+            method:'POST',
+            cache:'no-store',
+          }
+        );
+
+      if(
+        !response.ok
+      ) {
+        throw new Error(
+          await readApiError(
+            response,
+            'Não foi possível iniciar o Google OAuth.'
+          )
+        );
+      }
+
+      const payload =
+        await response.json();
+
+      const authorizationUrl =
+        String(
+          payload?.authorizationUrl
+          || ''
+        ).trim();
+
+      if(
+        !authorizationUrl
+      ) {
+        throw new Error(
+          'O servidor não retornou a URL de autorização do Google.'
+        );
+      }
+
+      window.location.assign(
+        authorizationUrl
+      );
+
+    } catch(error) {
+      state.onboardingRestoreBusy = false;
+
+      showAccessView(
+        'restore'
+      );
+
+      setOnboardingRestoreMessage(
+        error?.message
+        || String(error),
+        'bad'
+      );
+
+      await refreshOnboardingRestoreStatus();
+    }
+  }
+
+  async function restoreOnboardingFromDrive() {
+    if(
+      state.onboardingRestoreBusy
+    ) {
+      return;
+    }
+
+    const passphrase =
+      String(
+        $('onboardingCloudPassphrase')?.value
+        || ''
+      );
+
+    if(
+      passphrase.length < 12
+    ) {
+      setOnboardingRestoreMessage(
+        'Informe a mesma senha da nuvem usada no outro computador (mínimo de 12 caracteres).',
+        'bad'
+      );
+      $('onboardingCloudPassphrase')
+        ?.focus();
+      return;
+    }
+
+    state.onboardingRestoreBusy = true;
+
+    setAccessLoading(
+      'Restaurando seus dados…',
+      'Baixando, descriptografando e validando o snapshot do Google Drive.'
+    );
+
+    try {
+      const response =
+        await authenticatedFetch(
+          './api/google/cloud/restore',
+          {
+            method:'POST',
+            headers:{
+              'Content-Type':
+                'application/json',
+            },
+            body:JSON.stringify({
+              passphrase,
+            }),
+          }
+        );
+
+      if(
+        !response.ok
+      ) {
+        throw new Error(
+          await readApiError(
+            response,
+            'Não foi possível restaurar o backup do Google Drive.'
+          )
+        );
+      }
+
+      const result =
+        await response.json();
+
+      clearOnboardingFlags();
+
+      if(
+        $('onboardingCloudPassphrase')
+      ) {
+        $('onboardingCloudPassphrase').value =
+          '';
+      }
+
+      setAccessLoading(
+        'Dados restaurados com sucesso',
+        `Revisão ${result?.revision ?? '—'} recuperada. Reabrindo o ControleFin…`
+      );
+
+      window.setTimeout(
+        ()=>{
+          window.location.reload();
+        },
+        650
+      );
+
+    } catch(error) {
+      state.onboardingRestoreBusy = false;
+
+      showAccessView(
+        'restore'
+      );
+
+      setOnboardingRestoreMessage(
+        error?.message
+        || String(error),
+        'bad'
+      );
+
+      await refreshOnboardingRestoreStatus();
+    }
+  }
+
+  async function loadPluggyStatus() {
+    const response = await authenticatedFetch(
+      './api/pluggy/status',
+      {
+        cache:'no-store',
+      }
+    );
+
+    if(!response.ok) {
+      throw new Error(
+        await readApiError(
+          response,
+          'Não foi possível ler a configuração Pluggy.'
+        )
+      );
+    }
+
+    const status = await response.json();
+    state.pluggyStatus = status;
+    state.pluggyConfigured = Boolean(
+      status?.configured
+    );
+    return status;
+  }
+
+  function showPluggySetup(message='') {
+    showAccessView('pluggy');
+    if($('pluggySetupMessage')) {
+      $('pluggySetupMessage').textContent = message;
+    }
+
+    const status = state.pluggyStatus || {};
+    if($('pluggySetupClientId')) {
+      $('pluggySetupClientId').value =
+        status.clientId || '';
+    }
+    if($('pluggySetupItemIds')) {
+      $('pluggySetupItemIds').value =
+        itemIdsToText(status.itemIds);
+    }
+    if($('pluggySetupClientSecret')) {
+      $('pluggySetupClientSecret').value = '';
+    }
+
+    queueMicrotask(
+      ()=>$('pluggySetupClientId')?.focus()
+    );
+  }
+
+  async function databaseExists() {
+    const response = await authenticatedFetch(
+      './api/db/status',
+      {
+        cache:'no-store',
+      }
+    );
+
+    if(!response.ok) {
+      return false;
+    }
+
+    const status = await response.json();
+    return Boolean(status?.available);
+  }
+
+  async function syncFromPluggy({
+    reload=true,
+    showGate=true,
+  }={}) {
+    if(state.syncInFlight) {
+      return false;
+    }
+
+    state.syncInFlight = true;
+
+    if(showGate) {
+      setAccessLoading(
+        'Sincronizando com a Pluggy…',
+        'Atualizando o banco SQLite local.'
+      );
+    }
+
+    try {
+      const response = await authenticatedFetch(
+        './api/sync',
+        {
+          method:'POST',
+        }
+      );
+
+      if(!response.ok) {
+        throw new Error(
+          await readApiError(
+            response,
+            'Falha ao sincronizar com a Pluggy.'
+          )
+        );
+      }
+
+      if(reload) {
+        await loadFromSQLite();
+      }
+
+      return true;
+    } finally {
+      state.syncInFlight = false;
+    }
+  }
+
   async function startDashboardLoad(username) {
     setAuthenticatedUser(username);
+
+    if(
+      sessionFlag(
+        ONBOARDING_RESTORE_KEY
+      )
+    ) {
+      await beginOnboardingRestore();
+      return false;
+    }
+
+    if(
+      sessionFlag(
+        ONBOARDING_NEW_USER_KEY
+      )
+    ) {
+      showOnboardingChoice();
+      return false;
+    }
+
+    setAccessLoading(
+      'Preparando seu dashboard…',
+      'Verificando o estado mais recente no Google Drive.'
+    );
+
+    await autoCloudSyncBeforeDashboard();
+
+    setAccessLoading(
+      'Preparando seu dashboard…',
+      'Verificando sua configuração Pluggy.'
+    );
+
+    const pluggyStatus =
+      await loadPluggyStatus();
+
+    if(!pluggyStatus?.configured) {
+      showPluggySetup();
+      return false;
+    }
+
+    const hasDatabase =
+      await databaseExists();
+
+    if(!hasDatabase) {
+      try {
+        await syncFromPluggy({
+          reload:true,
+          showGate:true,
+        });
+      } catch(error) {
+        console.error(
+          'Primeira sincronização falhou:',
+          error
+        );
+        showAccessError(
+          `Não foi possível criar o banco local: ${error?.message || error}`
+        );
+      }
+      return;
+    }
+
     setAccessLoading(
       'Carregando seu dashboard…',
       'Lendo o banco SQLite local.'
     );
-    return autoLoad();
+
+    await autoLoad();
+
+    // Atualiza em segundo plano depois que o último banco válido já apareceu.
+    syncFromPluggy({
+      reload:false,
+      showGate:false,
+    }).then(ok=>{
+      if(ok) {
+        toast(
+          'Sincronização Pluggy concluída. Clique em Sincronizar para recarregar a tela agora.'
+        );
+      }
+    }).catch(error=>{
+      console.warn(
+        'Sincronização em segundo plano indisponível:',
+        error
+      );
+    });
+  }
+
+  async function loadAuthStatus() {
+    const response =
+      await fetch(
+        './api/auth/status',
+        {
+          cache:'no-store',
+          credentials:'same-origin',
+        }
+      );
+
+    if(!response.ok) {
+      throw new Error(
+        await readApiError(
+          response,
+          'Falha ao verificar autenticação.'
+        )
+      );
+    }
+
+    return response.json();
+  }
+
+  async function importGoogleLoginOAuthClient(
+    file
+  ) {
+    if(!file) return;
+
+    const message =
+      $('googleLoginMessage');
+
+    try {
+      if(message) {
+        message.textContent =
+          'Validando credentials.json…';
+      }
+
+      const payload =
+        JSON.parse(
+          await file.text()
+        );
+
+      const response =
+        await fetch(
+          './api/auth/google/client-config',
+          {
+            method:'PUT',
+            headers:{
+              'Content-Type':
+                'application/json',
+            },
+            credentials:
+              'same-origin',
+            body:JSON.stringify(
+              payload
+            ),
+          }
+        );
+
+      if(!response.ok) {
+        throw new Error(
+          await readApiError(
+            response,
+            'OAuth Client inválido.'
+          )
+        );
+      }
+
+      if(message) {
+        message.textContent =
+          'OAuth Client configurado. Agora entre com sua conta Google.';
+        message.className =
+          'auth-message good';
+      }
+
+      $('googleLoginAdminSetup')
+        ?.classList.add(
+          'hidden'
+        );
+
+    } catch(error) {
+      if(message) {
+        message.textContent =
+          error?.message
+          || String(error);
+        message.className =
+          'auth-message bad';
+      }
+    } finally {
+      if(
+        $('googleLoginOAuthClientFile')
+      ) {
+        $('googleLoginOAuthClientFile').value =
+          '';
+      }
+    }
+  }
+
+  async function beginGooglePrimaryLogin() {
+    const message =
+      $('googleLoginMessage');
+
+    if(message) {
+      message.textContent =
+        'Abrindo o Google para escolher sua conta…';
+      message.className =
+        'auth-message';
+    }
+
+    try {
+      const response =
+        await fetch(
+          './api/auth/google/start',
+          {
+            method:'POST',
+            cache:'no-store',
+            credentials:
+              'same-origin',
+          }
+        );
+
+      if(!response.ok) {
+        throw new Error(
+          await readApiError(
+            response,
+            'Não foi possível iniciar o login Google.'
+          )
+        );
+      }
+
+      const payload =
+        await response.json();
+
+      const url =
+        String(
+          payload?.authorizationUrl
+          || ''
+        ).trim();
+
+      if(!url) {
+        throw new Error(
+          'O servidor não retornou a URL de autenticação Google.'
+        );
+      }
+
+      window.location.assign(
+        url
+      );
+
+    } catch(error) {
+      showGoogleLogin(
+        error?.message
+        || String(error)
+      );
+    }
+  }
+
+  async function completeGooglePrimaryLogin({
+    retries=12,
+    delayMs=500,
+  }={}) {
+    for(
+      let attempt=0;
+      attempt<retries;
+      attempt++
+    ) {
+      const response =
+        await fetch(
+          './api/auth/google/complete',
+          {
+            method:'POST',
+            cache:'no-store',
+            credentials:
+              'same-origin',
+          }
+        );
+
+      if(
+        response.status
+        === 202
+      ) {
+        await new Promise(
+          resolve=>
+            setTimeout(
+              resolve,
+              delayMs
+            )
+        );
+        continue;
+      }
+
+      if(!response.ok) {
+        throw new Error(
+          await readApiError(
+            response,
+            'Não foi possível concluir o login Google.'
+          )
+        );
+      }
+
+      return response.json();
+    }
+
+    throw new Error(
+      'O Google ainda está finalizando a autenticação. Tente novamente.'
+    );
+  }
+
+  async function handleGoogleLoginPayload(
+    payload
+  ) {
+    if(
+      payload?.passwordRequired
+    ) {
+      showAdditionalPassword({
+        username:
+          payload?.username
+          || '',
+        email:
+          payload?.googleAccount
+            ?.emailAddress
+          || '',
+      });
+      return;
+    }
+
+    if(
+      !payload?.authenticated
+    ) {
+      showGoogleLogin(
+        'O login Google não foi concluído.'
+      );
+      return;
+    }
+
+    state.authConfigured = true;
+
+    if(
+      payload?.newProfile
+    ) {
+      setAuthenticatedUser(
+        payload?.googleAccount
+          ?.emailAddress
+        || payload?.username
+        || ''
+      );
+
+      setSessionFlag(
+        ONBOARDING_NEW_USER_KEY,
+        true
+      );
+
+      showOnboardingChoice(
+        'Conta Google autenticada. Escolha restaurar um backup existente ou configurar a Pluggy deste novo perfil.'
+      );
+      return;
+    }
+
+    await startDashboardLoad(
+      payload?.googleAccount
+        ?.emailAddress
+      || payload?.username
+      || ''
+    );
+  }
+
+  async function submitAdditionalPassword(
+    event
+  ) {
+    event.preventDefault();
+
+    const password =
+      String(
+        $('additionalPasswordInput')
+          ?.value
+        || ''
+      );
+
+    const message =
+      $('additionalPasswordMessage');
+
+    if(message) {
+      message.textContent =
+        '';
+    }
+
+    setAccessLoading(
+      'Validando senha adicional…',
+      'A conta Google já foi autenticada.'
+    );
+
+    try {
+      const response =
+        await fetch(
+          './api/auth/password/verify',
+          {
+            method:'POST',
+            headers:{
+              'Content-Type':
+                'application/json',
+            },
+            credentials:
+              'same-origin',
+            body:JSON.stringify({
+              password,
+            }),
+          }
+        );
+
+      if(!response.ok) {
+        throw new Error(
+          await readApiError(
+            response,
+            'Senha adicional inválida.'
+          )
+        );
+      }
+
+      const payload =
+        await response.json();
+
+      await handleGoogleLoginPayload({
+        ...payload,
+        passwordRequired:false,
+      });
+
+    } catch(error) {
+      showAdditionalPassword({
+        message:
+          error?.message
+          || String(error),
+      });
+    }
   }
 
   async function bootstrapAccess() {
     setAccessLoading(
       'Abrindo o ControleFin…',
-      'Verificando seu acesso local.'
+      'Verificando sua sessão Google.'
     );
 
     try {
-      const response = await fetch(
-        './api/auth/status',
+      const status =
+        await loadAuthStatus();
+
+      state.authConfigured =
+        Boolean(
+          status?.googleClientConfigured
+        );
+
+      state.authAuthenticated =
+        Boolean(
+          status?.authenticated
+        );
+
+      $('googleLoginAdminSetup')
+        ?.classList.toggle(
+          'hidden',
+          Boolean(
+            status?.googleClientConfigured
+          )
+        );
+
+      if(
+        status?.authenticated
+      ) {
+        await startDashboardLoad(
+          status?.googleAccount
+            ?.emailAddress
+          || status?.username
+          || ''
+        );
+        return;
+      }
+
+      if(
+        status?.passwordRequired
+      ) {
+        showAdditionalPassword({
+          username:
+            status?.pendingUsername
+            || '',
+        });
+        return;
+      }
+
+      showGoogleLogin(
+        status?.googleClientConfigured
+          ? ''
+          : 'Este build ainda não possui o OAuth Client do ControleFin. Configure credentials.json para desenvolvimento.'
+      );
+
+    } catch(error) {
+      console.error(
+        'Falha ao iniciar autenticação Google:',
+        error
+      );
+
+      showAccessError(
+        `Não foi possível verificar o login Google: ${error?.message || error}`
+      );
+    }
+  }
+
+  async function submitPluggySetup(event) {
+    event.preventDefault();
+
+    const clientId =
+      String(
+        $('pluggySetupClientId')?.value || ''
+      ).trim();
+
+    const clientSecret =
+      String(
+        $('pluggySetupClientSecret')?.value || ''
+      );
+
+    const itemIds =
+      itemIdsFromText(
+        $('pluggySetupItemIds')?.value
+      );
+
+    if($('pluggySetupMessage')) {
+      $('pluggySetupMessage').textContent = '';
+    }
+
+    setAccessLoading(
+      'Validando sua Pluggy…',
+      'Testando credenciais e Item IDs.'
+    );
+
+    try {
+      const response = await authenticatedFetch(
+        './api/pluggy/config',
         {
-          cache: 'no-store',
-          credentials: 'same-origin',
+          method:'PUT',
+          headers:{
+            'Content-Type':'application/json',
+          },
+          body:JSON.stringify({
+            clientId,
+            clientSecret,
+            itemIds,
+          }),
         }
       );
 
-      if (!response.ok) {
+      if(!response.ok) {
+        showPluggySetup(
+          await readApiError(
+            response,
+            'Não foi possível validar a configuração Pluggy.'
+          )
+        );
+        return;
+      }
+
+      state.pluggyConfigured = true;
+      state.pluggyStatus =
+        await response.json();
+
+      clearOnboardingFlags();
+
+      setAccessLoading(
+        'Primeira sincronização…',
+        'Criando seu banco financeiro local.'
+      );
+
+      await syncFromPluggy({
+        reload:true,
+        showGate:true,
+      });
+    } catch(error) {
+      showPluggySetup(
+        `Não foi possível configurar a Pluggy: ${error?.message || error}`
+      );
+    }
+  }
+
+  async function openPluggySettings() {
+    try {
+      const status =
+        await loadPluggyStatus();
+
+      $('pluggySettingsClientId').value =
+        status?.clientId || '';
+
+      $('pluggySettingsClientSecret').value =
+        '';
+
+      $('pluggySettingsItemIds').value =
+        itemIdsToText(
+          status?.itemIds
+        );
+
+      $('pluggySettingsMessage').textContent =
+        status?.secretConfigured
+          ? 'Client Secret protegido pelo Windows DPAPI.'
+          : '';
+
+      $('pluggySettingsMessage').className =
+        'form-status';
+
+      $('pluggySettingsModal')
+        ?.classList.remove('hidden');
+    } catch(error) {
+      toast(
+        `Não foi possível abrir a configuração Pluggy: ${error?.message || error}`
+      );
+    }
+  }
+
+  function closePluggySettings() {
+    $('pluggySettingsModal')
+      ?.classList.add('hidden');
+  }
+
+  function pluggySettingsPayload() {
+    return {
+      clientId:String(
+        $('pluggySettingsClientId')?.value || ''
+      ).trim(),
+      clientSecret:String(
+        $('pluggySettingsClientSecret')?.value || ''
+      ),
+      itemIds:itemIdsFromText(
+        $('pluggySettingsItemIds')?.value
+      ),
+    };
+  }
+
+  async function testPluggySettings() {
+    const message =
+      $('pluggySettingsMessage');
+
+    message.textContent =
+      'Testando credenciais e Item IDs…';
+    message.className =
+      'form-status';
+
+    try {
+      const response = await authenticatedFetch(
+        './api/pluggy/test',
+        {
+          method:'POST',
+          headers:{
+            'Content-Type':'application/json',
+          },
+          body:JSON.stringify(
+            pluggySettingsPayload()
+          ),
+        }
+      );
+
+      if(!response.ok) {
         throw new Error(
           await readApiError(
             response,
-            'Falha ao verificar autenticação.'
+            'Falha no teste da Pluggy.'
           )
         );
       }
 
-      const status = await response.json();
+      const result = await response.json();
 
-      state.authConfigured = Boolean(status?.configured);
-      state.authAuthenticated = Boolean(status?.authenticated);
+      message.textContent =
+        `Conexão válida. ${result.itemCount || 0} Item ID(s) verificado(s).`;
+      message.className =
+        'form-status good';
+    } catch(error) {
+      message.textContent =
+        error?.message || String(error);
+      message.className =
+        'form-status bad';
+    }
+  }
 
-      if (status?.authenticated) {
-        await startDashboardLoad(
-          status?.username || ''
-        );
-        return;
-      }
+  async function savePluggySettings(event) {
+    event.preventDefault();
 
-      if (status?.configured) {
-        showLogin();
-      } else {
-        showSetup();
-      }
-    } catch (error) {
-      console.error(
-        'Falha ao iniciar autenticação:',
-        error
+    const message =
+      $('pluggySettingsMessage');
+
+    message.textContent =
+      'Validando e salvando…';
+    message.className =
+      'form-status';
+
+    try {
+      const response = await authenticatedFetch(
+        './api/pluggy/config',
+        {
+          method:'PUT',
+          headers:{
+            'Content-Type':'application/json',
+          },
+          body:JSON.stringify(
+            pluggySettingsPayload()
+          ),
+        }
       );
-      showAccessError(
-        `Não foi possível verificar o acesso local: ${error?.message || error}`
+
+      if(!response.ok) {
+        throw new Error(
+          await readApiError(
+            response,
+            'Não foi possível salvar a Pluggy.'
+          )
+        );
+      }
+
+      state.pluggyStatus =
+        await response.json();
+      state.pluggyConfigured = true;
+
+      message.textContent =
+        'Configuração salva. Sincronizando…';
+      message.className =
+        'form-status good';
+
+      await syncFromPluggy({
+        reload:true,
+        showGate:false,
+      });
+
+      closePluggySettings();
+      toast(
+        'Pluggy atualizada e dados sincronizados.'
+      );
+    } catch(error) {
+      message.textContent =
+        error?.message || String(error);
+      message.className =
+        'form-status bad';
+    }
+  }
+
+  async function loadGoogleDriveStatus() {
+    const response = await authenticatedFetch(
+      './api/google/status',
+      {
+        cache:'no-store',
+      }
+    );
+
+    if(!response.ok) {
+      throw new Error(
+        await readApiError(
+          response,
+          'Não foi possível consultar o Google Drive.'
+        )
+      );
+    }
+
+    const status = await response.json();
+    state.googleDriveStatus = status;
+    return status;
+  }
+
+  function renderGoogleDriveStatus(status) {
+    const clientConfigured =
+      Boolean(status?.clientConfigured);
+    const connected =
+      Boolean(status?.connected);
+
+    if($('googleClientStatus')) {
+      $('googleClientStatus').textContent =
+        clientConfigured
+          ? 'Configurado'
+          : 'Não configurado';
+      $('googleClientStatus').className =
+        clientConfigured
+          ? 'good'
+          : 'warn';
+    }
+
+    if($('googleConnectionStatus')) {
+      $('googleConnectionStatus').textContent =
+        connected
+          ? 'Conectado'
+          : 'Desconectado';
+      $('googleConnectionStatus').className =
+        connected
+          ? 'good'
+          : 'muted';
+    }
+
+    if($('googleAccountStatus')) {
+      const account =
+        status?.account
+        || null;
+
+      const accountLabel =
+        account?.emailAddress
+        || account?.displayName
+        || '';
+
+      $('googleAccountStatus').textContent =
+        accountLabel
+          || (
+            connected
+              ? 'Identificando…'
+              : '—'
+          );
+
+      $('googleAccountStatus').title =
+        accountLabel;
+    }
+
+    if($('googleScopeStatus')) {
+      $('googleScopeStatus').textContent =
+        'drive.file';
+    }
+
+    const storage =
+      status?.storage
+      || null;
+
+    if($('googleFolderStatus')) {
+      $('googleFolderStatus').textContent =
+        storage?.rootFolderName
+          ? `Meu Drive / ${storage.rootFolderName}`
+          : (connected ? 'Preparando…' : '—');
+    }
+
+    if($('googleDriveFolderLink')) {
+      const href =
+        String(storage?.webViewLink || '').trim();
+
+      $('googleDriveFolderLink').classList.toggle(
+        'hidden',
+        !href
+      );
+
+      if(href) {
+        $('googleDriveFolderLink').href = href;
+      } else {
+        $('googleDriveFolderLink').removeAttribute('href');
+      }
+    }
+
+    $('googleOAuthAdminSetup')?.classList.toggle(
+      'hidden',
+      clientConfigured
+    );
+
+    if(
+      status?.associationError
+      && $('googleDriveMessage')
+    ) {
+      $('googleDriveMessage').textContent =
+        status.associationError;
+      $('googleDriveMessage').className =
+        'form-status bad';
+    }
+
+    const connectSyncButton =
+      $('connectGoogleDriveBtn');
+
+    if(connectSyncButton) {
+      connectSyncButton.toggleAttribute(
+        'disabled',
+        state.googleDriveBusy
+        || state.googleCloudBusy
+      );
+
+      connectSyncButton.textContent =
+        connected
+          ? 'Sincronizar Google Drive'
+          : 'Conectar Google Drive';
+    }
+    $('testGoogleDriveBtn')?.toggleAttribute(
+      'disabled',
+      !connected || state.googleDriveBusy
+    );
+    $('disconnectGoogleDriveBtn')?.toggleAttribute(
+      'disabled',
+      !connected || state.googleDriveBusy
+    );
+  }
+
+  async function openGoogleDriveSettings() {
+    $('googleDriveModal')
+      ?.classList.remove('hidden');
+
+    const message =
+      $('googleDriveMessage');
+
+    if(message) {
+      message.textContent =
+        'Verificando configuração local…';
+      message.className =
+        'form-status';
+    }
+
+    try {
+      const status =
+        await loadGoogleDriveStatus();
+
+      renderGoogleDriveStatus(
+        status
+      );
+
+      try {
+        const cloudPayload = await loadGoogleCloudStatus();
+        renderGoogleCloudStatus(cloudPayload);
+      } catch(error) {
+        console.warn('Status de nuvem indisponível:',error);
+      }
+
+      if(message) {
+        if(status?.associationError) {
+          message.textContent =
+            status.associationError;
+          message.className =
+            'form-status bad';
+        } else if(status?.connected) {
+          message.textContent =
+            'Google Drive conectado. Os dados serão salvos em Meu Drive / ControleFin.';
+          message.className =
+            'form-status good';
+        } else if(status?.oauthError) {
+          message.textContent =
+            `A autorização do Google não foi concluída: ${status.oauthError}`;
+          message.className =
+            'form-status bad';
+        } else if(status?.oauthPending) {
+          message.textContent =
+            'Finalizando a autorização do Google…';
+          message.className =
+            'form-status';
+        } else if(status?.requiresReauthorization) {
+          message.textContent =
+            'Sua autorização antiga usava o armazenamento oculto. Conecte novamente para habilitar Meu Drive / ControleFin.';
+          message.className =
+            'form-status';
+        } else if(status?.clientConfigured) {
+          message.textContent =
+            'OAuth Client do ControleFin configurado. Conecte sua própria conta Google.';
+          message.className =
+            'form-status';
+        } else {
+          message.textContent =
+            'O OAuth Client compartilhado do ControleFin não foi incluído nesta instalação. Use “Configurar OAuth do aplicativo” somente como administrador.';
+          message.className =
+            'form-status';
+        }
+      }
+    } catch(error) {
+      if(message) {
+        message.textContent =
+          error?.message || String(error);
+        message.className =
+          'form-status bad';
+      }
+    }
+  }
+
+  function closeGoogleDriveSettings() {
+    $('googleDriveModal')
+      ?.classList.add('hidden');
+  }
+
+  async function importGoogleOAuthClient(file) {
+    if(!file) return;
+
+    const message =
+      $('googleDriveMessage');
+
+    try {
+      if(message) {
+        message.textContent =
+          'Validando credentials.json…';
+        message.className =
+          'form-status';
+      }
+
+      const raw =
+        await file.text();
+      const clientConfig =
+        JSON.parse(raw);
+
+      const response =
+        await authenticatedFetch(
+          './api/google/client-config',
+          {
+            method:'PUT',
+            headers:{
+              'Content-Type':'application/json',
+            },
+            body:JSON.stringify({
+              clientConfig,
+            }),
+          }
+        );
+
+      if(!response.ok) {
+        throw new Error(
+          await readApiError(
+            response,
+            'OAuth Client inválido.'
+          )
+        );
+      }
+
+      const payload =
+        await response.json();
+
+      state.googleDriveStatus =
+        payload?.status || null;
+
+      renderGoogleDriveStatus(
+        state.googleDriveStatus
+      );
+
+      if(message) {
+        message.textContent =
+          'OAuth Client salvo. Agora conecte sua conta Google.';
+        message.className =
+          'form-status good';
+      }
+    } catch(error) {
+      if(message) {
+        message.textContent =
+          `Não foi possível importar: ${error?.message || error}`;
+        message.className =
+          'form-status bad';
+      }
+    } finally {
+      if($('googleOAuthClientFile')) {
+        $('googleOAuthClientFile').value = '';
+      }
+    }
+  }
+
+  async function waitForGoogleDriveConnection({
+    timeoutMs=185000,
+    intervalMs=1000,
+  }={}) {
+    const startedAt =
+      Date.now();
+
+    while(
+      Date.now()-startedAt
+      < timeoutMs
+    ) {
+      await new Promise(
+        resolve=>
+          setTimeout(
+            resolve,
+            intervalMs
+          )
+      );
+
+      const status =
+        await loadGoogleDriveStatus();
+
+      state.googleDriveStatus =
+        status;
+
+      renderGoogleDriveStatus(
+        status
+      );
+
+      if(status?.connected) {
+        return status;
+      }
+
+      if(status?.associationError) {
+        throw new Error(
+          status.associationError
+        );
+      }
+
+      if(
+        status?.oauthError
+        && !status?.oauthPending
+      ) {
+        throw new Error(
+          status.oauthError
+        );
+      }
+    }
+
+    throw new Error(
+      'Tempo esgotado aguardando a autorização do Google.'
+    );
+  }
+
+  async function connectGoogleDrive() {
+    if(state.googleDriveBusy) return;
+
+    const message =
+      $('googleDriveMessage');
+
+    const authLink =
+      $('googleDriveAuthLink');
+
+    /*
+      Importante: este botão nunca deve "não fazer nada".
+      Primeiro exibimos feedback. Depois validamos a configuração e,
+      se tudo estiver correto, navegamos na própria aba até o Google.
+      Isso evita bloqueio de popup em Chrome/Edge.
+    */
+    if(message) {
+      message.textContent =
+        'Preparando a conexão com o Google Drive…';
+      message.className =
+        'form-status';
+    }
+
+    if(authLink) {
+      authLink.classList.add(
+        'hidden'
+      );
+      authLink.removeAttribute(
+        'href'
+      );
+    }
+
+    state.googleDriveBusy = true;
+
+    try {
+      let status =
+        state.googleDriveStatus;
+
+      if(!status) {
+        status =
+          await loadGoogleDriveStatus();
+      }
+
+      if(!status?.clientConfigured) {
+        throw new Error(
+          'OAuth Client do aplicativo não configurado. O administrador deve incluí-lo no build ou usar “Configurar OAuth do aplicativo”.'
+        );
+      }
+
+      renderGoogleDriveStatus(
+        status
+      );
+
+      const response =
+        await authenticatedFetch(
+          './api/google/connect/start',
+          {
+            method:'POST',
+            cache:'no-store',
+          }
+        );
+
+      if(!response.ok) {
+        throw new Error(
+          await readApiError(
+            response,
+            'Não foi possível iniciar o Google OAuth.'
+          )
+        );
+      }
+
+      const payload =
+        await response.json();
+
+      const authorizationUrl =
+        String(
+          payload?.authorizationUrl
+          || ''
+        ).trim();
+
+      if(!authorizationUrl) {
+        throw new Error(
+          'O servidor não retornou a URL de autorização do Google.'
+        );
+      }
+
+      if(authLink) {
+        authLink.href =
+          authorizationUrl;
+        authLink.classList.remove(
+          'hidden'
+        );
+      }
+
+      if(message) {
+        message.textContent =
+          'Abrindo a autorização do Google…';
+        message.className =
+          'form-status good';
+      }
+
+      /*
+        Usa a própria aba, sem popup. Após o callback OAuth, o pequeno
+        servidor temporário retorna automaticamente para 127.0.0.1:8765.
+      */
+      window.location.assign(
+        authorizationUrl
+      );
+
+    } catch(error) {
+      state.googleDriveBusy = false;
+
+      renderGoogleDriveStatus(
+        state.googleDriveStatus || {}
+      );
+
+      if(message) {
+        message.textContent =
+          error?.message || String(error);
+        message.className =
+          'form-status bad';
+      }
+    }
+  }
+
+  async function testGoogleDriveAccess() {
+    if(state.googleDriveBusy) return;
+
+    const message =
+      $('googleDriveMessage');
+
+    state.googleDriveBusy = true;
+
+    if(message) {
+      message.textContent =
+        'Testando acesso à pasta Meu Drive / ControleFin…';
+      message.className =
+        'form-status';
+    }
+
+    try {
+      const response =
+        await authenticatedFetch(
+          './api/google/test',
+          {
+            method:'POST',
+          }
+        );
+
+      if(!response.ok) {
+        throw new Error(
+          await readApiError(
+            response,
+            'Teste do Google Drive falhou.'
+          )
+        );
+      }
+
+      const filesResponse =
+        await authenticatedFetch(
+          './api/google/drive/files',
+          {
+            cache:'no-store',
+          }
+        );
+
+      if(!filesResponse.ok) {
+        throw new Error(
+          await readApiError(
+            filesResponse,
+            'Não foi possível listar a pasta ControleFin/Snapshots.'
+          )
+        );
+      }
+
+      const filesPayload =
+        await filesResponse.json();
+
+      if(message) {
+        message.textContent =
+          `Acesso confirmado. ${filesPayload?.count || 0} snapshot(s) em Meu Drive / ControleFin / Snapshots.`;
+        message.className =
+          'form-status good';
+      }
+    } catch(error) {
+      if(message) {
+        message.textContent =
+          error?.message || String(error);
+        message.className =
+          'form-status bad';
+      }
+    } finally {
+      state.googleDriveBusy = false;
+      renderGoogleDriveStatus(
+        state.googleDriveStatus || {}
       );
     }
   }
 
-  async function submitFirstUser(event) {
-    event.preventDefault();
+  async function disconnectGoogleDrive() {
+    if(state.googleDriveBusy) return;
 
-    const username = String(
-      $('setupUsername')?.value || ''
-    ).trim();
-    const password = String(
-      $('setupPassword')?.value || ''
+    const message =
+      $('googleDriveMessage');
+
+    state.googleDriveBusy = true;
+
+    try {
+      const response =
+        await authenticatedFetch(
+          './api/google/disconnect',
+          {
+            method:'POST',
+          }
+        );
+
+      if(!response.ok) {
+        throw new Error(
+          await readApiError(
+            response,
+            'Não foi possível desconectar o Google Drive.'
+          )
+        );
+      }
+
+      const payload =
+        await response.json();
+
+      state.googleDriveStatus =
+        payload?.status || null;
+
+      renderGoogleDriveStatus(
+        state.googleDriveStatus
+      );
+
+      if(message) {
+        message.textContent =
+          payload?.revoked
+            ? 'Google Drive desconectado e autorização revogada.'
+            : 'Google Drive desconectado localmente.';
+        message.className =
+          'form-status good';
+      }
+    } catch(error) {
+      if(message) {
+        message.textContent =
+          error?.message || String(error);
+        message.className =
+          'form-status bad';
+      }
+    } finally {
+      state.googleDriveBusy = false;
+      renderGoogleDriveStatus(
+        state.googleDriveStatus || {}
+      );
+    }
+  }
+
+  async function loadGoogleCloudStatus() {
+    const response = await authenticatedFetch(
+      './api/google/cloud/status',
+      {cache:'no-store'}
     );
-    const confirmPassword = String(
-      $('setupPasswordConfirm')?.value || ''
+    if(!response.ok) {
+      throw new Error(await readApiError(response,'Não foi possível consultar a sincronização na nuvem.'));
+    }
+    const payload = await response.json();
+    state.googleCloudStatus = payload;
+    return payload;
+  }
+
+  function renderGoogleCloudStatus(payload) {
+    const google =
+      payload?.google
+      || state.googleDriveStatus
+      || {};
+
+    const cloud =
+      payload?.cloud
+      || {};
+
+    const remote =
+      cloud?.remote
+      || null;
+
+    if($('cloudKeyStatus')) {
+      $('cloudKeyStatus').textContent =
+        cloud?.keyConfigured
+          ? 'Configurada'
+          : 'Não configurada';
+
+      $('cloudKeyStatus').className =
+        cloud?.keyConfigured
+          ? 'good'
+          : 'warn';
+    }
+
+    if($('cloudLocalRevision')) {
+      $('cloudLocalRevision').textContent =
+        String(
+          cloud?.lastAppliedRevision
+          ?? 0
+        );
+    }
+
+    if($('cloudRemoteRevision')) {
+      if(cloud?.remoteError) {
+        $('cloudRemoteRevision').textContent =
+          'Erro';
+        $('cloudRemoteRevision').className =
+          'bad';
+      } else {
+        $('cloudRemoteRevision').textContent =
+          remote?.available
+            ? String(remote.revision)
+            : 'Sem snapshot';
+        $('cloudRemoteRevision').className =
+          '';
+      }
+    }
+
+    if($('cloudDirtyStatus')) {
+      $('cloudDirtyStatus').textContent =
+        cloud?.dirty
+          ? 'Alterações pendentes'
+          : 'Sincronizado';
+
+      $('cloudDirtyStatus').className =
+        cloud?.dirty
+          ? 'warn'
+          : 'good';
+    }
+
+    const formatSyncTime =
+      value=>{
+        if(!value) return '—';
+
+        const parsed =
+          new Date(value);
+
+        return Number.isNaN(
+          parsed.getTime()
+        )
+          ? String(value)
+          : parsed.toLocaleString(
+              state.uiLanguage
+              || 'pt-BR'
+            );
+      };
+
+    if($('cloudLocalModifiedTime')) {
+      $('cloudLocalModifiedTime').textContent =
+        formatSyncTime(
+          cloud?.localModifiedTime
+        );
+    }
+
+    if($('cloudRemoteModifiedTime')) {
+      $('cloudRemoteModifiedTime').textContent =
+        formatSyncTime(
+          remote?.modifiedTime
+        );
+    }
+
+    $('saveCloudPassphraseBtn')?.toggleAttribute(
+      'disabled',
+      state.googleCloudBusy
+      || !google?.connected
     );
 
-    if ($('setupMessage')) $('setupMessage').textContent = '';
+    $('clearCloudPassphraseBtn')?.toggleAttribute(
+      'disabled',
+      state.googleCloudBusy
+      || !cloud?.keyConfigured
+    );
 
-    if (password !== confirmPassword) {
-      $('setupMessage').textContent = 'As senhas não coincidem.';
+    const connectSyncButton =
+      $('connectGoogleDriveBtn');
+
+    if(connectSyncButton) {
+      connectSyncButton.toggleAttribute(
+        'disabled',
+        state.googleCloudBusy
+        || state.googleDriveBusy
+      );
+
+      connectSyncButton.textContent =
+        google?.connected
+          ? 'Sincronizar Google Drive'
+          : 'Conectar Google Drive';
+    }
+  }
+
+  function setCloudConflict(visible,message='') {
+    const box=$('cloudConflictBox');
+    if(!box) return;
+    box.classList.toggle('hidden',!visible);
+    if(visible && $('cloudConflictMessage')) $('cloudConflictMessage').textContent=message || 'A nuvem e este computador possuem alterações diferentes.';
+  }
+
+  async function refreshGoogleCloudPanel() {
+    const payload=await loadGoogleCloudStatus();
+    state.googleDriveStatus=payload?.google || state.googleDriveStatus;
+    renderGoogleDriveStatus(state.googleDriveStatus || {});
+    renderGoogleCloudStatus(payload);
+    return payload;
+  }
+
+  async function saveCloudPassphrase() {
+    if(state.googleCloudBusy) return;
+    const passphrase=String($('cloudPassphraseInput')?.value || '');
+    const message=$('googleDriveMessage');
+    state.googleCloudBusy=true;
+    setCloudConflict(false);
+    try {
+      if(message) {message.textContent='Validando a senha da nuvem…';message.className='form-status';}
+      const response=await authenticatedFetch('./api/google/cloud/passphrase',{
+        method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify({passphrase})
+      });
+      if(!response.ok) throw new Error(await readApiError(response,'Não foi possível salvar a senha da nuvem.'));
+      if($('cloudPassphraseInput')) $('cloudPassphraseInput').value='';
+      await refreshGoogleCloudPanel();
+      if(message) {message.textContent='Senha da nuvem configurada neste computador. Clique em Sincronizar Google Drive.';message.className='form-status good';}
+    } catch(error) {
+      if(message) {message.textContent=error?.message || String(error);message.className='form-status bad';}
+    } finally {
+      state.googleCloudBusy=false;
+      renderGoogleCloudStatus(state.googleCloudStatus || {});
+    }
+  }
+
+  async function clearCloudPassphrase() {
+    if(state.googleCloudBusy) return;
+    const message=$('googleDriveMessage');
+    state.googleCloudBusy=true;
+    try {
+      const response=await authenticatedFetch('./api/google/cloud/passphrase',{method:'DELETE'});
+      if(!response.ok) throw new Error(await readApiError(response,'Não foi possível esquecer a senha da nuvem.'));
+      await refreshGoogleCloudPanel();
+      if(message) {message.textContent='A senha da nuvem foi removida somente deste computador.';message.className='form-status good';}
+    } catch(error) {
+      if(message) {message.textContent=error?.message || String(error);message.className='form-status bad';}
+    } finally {
+      state.googleCloudBusy=false;
+      renderGoogleCloudStatus(state.googleCloudStatus || {});
+    }
+  }
+
+  async function cloudSyncRequest(endpoint,body=null) {
+    const options={method:'POST',cache:'no-store'};
+    if(body!==null) {options.headers={'Content-Type':'application/json'};options.body=JSON.stringify(body);}
+    const response=await authenticatedFetch(endpoint,options);
+    if(!response.ok) throw new Error(await readApiError(response,'Falha na sincronização Google Drive.'));
+    return response.json();
+  }
+
+  async function syncGoogleCloudNow() {
+    if(
+      state.googleCloudBusy
+      || state.googleDriveBusy
+    ) {
       return;
     }
 
-    setAccessLoading(
-      'Criando seu acesso…',
-      'Protegendo as credenciais localmente.'
-    );
+    const message =
+      $('googleDriveMessage');
+
+    state.googleCloudBusy = true;
 
     try {
-      const response = await fetch(
-        './api/auth/setup',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'same-origin',
-          body: JSON.stringify({
-            username,
-            password,
-            confirmPassword,
-          }),
-        }
-      );
+      if(message) {
+        message.textContent =
+          'Comparando a última alteração local com o arquivo mais recente do Google Drive…';
+        message.className =
+          'form-status';
+      }
 
-      if (!response.ok) {
-        const message = await readApiError(
-          response,
-          'Não foi possível criar o acesso.'
+      const result =
+        await cloudSyncRequest(
+          './api/google/cloud/sync'
         );
 
-        if (response.status === 409) {
-          state.authConfigured = true;
-          showLogin(message);
-          return;
+      if(
+        result?.action
+        === 'KEY_REQUIRED'
+      ) {
+        throw new Error(
+          'Configure primeiro a senha da nuvem.'
+        );
+      }
+
+      if(
+        result?.action
+        === 'DOWNLOADED'
+      ) {
+        if(message) {
+          message.textContent =
+            result?.decision
+            === 'INITIAL_REMOTE_RESTORE'
+              ? `Este computador ainda não tinha uma revisão sincronizada. A revisão ${result?.revision ?? '—'} do Drive foi restaurada.`
+              : `O arquivo do Drive era mais recente. A revisão ${result?.revision ?? '—'} foi baixada e substituiu os dados locais.`;
+
+          message.className =
+            'form-status good';
         }
 
-        showSetup(message);
+        window.setTimeout(
+          ()=>{
+            window.location.reload();
+          },
+          650
+        );
+
         return;
       }
 
-      const payload = await response.json();
-      state.authConfigured = true;
-      await startDashboardLoad(
-        payload?.username || username
+      if(
+        result?.action
+        === 'UPLOADED'
+      ) {
+        if(message) {
+          message.textContent =
+            result?.decision
+            === 'NO_REMOTE_UPLOAD_LOCAL'
+              ? `Ainda não havia snapshot no Drive. O estado local foi enviado como revisão ${result?.revision ?? '—'}.`
+              : `Os dados locais eram mais recentes ou tinham a mesma data. O Drive foi atualizado para a revisão ${result?.revision ?? '—'}.`;
+
+          message.className =
+            'form-status good';
+        }
+      } else {
+        if(message) {
+          message.textContent =
+            `Nenhuma alteração necessária. Local e Drive já estão sincronizados na revisão ${result?.revision ?? '—'}.`;
+          message.className =
+            'form-status good';
+        }
+      }
+
+      await refreshGoogleCloudPanel();
+
+    } catch(error) {
+      if(message) {
+        message.textContent =
+          error?.message || String(error);
+        message.className =
+          'form-status bad';
+      }
+    } finally {
+      state.googleCloudBusy = false;
+
+      renderGoogleCloudStatus(
+        state.googleCloudStatus
+        || {}
       );
-    } catch (error) {
-      showSetup(
-        `Não foi possível criar o acesso: ${error?.message || error}`
+
+      renderGoogleDriveStatus(
+        state.googleDriveStatus
+        || {}
       );
     }
   }
 
-  async function submitLogin(event) {
-    event.preventDefault();
+  async function connectOrSyncGoogleDrive() {
+    if(
+      state.googleDriveBusy
+      || state.googleCloudBusy
+    ) {
+      return;
+    }
 
-    const username = String(
-      $('loginUsername')?.value || ''
-    ).trim();
-    const password = String(
-      $('loginPassword')?.value || ''
-    );
-
-    if ($('loginMessage')) $('loginMessage').textContent = '';
-
-    setAccessLoading(
-      'Entrando…',
-      'Validando usuário e senha.'
-    );
+    const message =
+      $('googleDriveMessage');
 
     try {
-      const response = await fetch(
-        './api/auth/login',
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          credentials: 'same-origin',
-          body: JSON.stringify({
-            username,
-            password,
-          }),
-        }
+      const googleStatus =
+        await loadGoogleDriveStatus();
+
+      state.googleDriveStatus =
+        googleStatus;
+
+      renderGoogleDriveStatus(
+        googleStatus
       );
 
-      if (!response.ok) {
-        const message = await readApiError(
-          response,
-          'Usuário ou senha inválidos.'
-        );
-
-        if (response.status === 409) {
-          state.authConfigured = false;
-          showSetup(message);
-          return;
-        }
-
-        showLogin(message);
-        if ($('loginUsername')) $('loginUsername').value = username;
+      if(
+        !googleStatus?.connected
+      ) {
+        await connectGoogleDrive();
         return;
       }
 
-      const payload = await response.json();
-      state.authConfigured = true;
-      await startDashboardLoad(
-        payload?.username || username
+      const cloudPayload =
+        await loadGoogleCloudStatus();
+
+      renderGoogleCloudStatus(
+        cloudPayload
       );
-    } catch (error) {
-      showLogin(
-        `Não foi possível entrar: ${error?.message || error}`
+
+      if(
+        !cloudPayload?.cloud?.keyConfigured
+      ) {
+        if(message) {
+          message.textContent =
+            'Google Drive está conectado. Defina e salve a senha da nuvem antes da primeira sincronização.';
+          message.className =
+            'form-status bad';
+        }
+
+        $('cloudPassphraseInput')
+          ?.focus();
+
+        return;
+      }
+
+      await syncGoogleCloudNow();
+
+    } catch(error) {
+      if(message) {
+        message.textContent =
+          error?.message || String(error);
+        message.className =
+          'form-status bad';
+      }
+    }
+  }
+
+  async function autoCloudSyncBeforeDashboard() {
+    try {
+      const payload=await loadGoogleCloudStatus();
+      state.googleDriveStatus=payload?.google || null;
+      state.googleCloudStatus=payload;
+      if(!payload?.google?.connected || !payload?.cloud?.keyConfigured) return null;
+      const result=await cloudSyncRequest('./api/google/cloud/sync');
+      return result;
+    } catch(error) {
+      console.warn('Sincronização Google Drive no início indisponível:',error);
+      return null;
+    }
+  }
+
+  async function loadSecurityStatus() {
+    const response =
+      await fetch(
+        './api/auth/security',
+        {
+          cache:'no-store',
+          credentials:
+            'same-origin',
+        }
       );
-      if ($('loginUsername')) $('loginUsername').value = username;
+
+    if(!response.ok) {
+      throw new Error(
+        await readApiError(
+          response,
+          'Não foi possível carregar as opções de segurança.'
+        )
+      );
+    }
+
+    return response.json();
+  }
+
+  function renderSecurityStatus(
+    status
+  ) {
+    const enabled =
+      Boolean(
+        status?.passwordEnabled
+      );
+
+    const account =
+      status?.googleAccount
+      || {};
+
+    if(
+      $('securityGoogleAccount')
+    ) {
+      $('securityGoogleAccount').textContent =
+        account?.emailAddress
+        || account?.displayName
+        || 'Conta Google';
+    }
+
+    if(
+      $('securityPasswordStatus')
+    ) {
+      $('securityPasswordStatus').textContent =
+        enabled
+          ? 'Ativada'
+          : 'Não ativada';
+
+      $('securityPasswordStatus').className =
+        enabled
+          ? 'good'
+          : 'muted';
+    }
+
+    $('securityCurrentPasswordLabel')
+      ?.classList.toggle(
+        'hidden',
+        !enabled
+      );
+
+    $('disableSecurityPasswordBtn')
+      ?.classList.toggle(
+        'hidden',
+        !enabled
+      );
+
+    return enabled;
+  }
+
+  async function openSecuritySettings() {
+    $('securityModal')
+      ?.classList.remove(
+        'hidden'
+      );
+
+    const message =
+      $('securityMessage');
+
+    if(message) {
+      message.textContent =
+        'Carregando…';
+      message.className =
+        'form-status';
+    }
+
+    try {
+      const status =
+        await loadSecurityStatus();
+
+      renderSecurityStatus(
+        status
+      );
+
+      if(message) {
+        message.textContent =
+          status?.passwordEnabled
+            ? 'A senha adicional está ativa. Ela será solicitada depois do próximo login Google.'
+            : 'O Google é suficiente para entrar. Você pode adicionar uma senha local opcional.';
+        message.className =
+          'form-status';
+      }
+    } catch(error) {
+      if(message) {
+        message.textContent =
+          error?.message
+          || String(error);
+        message.className =
+          'form-status bad';
+      }
+    }
+  }
+
+  function closeSecuritySettings() {
+    $('securityModal')
+      ?.classList.add(
+        'hidden'
+      );
+
+    for(
+      const id
+      of [
+        'securityCurrentPassword',
+        'securityNewPassword',
+        'securityConfirmPassword',
+      ]
+    ) {
+      if($(id)) {
+        $(id).value =
+          '';
+      }
+    }
+  }
+
+  async function saveSecurityPassword() {
+    const currentPassword =
+      String(
+        $('securityCurrentPassword')
+          ?.value
+        || ''
+      );
+
+    const newPassword =
+      String(
+        $('securityNewPassword')
+          ?.value
+        || ''
+      );
+
+    const confirmPassword =
+      String(
+        $('securityConfirmPassword')
+          ?.value
+        || ''
+      );
+
+    const message =
+      $('securityMessage');
+
+    if(
+      newPassword
+      !== confirmPassword
+    ) {
+      if(message) {
+        message.textContent =
+          'As novas senhas não coincidem.';
+        message.className =
+          'form-status bad';
+      }
+      return;
+    }
+
+    try {
+      if(message) {
+        message.textContent =
+          'Salvando senha adicional…';
+        message.className =
+          'form-status';
+      }
+
+      const response =
+        await fetch(
+          './api/auth/security/password',
+          {
+            method:'PUT',
+            headers:{
+              'Content-Type':
+                'application/json',
+            },
+            credentials:
+              'same-origin',
+            body:JSON.stringify({
+              currentPassword,
+              newPassword,
+              confirmPassword,
+            }),
+          }
+        );
+
+      if(!response.ok) {
+        throw new Error(
+          await readApiError(
+            response,
+            'Não foi possível salvar a senha adicional.'
+          )
+        );
+      }
+
+      const status =
+        await loadSecurityStatus();
+
+      renderSecurityStatus(
+        status
+      );
+
+      for(
+        const id
+        of [
+          'securityCurrentPassword',
+          'securityNewPassword',
+          'securityConfirmPassword',
+        ]
+      ) {
+        if($(id)) {
+          $(id).value =
+            '';
+        }
+      }
+
+      if(message) {
+        message.textContent =
+          'Senha adicional ativada. No próximo acesso: Google → senha → dashboard.';
+        message.className =
+          'form-status good';
+      }
+
+    } catch(error) {
+      if(message) {
+        message.textContent =
+          error?.message
+          || String(error);
+        message.className =
+          'form-status bad';
+      }
+    }
+  }
+
+  async function disableSecurityPassword() {
+    const currentPassword =
+      String(
+        $('securityCurrentPassword')
+          ?.value
+        || ''
+      );
+
+    const message =
+      $('securityMessage');
+
+    try {
+      const response =
+        await fetch(
+          './api/auth/security/password',
+          {
+            method:'DELETE',
+            headers:{
+              'Content-Type':
+                'application/json',
+            },
+            credentials:
+              'same-origin',
+            body:JSON.stringify({
+              currentPassword,
+            }),
+          }
+        );
+
+      if(!response.ok) {
+        throw new Error(
+          await readApiError(
+            response,
+            'Não foi possível remover a senha adicional.'
+          )
+        );
+      }
+
+      const status =
+        await loadSecurityStatus();
+
+      renderSecurityStatus(
+        status
+      );
+
+      for(
+        const id
+        of [
+          'securityCurrentPassword',
+          'securityNewPassword',
+          'securityConfirmPassword',
+        ]
+      ) {
+        if($(id)) {
+          $(id).value =
+            '';
+        }
+      }
+
+      if(message) {
+        message.textContent =
+          'Senha adicional removida. O próximo acesso exigirá somente o Google.';
+        message.className =
+          'form-status good';
+      }
+
+    } catch(error) {
+      if(message) {
+        message.textContent =
+          error?.message
+          || String(error);
+        message.className =
+          'form-status bad';
+      }
     }
   }
 
   async function logoutDashboard() {
+    clearOnboardingFlags();
+
     try {
       await fetch(
         './api/auth/logout',
@@ -9916,20 +12765,120 @@
     }
   );
 
-  $('autoLoadBtn')?.addEventListener('click',()=>{
-    setAccessLoading('Recarregando…','Lendo o banco SQLite local.');
-    autoLoad();
-  });
-  $('retryLoadBtn')?.addEventListener('click',()=>{
-    if (state.authAuthenticated) {
-      setAccessLoading('Tentando novamente…','Lendo o banco SQLite local.');
-      autoLoad();
-    } else {
-      bootstrapAccess();
+  $('autoLoadBtn')?.addEventListener('click',async()=>{
+    try {
+      setAccessLoading(
+        'Sincronizando…',
+        'Atualizando dados pela Pluggy.'
+      );
+      await syncFromPluggy({
+        reload:true,
+        showGate:true,
+      });
+    } catch(error) {
+      showAccessError(
+        `Não foi possível sincronizar: ${error?.message || error}`
+      );
     }
   });
-  $('setupForm')?.addEventListener('submit',submitFirstUser);
-  $('loginForm')?.addEventListener('submit',submitLogin);
+  $('retryLoadBtn')?.addEventListener('click',async()=>{
+    if(!state.authAuthenticated) {
+      bootstrapAccess();
+      return;
+    }
+
+    try {
+      const status =
+        await loadPluggyStatus();
+
+      if(!status?.configured) {
+        showPluggySetup();
+        return;
+      }
+
+      if(await databaseExists()) {
+        setAccessLoading(
+          'Tentando novamente…',
+          'Lendo o banco SQLite local.'
+        );
+        await autoLoad();
+      } else {
+        await syncFromPluggy({
+          reload:true,
+          showGate:true,
+        });
+      }
+    } catch(error) {
+      showAccessError(
+        error?.message || String(error)
+      );
+    }
+  });
+  $('googleLoginBtn')?.addEventListener('click',beginGooglePrimaryLogin);
+  $('googleLoginOAuthClientFile')?.addEventListener('change',event=>importGoogleLoginOAuthClient(event.target.files?.[0]));
+  $('additionalPasswordForm')?.addEventListener('submit',submitAdditionalPassword);
+  $('additionalPasswordOtherGoogleBtn')?.addEventListener('click',async()=>{
+    try {
+      await fetch('./api/auth/logout',{method:'POST',credentials:'same-origin'});
+    } finally {
+      showGoogleLogin();
+    }
+  });
+
+  $('restoreFromDriveChoiceBtn')?.addEventListener(
+    'click',
+    beginOnboardingRestore
+  );
+
+  $('configurePluggyChoiceBtn')?.addEventListener(
+    'click',
+    chooseManualPluggySetup
+  );
+
+  $('onboardingChoiceLogoutBtn')?.addEventListener(
+    'click',
+    logoutDashboard
+  );
+
+  $('onboardingConnectGoogleBtn')?.addEventListener(
+    'click',
+    connectGoogleDriveFromOnboarding
+  );
+
+  $('onboardingRestoreNowBtn')?.addEventListener(
+    'click',
+    restoreOnboardingFromDrive
+  );
+
+  $('onboardingRefreshDriveBtn')?.addEventListener(
+    'click',
+    ()=>refreshOnboardingRestoreStatus({
+      message:
+        'Verificando novamente o Google Drive…',
+    })
+  );
+
+  $('onboardingRestoreBackBtn')?.addEventListener(
+    'click',
+    ()=>showOnboardingChoice()
+  );
+  $('pluggySetupForm')?.addEventListener('submit',submitPluggySetup);
+  $('pluggySettingsBtn')?.addEventListener('click',openPluggySettings);
+  $('googleDriveBtn')?.addEventListener('click',openGoogleDriveSettings);
+  $('securityBtn')?.addEventListener('click',openSecuritySettings);
+  $('closeSecurityBtn')?.addEventListener('click',closeSecuritySettings);
+  $('saveSecurityPasswordBtn')?.addEventListener('click',saveSecurityPassword);
+  $('disableSecurityPasswordBtn')?.addEventListener('click',disableSecurityPassword);
+  $('closeGoogleDriveBtn')?.addEventListener('click',closeGoogleDriveSettings);
+  $('googleOAuthClientFile')?.addEventListener('change',e=>importGoogleOAuthClient(e.target.files?.[0]));
+  $('connectGoogleDriveBtn')?.addEventListener('click',connectOrSyncGoogleDrive);
+  $('testGoogleDriveBtn')?.addEventListener('click',testGoogleDriveAccess);
+  $('disconnectGoogleDriveBtn')?.addEventListener('click',disconnectGoogleDrive);
+  $('saveCloudPassphraseBtn')?.addEventListener('click',saveCloudPassphrase);
+  $('clearCloudPassphraseBtn')?.addEventListener('click',clearCloudPassphrase);
+  $('closePluggySettingsBtn')?.addEventListener('click',closePluggySettings);
+  $('testPluggySettingsBtn')?.addEventListener('click',testPluggySettings);
+  $('pluggySettingsForm')?.addEventListener('submit',savePluggySettings);
   $('logoutBtn')?.addEventListener('click',logoutDashboard);
   $('errorLogoutBtn')?.addEventListener('click',logoutDashboard);
   $('currencySelect').addEventListener('change',e=>{state.currency=e.target.value;state.txPage=0;state.spendTxPage=0;state.incomeTxPage=0;renderAll()});
@@ -10045,7 +12994,84 @@
   });
 
   applyUiLanguage(document);
-  bootstrapAccess();
+
+  async function bootstrapAndHandleGoogleOauthReturn() {
+    const params =
+      new URLSearchParams(
+        window.location.search
+      );
+
+    const primaryGoogleAuthReturn =
+      params.get(
+        'google_auth'
+      ) === 'return';
+
+    const driveOauthReturn =
+      params.get(
+        'google_oauth'
+      ) === 'return';
+
+    if(
+      primaryGoogleAuthReturn
+      || driveOauthReturn
+    ) {
+      try {
+        const cleanUrl =
+          window.location.pathname
+          + window.location.hash;
+
+        window.history.replaceState(
+          {},
+          document.title,
+          cleanUrl
+        );
+      } catch {}
+    }
+
+    if(
+      primaryGoogleAuthReturn
+    ) {
+      setAccessLoading(
+        'Concluindo login Google…',
+        'Identificando sua conta e abrindo o perfil correto.'
+      );
+
+      try {
+        const payload =
+          await completeGooglePrimaryLogin();
+
+        await handleGoogleLoginPayload(
+          payload
+        );
+      } catch(error) {
+        showGoogleLogin(
+          error?.message
+          || String(error)
+        );
+      }
+
+      return;
+    }
+
+    await bootstrapAccess();
+
+    if(
+      driveOauthReturn
+      && state.authAuthenticated
+      && !sessionFlag(
+        ONBOARDING_RESTORE_KEY
+      )
+    ) {
+      window.setTimeout(
+        ()=>{
+          openGoogleDriveSettings();
+        },
+        350
+      );
+    }
+  }
+
+  bootstrapAndHandleGoogleOauthReturn();
 })();
 </script>
 </body>

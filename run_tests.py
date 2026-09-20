@@ -90,8 +90,9 @@ def main() -> int:
     print("SUÍTE COMPLETA: OK")
     print("=" * 88)
     print(
-        "Settings, SQLite, API local, contratos estruturais, CardBankslip, "
-        "parcelamentos, fluxo de caixa e projeções passaram."
+        "Settings, SQLite, Google Drive criptografado, conflitos, API local, "
+        "contratos estruturais, CardBankslip, parcelamentos, fluxo de caixa "
+        "e projeções passaram."
     )
     return 0
 
