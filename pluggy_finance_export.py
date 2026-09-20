@@ -5,8 +5,8 @@ ControleFin - Exportador local de dados financeiros da Pluggy.
 Objetivo
 --------
 Ler uma lista de Item IDs já conhecida pelo usuário, consultar os produtos
-financeiros relacionados e gerar CSVs estáveis + um banco SQLite local para
-consumo posterior pelo dashboard.
+financeiros relacionados e persistir todos os datasets exclusivamente em
+um banco SQLite local consumido pelo dashboard.
 
 Decisões importantes
 ---------------------
@@ -16,7 +16,7 @@ Decisões importantes
 * Investments são um produto separado, consultado por itemId.
 * Transações usam GET /v2/transactions, com paginação por cursor (`next`).
 * O script NÃO cria, atualiza ou remove Items. Ele somente lê dados.
-* Credenciais e API key nunca são gravadas nos CSVs.
+* Credenciais e API key nunca são gravadas no banco SQLite.
 
 Dependência externa: requests
 """
@@ -24,7 +24,6 @@ Dependência externa: requests
 from __future__ import annotations
 
 import argparse
-import csv
 import hashlib
 import json
 import sqlite3
@@ -1571,7 +1570,7 @@ class PluggyFinanceExtractor:
 
 
 # ---------------------------------------------------------------------------
-# Exportação CSV
+# Definição dos datasets
 # ---------------------------------------------------------------------------
 
 
@@ -1682,7 +1681,7 @@ PRIORITY_COLUMNS = [
 ]
 
 
-def csv_columns(records: list[dict[str, Any]], defaults: list[str]) -> list[str]:
+def dataset_columns(records: list[dict[str, Any]], defaults: list[str]) -> list[str]:
     seen: set[str] = set()
     discovered: list[str] = []
     for record in records:
@@ -1700,27 +1699,6 @@ def csv_columns(records: list[dict[str, Any]], defaults: list[str]) -> list[str]
     priority = [col for col in PRIORITY_COLUMNS if col in seen]
     remaining = [col for col in discovered if col not in set(priority)]
     return priority + remaining
-
-
-def write_csv(path: Path, records: list[dict[str, Any]], defaults: Optional[list[str]] = None) -> None:
-    flat_records = [flatten_dict(record) for record in records]
-    columns = csv_columns(records, defaults or [])
-    if not columns:
-        columns = ["_empty"]
-
-    with path.open("w", encoding="utf-8-sig", newline="") as handle:
-        writer = csv.DictWriter(handle, fieldnames=columns, extrasaction="ignore")
-        writer.writeheader()
-        for record in flat_records:
-            clean: dict[str, Any] = {}
-            for key in columns:
-                value = record.get(key)
-                if isinstance(value, (dict, list)):
-                    value = json_text(value)
-                elif value is None:
-                    value = ""
-                clean[key] = value
-            writer.writerow(clean)
 
 
 def sort_table(table_name: str, records: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -1743,59 +1721,34 @@ def sort_table(table_name: str, records: list[dict[str, Any]]) -> list[dict[str,
     return records
 
 
-def export_csv_bundle(
-    data: ExtractedData,
-    output_dir: Path,
-    *,
-    generated_at: Optional[str] = None,
-) -> None:
-    output_dir.mkdir(parents=True, exist_ok=True)
-    generated_at = generated_at or utc_now_iso()
-
-    # Cria todos os datasets conhecidos para manter nomes estáveis para o HTML.
-    known_tables = list(DATASET_DESCRIPTIONS.keys())
-    extra_tables = [t for t in data.tables.keys() if t not in DATASET_DESCRIPTIONS]
-    all_tables = known_tables + sorted(extra_tables)
-
-    catalog_rows: list[dict[str, Any]] = []
-    for table_name in all_tables:
-        records = sort_table(table_name, data.tables.get(table_name, []))
-        filename = f"{table_name}.csv"
-        write_csv(output_dir / filename, records, DEFAULT_COLUMNS.get(table_name, []))
-        grain, description = DATASET_DESCRIPTIONS.get(
-            table_name, ("variável", "Tabela adicional gerada pelo exportador.")
-        )
-        catalog_rows.append(
-            {
-                "tableName": table_name,
-                "fileName": filename,
-                "rowCount": len(records),
-                "grain": grain,
-                "description": description,
-            }
-        )
-
-    write_csv(
-        output_dir / "dataset_catalog.csv",
-        catalog_rows,
-        ["tableName", "fileName", "rowCount", "grain", "description"],
-    )
-
-    # Manifest em CSV para o HTML descobrir a execução sem depender de JSON.
-    manifest = [
-        {"key": "generatedAtUtc", "value": generated_at},
-        {"key": "baseUrl", "value": BASE_URL},
-        {"key": "datasetCount", "value": len(catalog_rows)},
-        {"key": "errorCount", "value": len(data.errors)},
-        {"key": "transactionEndpoint", "value": "/v2/transactions"},
-    ]
-    write_csv(output_dir / "manifest.csv", manifest, ["key", "value"])
-
-
-
 # ---------------------------------------------------------------------------
 # Persistência SQLite
 # ---------------------------------------------------------------------------
+
+
+def purge_legacy_csv_files(output_dir: Path) -> list[Path]:
+    """
+    Remove artefatos CSV legados da pasta `data`.
+
+    Desde a migração para SQLite-only, nenhum dado financeiro deve permanecer
+    duplicado em CSV. A remoção é limitada aos CSVs diretamente dentro de
+    `output_dir`; subpastas e outros formatos não são tocados.
+    """
+    output_dir = Path(output_dir)
+    if not output_dir.exists():
+        return []
+
+    removed: list[Path] = []
+
+    for csv_path in sorted(output_dir.glob("*.csv")):
+        try:
+            csv_path.unlink()
+            removed.append(csv_path)
+        except FileNotFoundError:
+            pass
+
+    return removed
+
 
 SQLITE_DATABASE_NAME = "controlefin.db"
 SQLITE_SCHEMA_VERSION = 1
@@ -2496,7 +2449,7 @@ def ensure_sqlite_dataset_table(
 ) -> list[str]:
     table_name = sqlite_table_name(table_name)
     flat_records = [flatten_dict(record) for record in records]
-    columns = csv_columns(records, defaults or [])
+    columns = dataset_columns(records, defaults or [])
     columns = [
         column
         for column in columns
@@ -2656,11 +2609,11 @@ def export_sqlite_bundle(
     database_path: Optional[Path] = None,
 ) -> Path:
     """
-    Grava os mesmos datasets dos CSVs em SQLite.
+    Grava todos os datasets do ControleFin exclusivamente em SQLite.
 
     Cada dataset vira uma tabela própria. `_cf_row_key` permite UPSERT.
     `_cf_raw_json` preserva o registro original completo e os campos achatados
-    continuam disponíveis em colunas, com os mesmos nomes usados nos CSVs.
+    continuam disponíveis em colunas consultáveis pelo backend local.
     """
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -2749,11 +2702,11 @@ def export_sqlite_bundle(
             catalog_rows.append(
                 {
                     "tableName": table_name,
-                    "fileName": f"{table_name}.csv",
+                    "fileName": "",
                     "rowCount": count,
                     "grain": grain,
                     "description": description,
-                    "storage": "sqlite+csv",
+                    "storage": "sqlite",
                 }
             )
 
@@ -2766,6 +2719,7 @@ def export_sqlite_bundle(
                 "key": "transactionEndpoint",
                 "value": "/v2/transactions",
             },
+            {"key": "storage", "value": "sqlite"},
             {"key": "sqliteDatabase", "value": SQLITE_DATABASE_NAME},
             {
                 "key": "sqliteSchemaVersion",
@@ -2823,98 +2777,6 @@ def export_sqlite_bundle(
     return database_path
 
 
-def migrate_csv_bundle_to_sqlite(
-    output_dir: Path,
-    *,
-    database_path: Optional[Path] = None,
-) -> Optional[Path]:
-    """
-    Cria `controlefin.db` a partir dos CSVs existentes sem remover os CSVs.
-    """
-    output_dir = Path(output_dir)
-    catalog_path = output_dir / "dataset_catalog.csv"
-
-    if not catalog_path.exists():
-        return None
-
-    with catalog_path.open(
-        "r",
-        encoding="utf-8-sig",
-        newline="",
-    ) as handle:
-        catalog_rows = list(csv.DictReader(handle))
-
-    if not catalog_rows:
-        return None
-
-    data = ExtractedData()
-
-    for catalog_row in catalog_rows:
-        table_name = str(
-            catalog_row.get("tableName") or ""
-        ).strip()
-        file_name = str(
-            catalog_row.get("fileName") or ""
-        ).strip()
-
-        if not table_name or not file_name:
-            continue
-
-        sqlite_table_name(table_name)
-        csv_path = output_dir / file_name
-        if not csv_path.exists():
-            continue
-
-        with csv_path.open(
-            "r",
-            encoding="utf-8-sig",
-            newline="",
-        ) as handle:
-            data.tables[table_name] = list(csv.DictReader(handle))
-
-    data.errors = list(data.tables.get("api_errors", []))
-
-    migrated_path = database_path or (
-        output_dir / SQLITE_DATABASE_NAME
-    )
-    if migrated_path.name != SQLITE_DATABASE_NAME:
-        raise ValueError(
-            f"O banco de migração deve se chamar "
-            f"{SQLITE_DATABASE_NAME}."
-        )
-
-    generated_at = utc_now_iso()
-    manifest_path = output_dir / "manifest.csv"
-
-    if manifest_path.exists():
-        try:
-            with manifest_path.open(
-                "r",
-                encoding="utf-8-sig",
-                newline="",
-            ) as handle:
-                manifest_rows = list(csv.DictReader(handle))
-            manifest_map = {
-                str(row.get("key") or ""): row.get("value")
-                for row in manifest_rows
-            }
-            generated_at = str(
-                manifest_map.get("generatedAtUtc")
-                or generated_at
-            )
-        except Exception:
-            pass
-
-    return export_sqlite_bundle_atomic(
-        data,
-        output_dir,
-        generated_at=generated_at,
-        full_snapshot=True,
-        sync_id=f"csv_migration_{utc_now_iso()}",
-        database_path=migrated_path,
-    )
-
-
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
@@ -2930,7 +2792,7 @@ def validate_date_arg(value: Optional[str], flag_name: str) -> Optional[str]:
 
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(
-        description="Exporta dados financeiros da Pluggy para CSV + SQLite consumíveis por um dashboard local."
+        description="Sincroniza dados financeiros da Pluggy para o banco SQLite local do ControleFin."
     )
     parser.add_argument(
         "--item-id",
@@ -2947,7 +2809,7 @@ def parse_args() -> argparse.Namespace:
         "--output",
         type=Path,
         default=Path(DEFAULT_OUTPUT_DIR),
-        help=f"Diretório dos CSVs. Padrão: ./{DEFAULT_OUTPUT_DIR}",
+        help=f"Diretório que contém {SQLITE_DATABASE_NAME}. Padrão: ./{DEFAULT_OUTPUT_DIR}",
     )
     parser.add_argument(
         "--date-from",
@@ -2996,7 +2858,7 @@ def run_export(
     Ela fica fora de `dist`, para que recompilar o executável não apague os dados.
     O `controlefin.db` é construído em staging, validado e publicado
     atomicamente, preservando o último banco válido em qualquer falha.
-    Os CSVs continuam sendo sobrescritos como compatibilidade/fallback.
+    SQLite é a única persistência dos dados financeiros importados.
     """
     output_dir = Path(output_dir)
     env_file = Path(env_file)
@@ -3057,7 +2919,7 @@ def run_export(
     generated_at = utc_now_iso()
     full_snapshot = not date_from and not date_to
 
-    # SQLite é a fonte primária do dashboard. A nova sincronização é
+    # SQLite é a única persistência financeira. A nova sincronização é
     # construída em staging e só substitui o banco válido após validação.
     database_path = export_sqlite_bundle_atomic(
         data,
@@ -3066,20 +2928,14 @@ def run_export(
         full_snapshot=full_snapshot,
     )
 
-    # CSV é compatibilidade/fallback secundário. Uma falha de CSV não desfaz
-    # um SQLite já validado e publicado com sucesso.
-    try:
-        export_csv_bundle(
-            data,
-            output_dir,
-            generated_at=generated_at,
-        )
-    except Exception as exc:
+    # Remove artefatos CSV de versões anteriores somente depois que existe
+    # um SQLite novo e validado publicado com sucesso.
+    removed_csv = purge_legacy_csv_files(
+        output_dir
+    )
+    if removed_csv:
         print(
-            "Aviso: SQLite foi publicado com sucesso, "
-            "mas a atualização dos CSVs falhou: "
-            f"{exc}",
-            file=sys.stderr,
+            f"CSV(s) legado(s) removido(s): {len(removed_csv)}",
             flush=True,
         )
 
@@ -3089,9 +2945,9 @@ def run_export(
         "SQLite atômico publicado: "
         f"{database_path.resolve()}"
     )
-    print(f"Tabelas: {len(DATASET_DESCRIPTIONS)} + catálogo/manifest")
+    print(f"Tabelas SQLite: {len(DATASET_DESCRIPTIONS)} + catálogo/manifest")
     print(f"Erros/avisos registrados: {len(data.errors)}")
-    print("Use dataset_catalog.csv para saber o propósito e a granularidade de cada arquivo.")
+    print("O catálogo de datasets está na tabela SQLite dataset_catalog.")
 
     return data
 

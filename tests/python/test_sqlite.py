@@ -170,6 +170,49 @@ class SQLiteRegressionTests(unittest.TestCase):
 
             self.assertEqual(count, 2)
 
+    def test_purge_legacy_csv_files_removes_only_top_level_csv(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            nested = root / "nested"
+            nested.mkdir()
+
+            (root / "transactions.csv").write_text(
+                "id\n1\n",
+                encoding="utf-8",
+            )
+            (root / "manifest.csv").write_text(
+                "key,value\nx,y\n",
+                encoding="utf-8",
+            )
+            (root / "controlefin.db").write_bytes(
+                b"db-placeholder"
+            )
+            (nested / "keep.csv").write_text(
+                "x\n1\n",
+                encoding="utf-8",
+            )
+
+            removed = self.exporter.purge_legacy_csv_files(
+                root
+            )
+
+            self.assertEqual(
+                sorted(path.name for path in removed),
+                ["manifest.csv", "transactions.csv"],
+            )
+            self.assertFalse(
+                (root / "transactions.csv").exists()
+            )
+            self.assertFalse(
+                (root / "manifest.csv").exists()
+            )
+            self.assertTrue(
+                (root / "controlefin.db").exists()
+            )
+            self.assertTrue(
+                (nested / "keep.csv").exists()
+            )
+
     def test_fsync_file_accepts_regular_sqlite_file(self):
         """
         Regressão Windows: fsync em handle somente leitura pode falhar.

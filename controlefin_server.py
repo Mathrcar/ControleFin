@@ -11,12 +11,11 @@ from pathlib import Path
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles
 import json
 
 from pluggy_finance_export import (
     run_export,
-    migrate_csv_bundle_to_sqlite,
+    purge_legacy_csv_files,
     SQLITE_DATABASE_NAME,
 )
 
@@ -919,7 +918,7 @@ def database_catalog():
             rows.append(
                 {
                     "tableName": table_name,
-                    "fileName": f"{table_name}.csv",
+                    "fileName": "",
                     "rowCount": count,
                     "grain": "",
                     "description": "",
@@ -943,13 +942,6 @@ def database_table(table_name: str):
         }
 
 
-app.mount(
-    "/data",
-    StaticFiles(directory=DATA_DIR),
-    name="data",
-)
-
-
 def open_browser():
     time.sleep(1.5)
 
@@ -964,25 +956,16 @@ if __name__ == "__main__":
     print(f"Dados locais: {DATA_DIR}", flush=True)
     print(f"Banco SQLite: {DB_FILE}", flush=True)
 
-    # Primeira ponte de migração: aproveita os CSVs já existentes.
-    if (
-        not DB_FILE.exists()
-        and (DATA_DIR / "dataset_catalog.csv").exists()
-    ):
-        try:
-            migrated = migrate_csv_bundle_to_sqlite(
-                DATA_DIR
-            )
-            if migrated:
-                print(
-                    f"CSVs existentes migrados para: {migrated}",
-                    flush=True,
-                )
-        except Exception as exc:
+    # Se já existe um banco válido de versão anterior, remove CSVs legados
+    # antes da sincronização. Se ainda não existe DB, a limpeza só ocorrerá
+    # depois que run_export publicar um SQLite válido com sucesso.
+    if DB_FILE.exists():
+        removed_csv = purge_legacy_csv_files(
+            DATA_DIR
+        )
+        if removed_csv:
             print(
-                "Aviso: não foi possível migrar os CSVs "
-                f"existentes para SQLite: {exc}",
-                file=sys.stderr,
+                f"CSV(s) legado(s) removido(s): {len(removed_csv)}",
                 flush=True,
             )
 
@@ -1002,21 +985,19 @@ if __name__ == "__main__":
             flush=True,
         )
 
-        # Preserva o uso offline dos últimos dados válidos.
+        # Preserva o uso offline somente do último SQLite válido.
         if DB_FILE.exists():
             print(
                 "Usando o último banco SQLite local válido; a sincronização com falha não o substituiu.",
                 file=sys.stderr,
                 flush=True,
             )
-        elif (DATA_DIR / "dataset_catalog.csv").exists():
+        else:
             print(
-                "SQLite indisponível; mantendo fallback "
-                "pelos CSVs existentes.",
+                "Nenhum banco SQLite válido está disponível.",
                 file=sys.stderr,
                 flush=True,
             )
-        else:
             raise SystemExit(1)
 
     threading.Thread(

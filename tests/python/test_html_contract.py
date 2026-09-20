@@ -92,6 +92,37 @@ class DashboardStructuralRegressionTests(unittest.TestCase):
             self.html,
         )
 
+    def test_dashboard_is_sqlite_only(self):
+        self.assertNotIn("folderPicker", self.html)
+        self.assertNotIn("loadFromCsvHttp", self.html)
+        self.assertNotIn("loadFolderFiles", self.html)
+        self.assertNotIn("./data/dataset_catalog.csv", self.html)
+        self.assertIn("function loadFromSQLite()", self.html)
+        self.assertIn("data/controlefin.db", self.html)
+
+    def test_server_does_not_expose_data_directory_or_csv_fallback(self):
+        self.assertNotIn("StaticFiles", self.server)
+        self.assertNotIn('app.mount(\\n    "/data"', self.server)
+        self.assertNotIn("migrate_csv_bundle_to_sqlite", self.server)
+        self.assertNotIn("dataset_catalog.csv", self.server)
+
+    def test_exporter_has_no_csv_persistence_path(self):
+        exporter = (
+            PROJECT_ROOT / "pluggy_finance_export.py"
+        ).read_text(encoding="utf-8")
+
+        self.assertNotIn("import csv", exporter)
+        self.assertNotIn("export_csv_bundle", exporter)
+        self.assertNotIn("migrate_csv_bundle_to_sqlite", exporter)
+        self.assertIn(
+            "def purge_legacy_csv_files",
+            exporter,
+        )
+        self.assertIn(
+            '"storage": "sqlite"',
+            exporter,
+        )
+
     def test_server_remains_local_only(self):
         self.assertIn(
             'host="127.0.0.1"',

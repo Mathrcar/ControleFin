@@ -122,7 +122,7 @@ function testInstallmentsOnePerMonth() {
   const block = sectionBetween(
     html,
     "  function localCurrentMonth() {",
-    "\n  function setTableFromFilename"
+    "\n  function isTerminalInvalidStatus"
   );
 
   const rawTransactions = JSON.parse(
