@@ -1,7 +1,15 @@
 import sys
 import time
 import threading
+import os
+import base64
+import hashlib
+import hmac
+import secrets
 import webbrowser
+import shutil
+import ctypes
+from ctypes import wintypes
 import re
 import sqlite3
 from contextlib import closing
@@ -10,13 +18,15 @@ from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI, Request, HTTPException
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, JSONResponse
 import json
 
 from pluggy_finance_export import (
     run_export,
     purge_legacy_csv_files,
     SQLITE_DATABASE_NAME,
+    PluggyClient,
+    PluggyAPIError,
 )
 
 
@@ -52,17 +62,1635 @@ def get_app_dir():
 
 BASE_DIR = get_app_dir()
 
-DATA_DIR = BASE_DIR / "data"
-USER_DATA_DIR = BASE_DIR / "user_data"
+
+def get_storage_dir():
+    """
+    Dados pessoais ficam fora da pasta do executável.
+
+    Windows:
+        %LOCALAPPDATA%\\ControleFin
+
+    Desenvolvimento/Linux/macOS:
+        CONTROLEFIN_HOME, quando definido; caso contrário BASE_DIR.
+    """
+    explicit = str(
+        os.getenv("CONTROLEFIN_HOME") or ""
+    ).strip()
+
+    if explicit:
+        return Path(
+            explicit
+        ).expanduser().resolve()
+
+    local_app_data = str(
+        os.getenv("LOCALAPPDATA") or ""
+    ).strip()
+
+    if os.name == "nt" and local_app_data:
+        return (
+            Path(local_app_data)
+            / "ControleFin"
+        )
+
+    return BASE_DIR
+
+
+STORAGE_DIR = get_storage_dir()
+
+DATA_DIR = STORAGE_DIR / "data"
+USER_DATA_DIR = STORAGE_DIR / "user_data"
+CONFIG_DIR = STORAGE_DIR / "config"
+
 SETTINGS_FILE = USER_DATA_DIR / "ajustes.json"
+AUTH_FILE = USER_DATA_DIR / "auth.json"
+PLUGGY_CONFIG_FILE = CONFIG_DIR / "pluggy.json"
+
 HTML_FILE = BASE_DIR / "controlefin_dashboard.html"
-ENV_FILE = BASE_DIR / ".env"
+LEGACY_ENV_FILE = BASE_DIR / ".env"
+
 DB_FILE = DATA_DIR / SQLITE_DATABASE_NAME
 
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 USER_DATA_DIR.mkdir(parents=True, exist_ok=True)
+CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
 app = FastAPI()
+
+
+
+PLUGGY_CONFIG_VERSION = 1
+PLUGGY_CONFIG_LOCK = threading.RLock()
+SYNC_LOCK = threading.Lock()
+
+
+def atomic_write_json(path, payload):
+    path = Path(path)
+    path.parent.mkdir(
+        parents=True,
+        exist_ok=True,
+    )
+
+    temp_file = path.with_name(
+        f".{path.name}.{secrets.token_hex(6)}.tmp"
+    )
+
+    try:
+        with temp_file.open(
+            "w",
+            encoding="utf-8",
+            newline="\n",
+        ) as handle:
+            json.dump(
+                payload,
+                handle,
+                ensure_ascii=False,
+                indent=2,
+            )
+            handle.write("\n")
+            handle.flush()
+            os.fsync(
+                handle.fileno()
+            )
+
+        try:
+            os.chmod(
+                temp_file,
+                0o600,
+            )
+        except OSError:
+            pass
+
+        os.replace(
+            temp_file,
+            path,
+        )
+    finally:
+        try:
+            temp_file.unlink()
+        except FileNotFoundError:
+            pass
+
+
+def normalize_item_ids(values):
+    if isinstance(values, str):
+        raw_values = re.split(
+            r"[\s,;]+",
+            values,
+        )
+    elif isinstance(values, (list, tuple, set)):
+        raw_values = values
+    else:
+        raw_values = []
+
+    result = []
+    seen = set()
+
+    for value in raw_values:
+        item_id = str(
+            value or ""
+        ).strip()
+
+        if not item_id:
+            continue
+
+        if len(item_id) > 200:
+            raise ValueError(
+                "Item ID inválido."
+            )
+
+        if item_id in seen:
+            continue
+
+        seen.add(item_id)
+        result.append(item_id)
+
+    return result
+
+
+class _DATA_BLOB(ctypes.Structure):
+    _fields_ = [
+        ("cbData", wintypes.DWORD),
+        ("pbData", ctypes.POINTER(ctypes.c_ubyte)),
+    ]
+
+
+def _bytes_to_blob(value):
+    buffer = ctypes.create_string_buffer(
+        value
+    )
+    blob = _DATA_BLOB(
+        len(value),
+        ctypes.cast(
+            buffer,
+            ctypes.POINTER(
+                ctypes.c_ubyte
+            ),
+        ),
+    )
+    return blob, buffer
+
+
+def protect_local_secret(secret):
+    """
+    Windows DPAPI: o segredo só pode ser decriptado pelo mesmo usuário do
+    Windows no mesmo contexto de perfil.
+
+    Não há fallback em texto puro. Em outros sistemas, CONTROLEFIN permite
+    desenvolvimento, mas a tela de configuração segura informa que o recurso
+    de armazenamento foi projetado para Windows.
+    """
+    secret = str(
+        secret or ""
+    )
+
+    if not secret:
+        raise ValueError(
+            "Client Secret não informado."
+        )
+
+    if os.name != "nt":
+        raise RuntimeError(
+            "O armazenamento seguro das credenciais Pluggy usa Windows DPAPI."
+        )
+
+    crypt32 = ctypes.WinDLL(
+        "crypt32",
+        use_last_error=True,
+    )
+    kernel32 = ctypes.WinDLL(
+        "kernel32",
+        use_last_error=True,
+    )
+
+    source, source_buffer = _bytes_to_blob(
+        secret.encode("utf-8")
+    )
+    output = _DATA_BLOB()
+
+    CRYPTPROTECT_UI_FORBIDDEN = 0x01
+
+    ok = crypt32.CryptProtectData(
+        ctypes.byref(source),
+        "ControleFin Pluggy",
+        None,
+        None,
+        None,
+        CRYPTPROTECT_UI_FORBIDDEN,
+        ctypes.byref(output),
+    )
+
+    if not ok:
+        raise OSError(
+            ctypes.get_last_error(),
+            "Falha ao proteger Client Secret com Windows DPAPI.",
+        )
+
+    try:
+        encrypted = ctypes.string_at(
+            output.pbData,
+            output.cbData,
+        )
+    finally:
+        kernel32.LocalFree(
+            output.pbData
+        )
+
+    return {
+        "scheme": "windows-dpapi-user",
+        "ciphertext": base64.b64encode(
+            encrypted
+        ).decode("ascii"),
+    }
+
+
+def unprotect_local_secret(record):
+    if not isinstance(record, dict):
+        raise ValueError(
+            "Registro de Client Secret inválido."
+        )
+
+    if record.get("scheme") != "windows-dpapi-user":
+        raise ValueError(
+            "Formato de Client Secret não suportado."
+        )
+
+    if os.name != "nt":
+        raise RuntimeError(
+            "O Client Secret está protegido pelo Windows DPAPI e só pode ser lido no Windows."
+        )
+
+    try:
+        encrypted = base64.b64decode(
+            str(
+                record.get("ciphertext")
+                or ""
+            ),
+            validate=True,
+        )
+    except Exception as exc:
+        raise ValueError(
+            "Client Secret criptografado inválido."
+        ) from exc
+
+    crypt32 = ctypes.WinDLL(
+        "crypt32",
+        use_last_error=True,
+    )
+    kernel32 = ctypes.WinDLL(
+        "kernel32",
+        use_last_error=True,
+    )
+
+    source, source_buffer = _bytes_to_blob(
+        encrypted
+    )
+    output = _DATA_BLOB()
+
+    CRYPTPROTECT_UI_FORBIDDEN = 0x01
+
+    ok = crypt32.CryptUnprotectData(
+        ctypes.byref(source),
+        None,
+        None,
+        None,
+        None,
+        CRYPTPROTECT_UI_FORBIDDEN,
+        ctypes.byref(output),
+    )
+
+    if not ok:
+        raise OSError(
+            ctypes.get_last_error(),
+            "Falha ao desbloquear o Client Secret com Windows DPAPI.",
+        )
+
+    try:
+        clear_bytes = ctypes.string_at(
+            output.pbData,
+            output.cbData,
+        )
+    finally:
+        kernel32.LocalFree(
+            output.pbData
+        )
+
+    return clear_bytes.decode(
+        "utf-8"
+    )
+
+
+def load_pluggy_config(
+    *,
+    include_secret=False,
+):
+    if not PLUGGY_CONFIG_FILE.exists():
+        return None
+
+    try:
+        raw = json.loads(
+            PLUGGY_CONFIG_FILE.read_text(
+                encoding="utf-8"
+            )
+        )
+    except Exception as exc:
+        raise RuntimeError(
+            "A configuração Pluggy local está corrompida."
+        ) from exc
+
+    if not isinstance(raw, dict):
+        raise RuntimeError(
+            "A configuração Pluggy local está inválida."
+        )
+
+    if int(
+        raw.get("version") or 0
+    ) != PLUGGY_CONFIG_VERSION:
+        raise RuntimeError(
+            "Versão da configuração Pluggy não suportada."
+        )
+
+    client_id = str(
+        raw.get("clientId")
+        or ""
+    ).strip()
+
+    item_ids = normalize_item_ids(
+        raw.get("itemIds")
+        or []
+    )
+
+    secret_record = raw.get(
+        "clientSecret"
+    )
+
+    if not client_id or not secret_record:
+        raise RuntimeError(
+            "Configuração Pluggy incompleta."
+        )
+
+    config = {
+        "version": PLUGGY_CONFIG_VERSION,
+        "clientId": client_id,
+        "itemIds": item_ids,
+        "secretConfigured": True,
+        "updatedAt": raw.get(
+            "updatedAt"
+        ),
+    }
+
+    if include_secret:
+        config["clientSecret"] = (
+            unprotect_local_secret(
+                secret_record
+            )
+        )
+
+    return config
+
+
+def save_pluggy_config(
+    *,
+    client_id,
+    client_secret,
+    item_ids,
+):
+    client_id = str(
+        client_id or ""
+    ).strip()
+
+    item_ids = normalize_item_ids(
+        item_ids
+    )
+
+    if not client_id:
+        raise ValueError(
+            "Client ID não informado."
+        )
+
+    if not item_ids:
+        raise ValueError(
+            "Informe ao menos um Item ID da Pluggy."
+        )
+
+    existing = None
+    if PLUGGY_CONFIG_FILE.exists():
+        try:
+            existing = json.loads(
+                PLUGGY_CONFIG_FILE.read_text(
+                    encoding="utf-8"
+                )
+            )
+        except Exception:
+            existing = None
+
+    if str(
+        client_secret or ""
+    ).strip():
+        protected_secret = (
+            protect_local_secret(
+                str(client_secret)
+            )
+        )
+    elif isinstance(existing, dict):
+        protected_secret = existing.get(
+            "clientSecret"
+        )
+        if not protected_secret:
+            raise ValueError(
+                "Client Secret não informado."
+            )
+    else:
+        raise ValueError(
+            "Client Secret não informado."
+        )
+
+    payload = {
+        "version": PLUGGY_CONFIG_VERSION,
+        "clientId": client_id,
+        "clientSecret": protected_secret,
+        "itemIds": item_ids,
+        "updatedAt": utc_iso_now(),
+    }
+
+    atomic_write_json(
+        PLUGGY_CONFIG_FILE,
+        payload,
+    )
+
+    return {
+        "version": PLUGGY_CONFIG_VERSION,
+        "clientId": client_id,
+        "itemIds": item_ids,
+        "secretConfigured": True,
+        "updatedAt": payload["updatedAt"],
+    }
+
+
+def parse_legacy_env(path):
+    path = Path(path)
+    if not path.exists():
+        return {}
+
+    result = {}
+
+    for raw_line in path.read_text(
+        encoding="utf-8"
+    ).splitlines():
+        line = raw_line.strip()
+
+        if (
+            not line
+            or line.startswith("#")
+            or "=" not in line
+        ):
+            continue
+
+        key, value = line.split(
+            "=",
+            1,
+        )
+
+        key = key.strip()
+        value = value.strip()
+
+        if (
+            len(value) >= 2
+            and value[0] == value[-1]
+            and value[0] in {"'", '"'}
+        ):
+            value = value[1:-1]
+
+        result[key] = value
+
+    return result
+
+
+def migrate_legacy_storage():
+    """
+    Migra os arquivos pessoais da antiga pasta do projeto para LocalAppData.
+
+    O legado é copiado, nunca removido automaticamente.
+    """
+    if STORAGE_DIR.resolve() == BASE_DIR.resolve():
+        return []
+
+    copied = []
+
+    candidates = [
+        (
+            BASE_DIR / "data" / SQLITE_DATABASE_NAME,
+            DB_FILE,
+        ),
+        (
+            BASE_DIR / "user_data" / "ajustes.json",
+            SETTINGS_FILE,
+        ),
+        (
+            BASE_DIR / "user_data" / "auth.json",
+            AUTH_FILE,
+        ),
+    ]
+
+    for source, destination in candidates:
+        if (
+            source.exists()
+            and not destination.exists()
+        ):
+            destination.parent.mkdir(
+                parents=True,
+                exist_ok=True,
+            )
+            shutil.copy2(
+                source,
+                destination,
+            )
+            copied.append(
+                destination
+            )
+
+    return copied
+
+
+def migrate_legacy_env():
+    """
+    Importa o .env histórico uma única vez para o cofre DPAPI.
+
+    Depois de salvar e validar estruturalmente o novo arquivo, o .env antigo é
+    apagado para que o Client Secret não permaneça em texto puro.
+    """
+    if PLUGGY_CONFIG_FILE.exists():
+        return False
+
+    if not LEGACY_ENV_FILE.exists():
+        return False
+
+    values = parse_legacy_env(
+        LEGACY_ENV_FILE
+    )
+
+    client_id = str(
+        values.get(
+            "PLUGGY_CLIENT_ID"
+        )
+        or ""
+    ).strip()
+
+    client_secret = str(
+        values.get(
+            "PLUGGY_CLIENT_SECRET"
+        )
+        or ""
+    ).strip()
+
+    item_ids = normalize_item_ids(
+        values.get(
+            "PLUGGY_ITEM_IDS"
+        )
+        or ""
+    )
+
+    if (
+        not client_id
+        or not client_secret
+        or not item_ids
+    ):
+        return False
+
+    save_pluggy_config(
+        client_id=client_id,
+        client_secret=client_secret,
+        item_ids=item_ids,
+    )
+
+    # Confirma que o segredo pode ser recuperado antes de excluir o legado.
+    migrated = load_pluggy_config(
+        include_secret=True
+    )
+
+    if (
+        migrated["clientId"] != client_id
+        or migrated["clientSecret"]
+        != client_secret
+    ):
+        raise RuntimeError(
+            "Falha ao validar a migração das credenciais Pluggy."
+        )
+
+    LEGACY_ENV_FILE.unlink()
+    return True
+
+
+def pluggy_public_status():
+    config = load_pluggy_config(
+        include_secret=False
+    )
+
+    return {
+        "configured": bool(config),
+        "clientId": (
+            config.get("clientId")
+            if config
+            else ""
+        ),
+        "itemIds": (
+            config.get("itemIds")
+            if config
+            else []
+        ),
+        "secretConfigured": bool(
+            config
+            and config.get(
+                "secretConfigured"
+            )
+        ),
+        "storage": (
+            "windows-dpapi-user"
+            if config
+            else None
+        ),
+    }
+
+
+def resolve_pluggy_credentials(
+    payload=None,
+):
+    payload = (
+        payload
+        if isinstance(payload, dict)
+        else {}
+    )
+
+    stored = None
+    if PLUGGY_CONFIG_FILE.exists():
+        stored = load_pluggy_config(
+            include_secret=True
+        )
+
+    client_id = str(
+        payload.get("clientId")
+        or (
+            stored.get("clientId")
+            if stored
+            else ""
+        )
+        or ""
+    ).strip()
+
+    client_secret = str(
+        payload.get("clientSecret")
+        or (
+            stored.get("clientSecret")
+            if stored
+            else ""
+        )
+        or ""
+    ).strip()
+
+    item_ids = normalize_item_ids(
+        payload.get("itemIds")
+        if "itemIds" in payload
+        else (
+            stored.get("itemIds")
+            if stored
+            else []
+        )
+    )
+
+    if not client_id or not client_secret:
+        raise ValueError(
+            "Client ID e Client Secret são obrigatórios."
+        )
+
+    return (
+        client_id,
+        client_secret,
+        item_ids,
+    )
+
+
+def test_pluggy_access(
+    *,
+    client_id,
+    client_secret,
+    item_ids,
+):
+    client = PluggyClient(
+        client_id=client_id,
+        client_secret=client_secret,
+    )
+    client.authenticate()
+
+    checked_items = []
+
+    for item_id in normalize_item_ids(
+        item_ids
+    ):
+        try:
+            item = client.get_json(
+                f"/items/{item_id}"
+            )
+        except Exception as exc:
+            raise ValueError(
+                f"Item ID inválido ou inacessível: {item_id}"
+            ) from exc
+
+        connector_name = ""
+        if isinstance(item, dict):
+            connector = item.get(
+                "connector"
+            )
+            if isinstance(connector, dict):
+                connector_name = str(
+                    connector.get("name")
+                    or ""
+                )
+
+        checked_items.append(
+            {
+                "itemId": item_id,
+                "connectorName": connector_name,
+            }
+        )
+
+    return {
+        "ok": True,
+        "itemCount": len(
+            checked_items
+        ),
+        "items": checked_items,
+    }
+
+
+def synchronize_from_saved_pluggy():
+    if not SYNC_LOCK.acquire(
+        blocking=False
+    ):
+        raise RuntimeError(
+            "Já existe uma sincronização em andamento."
+        )
+
+    try:
+        config = load_pluggy_config(
+            include_secret=True
+        )
+
+        if not config:
+            raise ValueError(
+                "Pluggy ainda não configurada."
+            )
+
+        return run_export(
+            output_dir=DATA_DIR,
+            client_id=config[
+                "clientId"
+            ],
+            client_secret=config[
+                "clientSecret"
+            ],
+            item_ids=config[
+                "itemIds"
+            ],
+        )
+    finally:
+        SYNC_LOCK.release()
+
+
+AUTH_FILE_VERSION = 1
+AUTH_COOKIE_NAME = "controlefin_session"
+AUTH_SESSION_TTL_SECONDS = 12 * 60 * 60
+AUTH_PASSWORD_MIN_LENGTH = 8
+AUTH_PASSWORD_MAX_LENGTH = 256
+AUTH_USERNAME_MIN_LENGTH = 3
+AUTH_USERNAME_MAX_LENGTH = 80
+AUTH_PBKDF2_ITERATIONS = 600_000
+
+AUTH_LOCK = threading.RLock()
+AUTH_SESSIONS_LOCK = threading.RLock()
+AUTH_SESSIONS = {}
+
+LOGIN_FAILURE_LOCK = threading.RLock()
+LOGIN_FAILURES = {}
+LOGIN_FAILURE_WINDOW_SECONDS = 60
+LOGIN_FAILURE_MAX_ATTEMPTS = 5
+
+
+def utc_iso_now():
+    return datetime.now().astimezone().isoformat(timespec="seconds")
+
+
+def normalize_auth_username(value):
+    username = str(value or "").strip()
+
+    if not (
+        AUTH_USERNAME_MIN_LENGTH
+        <= len(username)
+        <= AUTH_USERNAME_MAX_LENGTH
+    ):
+        raise ValueError(
+            "O usuário deve ter entre "
+            f"{AUTH_USERNAME_MIN_LENGTH} e "
+            f"{AUTH_USERNAME_MAX_LENGTH} caracteres."
+        )
+
+    if any(ord(char) < 32 for char in username):
+        raise ValueError(
+            "O usuário contém caracteres inválidos."
+        )
+
+    return username
+
+
+def validate_auth_password(value):
+    password = str(value or "")
+
+    if not (
+        AUTH_PASSWORD_MIN_LENGTH
+        <= len(password)
+        <= AUTH_PASSWORD_MAX_LENGTH
+    ):
+        raise ValueError(
+            "A senha deve ter entre "
+            f"{AUTH_PASSWORD_MIN_LENGTH} e "
+            f"{AUTH_PASSWORD_MAX_LENGTH} caracteres."
+        )
+
+    return password
+
+
+def encode_auth_bytes(value):
+    return base64.urlsafe_b64encode(
+        value
+    ).decode("ascii")
+
+
+def decode_auth_bytes(value):
+    return base64.urlsafe_b64decode(
+        str(value).encode("ascii")
+    )
+
+
+def derive_password_hash(
+    password,
+    salt,
+    *,
+    iterations=AUTH_PBKDF2_ITERATIONS,
+):
+    return hashlib.pbkdf2_hmac(
+        "sha256",
+        password.encode("utf-8"),
+        salt,
+        int(iterations),
+    )
+
+
+def build_auth_config(username, password):
+    username = normalize_auth_username(
+        username
+    )
+    password = validate_auth_password(
+        password
+    )
+
+    salt = os.urandom(16)
+    digest = derive_password_hash(
+        password,
+        salt,
+    )
+
+    return {
+        "version": AUTH_FILE_VERSION,
+        "username": username,
+        "password": {
+            "algorithm": "pbkdf2_sha256",
+            "iterations": AUTH_PBKDF2_ITERATIONS,
+            "salt": encode_auth_bytes(salt),
+            "hash": encode_auth_bytes(digest),
+        },
+        "createdAt": utc_iso_now(),
+    }
+
+
+def validate_auth_config(config):
+    if not isinstance(config, dict):
+        raise ValueError(
+            "Arquivo de autenticação inválido."
+        )
+
+    if int(config.get("version") or 0) != AUTH_FILE_VERSION:
+        raise ValueError(
+            "Versão do arquivo de autenticação não suportada."
+        )
+
+    username = normalize_auth_username(
+        config.get("username")
+    )
+
+    password = config.get("password")
+    if not isinstance(password, dict):
+        raise ValueError(
+            "Registro de senha inválido."
+        )
+
+    if password.get("algorithm") != "pbkdf2_sha256":
+        raise ValueError(
+            "Algoritmo de senha não suportado."
+        )
+
+    iterations = int(
+        password.get("iterations") or 0
+    )
+    if iterations < 100_000:
+        raise ValueError(
+            "Parâmetros de senha inválidos."
+        )
+
+    salt = decode_auth_bytes(
+        password.get("salt")
+    )
+    digest = decode_auth_bytes(
+        password.get("hash")
+    )
+
+    if len(salt) < 16 or len(digest) != 32:
+        raise ValueError(
+            "Registro de senha inválido."
+        )
+
+    return {
+        **config,
+        "username": username,
+    }
+
+
+def load_auth_config():
+    if not AUTH_FILE.exists():
+        return None
+
+    try:
+        config = json.loads(
+            AUTH_FILE.read_text(
+                encoding="utf-8"
+            )
+        )
+        return validate_auth_config(
+            config
+        )
+    except Exception as exc:
+        raise RuntimeError(
+            "O arquivo user_data/auth.json está inválido. "
+            "Ele não será recriado automaticamente."
+        ) from exc
+
+
+def save_auth_config(config):
+    config = validate_auth_config(
+        config
+    )
+
+    atomic_write_json(
+        AUTH_FILE,
+        config,
+    )
+
+
+def verify_auth_password(
+    config,
+    password,
+):
+    config = validate_auth_config(
+        config
+    )
+
+    password_record = config["password"]
+
+    try:
+        candidate = derive_password_hash(
+            str(password or ""),
+            decode_auth_bytes(
+                password_record["salt"]
+            ),
+            iterations=int(
+                password_record["iterations"]
+            ),
+        )
+        expected = decode_auth_bytes(
+            password_record["hash"]
+        )
+    except Exception:
+        return False
+
+    return hmac.compare_digest(
+        candidate,
+        expected,
+    )
+
+
+def purge_expired_auth_sessions():
+    now = time.time()
+
+    with AUTH_SESSIONS_LOCK:
+        expired = [
+            token
+            for token, session
+            in AUTH_SESSIONS.items()
+            if float(
+                session.get("expiresAt") or 0
+            ) <= now
+        ]
+
+        for token in expired:
+            AUTH_SESSIONS.pop(
+                token,
+                None,
+            )
+
+
+def create_auth_session(username):
+    purge_expired_auth_sessions()
+
+    token = secrets.token_urlsafe(32)
+    now = time.time()
+
+    with AUTH_SESSIONS_LOCK:
+        AUTH_SESSIONS[token] = {
+            "username": username,
+            "createdAt": now,
+            "expiresAt": (
+                now
+                + AUTH_SESSION_TTL_SECONDS
+            ),
+        }
+
+    return token
+
+
+def auth_session_username(token):
+    if not token:
+        return None
+
+    purge_expired_auth_sessions()
+
+    with AUTH_SESSIONS_LOCK:
+        session = AUTH_SESSIONS.get(
+            token
+        )
+
+        if not session:
+            return None
+
+        return str(
+            session.get("username")
+            or ""
+        ) or None
+
+
+def auth_request_username(request):
+    return auth_session_username(
+        request.cookies.get(
+            AUTH_COOKIE_NAME
+        )
+    )
+
+
+def revoke_auth_session(token):
+    if not token:
+        return
+
+    with AUTH_SESSIONS_LOCK:
+        AUTH_SESSIONS.pop(
+            token,
+            None,
+        )
+
+
+def set_auth_cookie(
+    response,
+    token,
+):
+    response.set_cookie(
+        key=AUTH_COOKIE_NAME,
+        value=token,
+        max_age=AUTH_SESSION_TTL_SECONDS,
+        httponly=True,
+        samesite="strict",
+        secure=False,
+        path="/",
+    )
+
+
+def clear_auth_cookie(response):
+    response.delete_cookie(
+        key=AUTH_COOKIE_NAME,
+        path="/",
+        httponly=True,
+        samesite="strict",
+    )
+
+
+def auth_client_key(request):
+    client = getattr(
+        request,
+        "client",
+        None,
+    )
+    return str(
+        getattr(
+            client,
+            "host",
+            None,
+        )
+        or "local"
+    )
+
+
+def auth_login_retry_after(
+    client_key,
+):
+    now = time.time()
+
+    with LOGIN_FAILURE_LOCK:
+        attempts = [
+            value
+            for value in LOGIN_FAILURES.get(
+                client_key,
+                [],
+            )
+            if (
+                now - value
+                < LOGIN_FAILURE_WINDOW_SECONDS
+            )
+        ]
+
+        LOGIN_FAILURES[
+            client_key
+        ] = attempts
+
+        if (
+            len(attempts)
+            < LOGIN_FAILURE_MAX_ATTEMPTS
+        ):
+            return 0
+
+        oldest = min(
+            attempts
+        )
+
+        return max(
+            1,
+            int(
+                LOGIN_FAILURE_WINDOW_SECONDS
+                - (now - oldest)
+            )
+            + 1,
+        )
+
+
+def register_auth_login_failure(
+    client_key,
+):
+    now = time.time()
+
+    with LOGIN_FAILURE_LOCK:
+        attempts = [
+            value
+            for value in LOGIN_FAILURES.get(
+                client_key,
+                [],
+            )
+            if (
+                now - value
+                < LOGIN_FAILURE_WINDOW_SECONDS
+            )
+        ]
+        attempts.append(now)
+        LOGIN_FAILURES[
+            client_key
+        ] = attempts
+
+
+def clear_auth_login_failures(
+    client_key,
+):
+    with LOGIN_FAILURE_LOCK:
+        LOGIN_FAILURES.pop(
+            client_key,
+            None,
+        )
+
+
+async def auth_json_payload(request):
+    try:
+        payload = await request.json()
+    except Exception as exc:
+        raise HTTPException(
+            status_code=400,
+            detail="JSON inválido.",
+        ) from exc
+
+    if not isinstance(
+        payload,
+        dict,
+    ):
+        raise HTTPException(
+            status_code=400,
+            detail="Formato inválido.",
+        )
+
+    return payload
+
+
+@app.middleware("http")
+async def local_authentication_middleware(
+    request,
+    call_next,
+):
+    path = request.url.path
+
+    # O HTML e os endpoints necessários para setup/login são públicos.
+    # Qualquer API financeira/configurável exige uma sessão válida.
+    if (
+        path.startswith("/api/")
+        and not path.startswith(
+            "/api/auth/"
+        )
+    ):
+        username = auth_request_username(
+            request
+        )
+
+        if not username:
+            return JSONResponse(
+                status_code=401,
+                content={
+                    "detail": (
+                        "Autenticação necessária."
+                    )
+                },
+            )
+
+    response = await call_next(
+        request
+    )
+
+    if path == "/":
+        response.headers[
+            "Cache-Control"
+        ] = "no-store"
+
+    return response
+
+
+@app.get("/api/auth/status")
+def auth_status(request: Request):
+    configured = AUTH_FILE.exists()
+
+    if configured:
+        # Não transforma arquivo corrompido em "primeiro acesso".
+        load_auth_config()
+
+    username = auth_request_username(
+        request
+    )
+
+    return {
+        "configured": configured,
+        "authenticated": bool(username),
+        "username": username,
+        "passwordMinLength": AUTH_PASSWORD_MIN_LENGTH,
+        "sessionTtlSeconds": AUTH_SESSION_TTL_SECONDS,
+    }
+
+
+@app.post("/api/auth/setup")
+async def auth_setup(request: Request):
+    payload = await auth_json_payload(
+        request
+    )
+
+    with AUTH_LOCK:
+        if AUTH_FILE.exists():
+            raise HTTPException(
+                status_code=409,
+                detail=(
+                    "O primeiro usuário já foi criado."
+                ),
+            )
+
+        password = str(
+            payload.get("password")
+            or ""
+        )
+        confirm_password = str(
+            payload.get(
+                "confirmPassword"
+            )
+            or ""
+        )
+
+        if (
+            password
+            != confirm_password
+        ):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "As senhas não coincidem."
+                ),
+            )
+
+        try:
+            config = build_auth_config(
+                payload.get("username"),
+                password,
+            )
+        except ValueError as exc:
+            raise HTTPException(
+                status_code=400,
+                detail=str(exc),
+            ) from exc
+
+        save_auth_config(
+            config
+        )
+
+    token = create_auth_session(
+        config["username"]
+    )
+
+    response = JSONResponse(
+        {
+            "ok": True,
+            "authenticated": True,
+            "username": config["username"],
+        }
+    )
+    set_auth_cookie(
+        response,
+        token,
+    )
+    return response
+
+
+@app.post("/api/auth/login")
+async def auth_login(request: Request):
+    payload = await auth_json_payload(
+        request
+    )
+
+    if not AUTH_FILE.exists():
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Nenhum usuário foi criado ainda."
+            ),
+        )
+
+    client_key = auth_client_key(
+        request
+    )
+    retry_after = auth_login_retry_after(
+        client_key
+    )
+
+    if retry_after:
+        raise HTTPException(
+            status_code=429,
+            detail=(
+                "Muitas tentativas de login. "
+                f"Tente novamente em {retry_after}s."
+            ),
+            headers={
+                "Retry-After": str(
+                    retry_after
+                )
+            },
+        )
+
+    config = load_auth_config()
+
+    username = str(
+        payload.get("username")
+        or ""
+    ).strip()
+
+    password_ok = verify_auth_password(
+        config,
+        payload.get("password"),
+    )
+    username_ok = hmac.compare_digest(
+        username,
+        str(config["username"]),
+    )
+
+    if not (
+        username_ok
+        and password_ok
+    ):
+        register_auth_login_failure(
+            client_key
+        )
+        raise HTTPException(
+            status_code=401,
+            detail=(
+                "Usuário ou senha inválidos."
+            ),
+        )
+
+    clear_auth_login_failures(
+        client_key
+    )
+
+    token = create_auth_session(
+        config["username"]
+    )
+
+    response = JSONResponse(
+        {
+            "ok": True,
+            "authenticated": True,
+            "username": config["username"],
+        }
+    )
+    set_auth_cookie(
+        response,
+        token,
+    )
+    return response
+
+
+@app.post("/api/auth/logout")
+def auth_logout(request: Request):
+    revoke_auth_session(
+        request.cookies.get(
+            AUTH_COOKIE_NAME
+        )
+    )
+
+    response = JSONResponse(
+        {
+            "ok": True,
+        }
+    )
+    clear_auth_cookie(
+        response
+    )
+    return response
+
+
+@app.get("/api/pluggy/status")
+def api_pluggy_status():
+    return pluggy_public_status()
+
+
+@app.post("/api/pluggy/test")
+async def api_pluggy_test(
+    request: Request,
+):
+    payload = await auth_json_payload(
+        request
+    )
+
+    try:
+        (
+            client_id,
+            client_secret,
+            item_ids,
+        ) = resolve_pluggy_credentials(
+            payload
+        )
+
+        return test_pluggy_access(
+            client_id=client_id,
+            client_secret=client_secret,
+            item_ids=item_ids,
+        )
+    except PluggyAPIError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "A Pluggy recusou as credenciais. "
+                "Confira Client ID e Client Secret."
+            ),
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+
+@app.put("/api/pluggy/config")
+async def api_pluggy_config(
+    request: Request,
+):
+    payload = await auth_json_payload(
+        request
+    )
+
+    try:
+        (
+            client_id,
+            client_secret,
+            item_ids,
+        ) = resolve_pluggy_credentials(
+            payload
+        )
+
+        if not item_ids:
+            raise ValueError(
+                "Informe ao menos um Item ID."
+            )
+
+        # Só persiste configurações que realmente autenticam e conseguem
+        # acessar todos os Item IDs informados.
+        test_pluggy_access(
+            client_id=client_id,
+            client_secret=client_secret,
+            item_ids=item_ids,
+        )
+
+        with PLUGGY_CONFIG_LOCK:
+            saved = save_pluggy_config(
+                client_id=client_id,
+                client_secret=(
+                    payload.get(
+                        "clientSecret"
+                    )
+                    or None
+                ),
+                item_ids=item_ids,
+            )
+
+        return {
+            "ok": True,
+            **saved,
+        }
+    except PluggyAPIError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=(
+                "A Pluggy recusou as credenciais."
+            ),
+        ) from exc
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=400,
+            detail=str(exc),
+        ) from exc
+
+
+@app.post("/api/sync")
+def api_sync():
+    if not PLUGGY_CONFIG_FILE.exists():
+        raise HTTPException(
+            status_code=409,
+            detail=(
+                "Configure a Pluggy antes de sincronizar."
+            ),
+        )
+
+    try:
+        data = synchronize_from_saved_pluggy()
+    except RuntimeError as exc:
+        message = str(exc)
+
+        if (
+            "sincronização em andamento"
+            in message.lower()
+        ):
+            raise HTTPException(
+                status_code=409,
+                detail=message,
+            ) from exc
+
+        raise HTTPException(
+            status_code=500,
+            detail=message,
+        ) from exc
+    except PluggyAPIError as exc:
+        raise HTTPException(
+            status_code=502,
+            detail=(
+                "Falha de comunicação com a Pluggy."
+            ),
+        ) from exc
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=(
+                "Não foi possível atualizar os dados: "
+                f"{exc}"
+            ),
+        ) from exc
+
+    return {
+        "ok": True,
+        "errorCount": len(
+            data.errors
+        ),
+        "database": database_status(),
+    }
+
 
 @app.get("/")
 def dashboard():
@@ -75,6 +1703,9 @@ def dashboard():
     return FileResponse(
         HTML_FILE,
         media_type="text/html",
+        headers={
+            "Cache-Control": "no-store",
+        },
     )
 
 
@@ -634,23 +2265,10 @@ def load_settings():
 
 
 def save_settings(settings):
-    USER_DATA_DIR.mkdir(
-        parents=True,
-        exist_ok=True
+    atomic_write_json(
+        SETTINGS_FILE,
+        settings,
     )
-
-    temp_file = SETTINGS_FILE.with_suffix(".tmp")
-
-    temp_file.write_text(
-        json.dumps(
-            settings,
-            ensure_ascii=False,
-            indent=2,
-        ),
-        encoding="utf-8",
-    )
-
-    temp_file.replace(SETTINGS_FILE)
 
 @app.get("/api/settings")
 def get_settings():
@@ -952,13 +2570,44 @@ def open_browser():
 
 if __name__ == "__main__":
 
-    print(f"Pasta permanente da aplicação: {BASE_DIR}", flush=True)
-    print(f"Dados locais: {DATA_DIR}", flush=True)
-    print(f"Banco SQLite: {DB_FILE}", flush=True)
+    migrated_files = migrate_legacy_storage()
 
-    # Se já existe um banco válido de versão anterior, remove CSVs legados
-    # antes da sincronização. Se ainda não existe DB, a limpeza só ocorrerá
-    # depois que run_export publicar um SQLite válido com sucesso.
+    print(
+        f"Pasta do aplicativo: {BASE_DIR}",
+        flush=True,
+    )
+    print(
+        f"Dados pessoais: {STORAGE_DIR}",
+        flush=True,
+    )
+    print(
+        f"Banco SQLite: {DB_FILE}",
+        flush=True,
+    )
+
+    if migrated_files:
+        print(
+            "Arquivos locais antigos copiados para "
+            f"{STORAGE_DIR}.",
+            flush=True,
+        )
+
+    if os.name == "nt":
+        try:
+            if migrate_legacy_env():
+                print(
+                    "Credenciais Pluggy do .env foram migradas "
+                    "para Windows DPAPI; o .env legado foi removido.",
+                    flush=True,
+                )
+        except Exception as exc:
+            print(
+                "Aviso: não foi possível migrar automaticamente "
+                f"o .env legado: {exc}",
+                file=sys.stderr,
+                flush=True,
+            )
+
     if DB_FILE.exists():
         removed_csv = purge_legacy_csv_files(
             DATA_DIR
@@ -968,37 +2617,6 @@ if __name__ == "__main__":
                 f"CSV(s) legado(s) removido(s): {len(removed_csv)}",
                 flush=True,
             )
-
-    try:
-        run_export(
-            output_dir=DATA_DIR,
-            env_file=ENV_FILE,
-        )
-        print(
-            "Sincronização concluída: SQLite validado e publicado atomicamente.",
-            flush=True,
-        )
-    except Exception as exc:
-        print(
-            f"Falha ao atualizar os dados: {exc}",
-            file=sys.stderr,
-            flush=True,
-        )
-
-        # Preserva o uso offline somente do último SQLite válido.
-        if DB_FILE.exists():
-            print(
-                "Usando o último banco SQLite local válido; a sincronização com falha não o substituiu.",
-                file=sys.stderr,
-                flush=True,
-            )
-        else:
-            print(
-                "Nenhum banco SQLite válido está disponível.",
-                file=sys.stderr,
-                flush=True,
-            )
-            raise SystemExit(1)
 
     threading.Thread(
         target=open_browser,

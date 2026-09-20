@@ -2841,6 +2841,8 @@ def run_export(
     *,
     output_dir: Path,
     env_file: Path = Path(".env"),
+    client_id: Optional[str] = None,
+    client_secret: Optional[str] = None,
     item_ids: Optional[Iterable[str]] = None,
     item_file: Optional[Path] = None,
     date_from: Optional[str] = None,
@@ -2863,14 +2865,26 @@ def run_export(
     output_dir = Path(output_dir)
     env_file = Path(env_file)
 
-    load_simple_dotenv(env_file)
+    # CLI/desenvolvimento ainda pode usar variáveis de ambiente. O backend
+    # local compartilhável informa as credenciais explicitamente, sem .env.
+    if client_id is None or client_secret is None:
+        load_simple_dotenv(env_file)
 
-    client_id = os.getenv("PLUGGY_CLIENT_ID", "").strip()
-    client_secret = os.getenv("PLUGGY_CLIENT_SECRET", "").strip()
+    resolved_client_id = str(
+        client_id
+        if client_id is not None
+        else os.getenv("PLUGGY_CLIENT_ID", "")
+    ).strip()
 
-    if not client_id or not client_secret:
+    resolved_client_secret = str(
+        client_secret
+        if client_secret is not None
+        else os.getenv("PLUGGY_CLIENT_SECRET", "")
+    ).strip()
+
+    if not resolved_client_id or not resolved_client_secret:
         raise ValueError(
-            "Defina PLUGGY_CLIENT_ID e PLUGGY_CLIENT_SECRET no ambiente ou no .env."
+            "Credenciais Pluggy não configuradas."
         )
 
     env_item_ids = [
@@ -2910,7 +2924,10 @@ def run_export(
         flush=True,
     )
 
-    client = PluggyClient(client_id=client_id, client_secret=client_secret)
+    client = PluggyClient(
+        client_id=resolved_client_id,
+        client_secret=resolved_client_secret,
+    )
     client.authenticate()
 
     extractor = PluggyFinanceExtractor(client, resolved_item_ids, options)
